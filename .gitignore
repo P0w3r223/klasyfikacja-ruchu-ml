@@ -1,0 +1,23 @@
+# Dane i modele (duże pliki trzymamy poza historią gita)
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+*.pcap
+*.pcapng
+*.parquet
+*.joblib
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+.env
+
+# System / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
