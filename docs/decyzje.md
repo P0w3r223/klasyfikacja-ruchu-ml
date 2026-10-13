@@ -59,6 +59,18 @@ Po filtrze VoIP ma tylko **391 przepływów** (204 NonVPN, 187 VPN), ale to praw
 - Przy podziale grupowym użyjemy `StratifiedGroupKFold`, żeby każda klasa (szczególnie VoIP) trafiła do każdego foldu.
 - W E2 sprawdzimy wrażliwość wyników na próg (5 vs 15 min).
 
+## 2026-10-13: EDA – efekt kampanii potwierdzony (`notebooks/01_eda.ipynb`)
+
+- Random Forest odróżnia wideo z kampanii Tor-nonTor od wideo z kampanii VPN-nonVPN z dokładnością zbalansowaną **0,997** (podział grupowy, 5 foldów). Bez cech TCP: 0,989, same czasowe: 0,92, same rozmiarowe: 0,96.
+- Najsilniejsze skróty: `Fwd Seg Size Min` (rozmiar nagłówka TCP, zależny od systemu operacyjnego), `Init Win Bytes`, `Idle *`.
+- Wewnątrz kampanii Tor-nonTor WWW i wideo są do siebie bardzo podobne na poziomie przepływu.
+
+**Propozycja (do potwierdzenia):** oprócz klasyfikacji trzech usług prowadzić dwa zadania wewnątrz jednej kampanii:
+1. WWW vs wideo, kampania Tor-nonTor;
+2. VoIP vs wideo, kampania VPN-nonVPN (ruch zwykły i VPN; zawiera E3).
+
+Różnica wyników (3 klasy vs zadania wewnątrz kampanii) mierzy wkład efektu kampanii. Cechy TCP zależne od systemu (`Fwd Seg Size Min`, `Init Win Bytes`) traktujemy jako podejrzane: w E4 wariant z nimi i bez nich.
+
 ## Do sprawdzenia w eksperymentach
 
 - `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. Sprawdzić ich ważność w E4 i w teście kontrolnym kampanii.
