@@ -32,4 +32,34 @@
 - VoIP to mało sesji: 69 par IP i 18 źródłowych IP (NonVPN), 51 par i 12 IP (VPN), każda kampania z jednego dnia. To ma znaczenie dla GroupKFold.
 - Wideo występuje w obu kampaniach (Non-Tor i NonVPN), więc pozwala zmierzyć, jak silny jest efekt kampanii.
 
-**Decyzja:** do podjęcia (warianty w odpowiedzi z 2026-10-13; skonsultować z prowadzącym).
+**Decyzja (2026-10-13): wariant A.** Zostajemy przy CIC-Darknet2020 i opisujemy problem jako wynik projektu:
+
+- trzy klasy (WWW, VoIP, Video) tylko w ruchu zwykłym (`tunnel = plain`: Non-Tor + NonVPN);
+- E3 dla dwóch klas (VoIP vs Video): zwykły ruch kontra VPN, w obrębie kampanii VPN-nonVPN;
+- nowy test kontrolny efektu kampanii: Video występuje w obu kampaniach (Non-Tor i NonVPN), więc sprawdzamy, czy model odróżnia kampanię przy tej samej usłudze;
+- do skonsultowania z prowadzącym przy oddaniu M1.
+
+## 2026-10-13: Ruch tła w etykietach usług
+
+Etykiety nadano całym plikom przechwyceń, więc ruch tła systemu dostał etykietę usługi. Przykłady:
+- 73% przepływów „VoIP” w NonVPN to LLMNR (224.0.0.252:5355);
+- ok. 29% „Browsing” to zapytania DNS;
+- ok. 2/3 „Audio-Stream” to DNS.
+
+**Decyzja:** w `src/preprocess.py` usuwamy przepływy, w których dowolny port to DNS, mDNS, LLMNR, NetBIOS, SSDP, DHCP, NTP, SNMP albo Dropbox LAN sync. Usuwamy też ruch do adresów multicast/broadcast i protokoły inne niż TCP/UDP. Porty służą tu wyłącznie do filtrowania, nie są cechami modelu. Liczby: `reports/preprocess_report.md`.
+
+Po filtrze VoIP ma tylko **391 przepływów** (204 NonVPN, 187 VPN), ale to prawdziwe rozmowy: ok. 1,4 mln pakietów, m.in. serwery VoipBuster. Przepływów jest mało, bo CICFlowMeter kończy przepływ po 120 s, a rozmowa to kilka długich strumieni UDP. To ograniczenie trzeba opisać w raporcie. Do F1 makro wliczamy F1 dla VoIP.
+
+## 2026-10-13: Definicja sesji (wersja 1)
+
+**Sesja** to przepływy z tą samą nieuporządkowaną parą adresów IP i tą samą etykietą (typ ruchu, usługa), w których przerwa między kolejnymi przepływami nie przekracza **5 minut**.
+
+- Uzasadnienie: dla progów 1/5/15/60 min liczba sesji stabilizuje się od ok. 5–15 min, a przy 1 min jedna rozmowa rozpada się na wiele sztucznych sesji.
+- Wynik: 49 sesji VoIP NonVPN (największa ma 30% przepływów), 25 sesji VoIP VPN, 3285 sesji WWW.
+- Przy podziale grupowym użyjemy `StratifiedGroupKFold`, żeby każda klasa (szczególnie VoIP) trafiła do każdego foldu.
+- W E2 sprawdzimy wrażliwość wyników na próg (5 vs 15 min).
+
+## Do sprawdzenia w eksperymentach
+
+- `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. Sprawdzić ich ważność w E4 i w teście kontrolnym kampanii.
+- `Protocol`: VoIP to w ok. 60–70% UDP, a WWW praktycznie 0%. To uczciwa cecha, ale warto zobaczyć wynik bez niej.
