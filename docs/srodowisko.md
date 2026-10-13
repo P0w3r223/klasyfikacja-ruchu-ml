@@ -18,8 +18,13 @@ git clone https://github.com/P0w3r223/klasyfikacja-ruchu-ml.git
 cd klasyfikacja-ruchu-ml
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
-gh release download data-raw-v1 -D data/raw
+gh release download data-processed-v1 -D data/processed --skip-existing
+# surowy CSV potrzebny tylko do ponownego uruchomienia src/preprocess.py:
+gh release download data-raw-v1 -D data/raw --skip-existing
 ```
+
+`--skip-existing` pomija pliki, które już są na dysku (np. wygenerowane lokalnie przez `preprocess.py`).
+Przy przejściu na nową wersję danych (`data-processed-v2` itd.) użyj `--clobber`, żeby nadpisać stare pliki.
 
 ## Zasady przenośności modeli (żeby laptop „po prostu działał”)
 
