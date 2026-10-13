@@ -39,6 +39,8 @@
 - nowy test kontrolny efektu kampanii: Video występuje w obu kampaniach (Non-Tor i NonVPN), więc sprawdzamy, czy model odróżnia kampanię przy tej samej usłudze;
 - do skonsultowania z prowadzącym przy oddaniu M1.
 
+*Aktualizacja: test kontrolny wykonano w EDA (sekcja niżej), a jego wynik zmienił plan na zadania wewnątrz kampanii.*
+
 ## 2026-10-13: Ruch tła w etykietach usług
 
 Etykiety nadano całym plikom przechwyceń, więc ruch tła systemu dostał etykietę usługi. Przykłady:
@@ -73,5 +75,5 @@ Różnica wyników (3 klasy vs zadania wewnątrz kampanii) mierzy wkład efektu 
 
 ## Do sprawdzenia w eksperymentach
 
-- `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. Sprawdzić ich ważność w E4 i w teście kontrolnym kampanii.
+- `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.
 - `Protocol`: VoIP to w ok. 60–70% UDP, a WWW praktycznie 0%. To uczciwa cecha, ale warto zobaczyć wynik bez niej.
