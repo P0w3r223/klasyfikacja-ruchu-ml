@@ -1,0 +1,13 @@
+# Wersje przypięte: modele .joblib wczytuje się poprawnie tylko przy TEJ SAMEJ wersji scikit-learn.
+# Python 3.13 na obu maszynach (komputer i laptop).
+numpy==2.5.4
+pandas==3.0.6
+pyarrow==25.0.1
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+matplotlib==3.11.2
+seaborn==0.13.2
+streamlit==1.65.0
+jupyter==1.1.1
+ipykernel==7.4.0

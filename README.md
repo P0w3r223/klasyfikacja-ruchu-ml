@@ -23,4 +23,13 @@ reports/     tabele wyników i rysunki do raportu
 ## Dane
 
 Surowe dane nie są przechowywane w historii gita. Źródło: [CIC-Darknet2020 (UNB)](https://www.unb.ca/cic/datasets/darknet2020.html).
-Instrukcja pobrania zostanie dodana po ustaleniu źródła i wersji pliku.
+Kopia pliku `Darknet.CSV` jest w Release `data-raw-v1`:
+
+```bash
+gh release download data-raw-v1 -D data/raw
+```
+
+Pochodzenie pliku, suma kontrolna i ustalenia z przeglądu: [docs/decyzje.md](docs/decyzje.md).
+Praca na dwóch maszynach (komputer i laptop): [docs/srodowisko.md](docs/srodowisko.md).
+
+Korzystając z danych, cytuj: A. H. Lashkari, G. Kaur, A. Rahali, *DIDarknet: A Contemporary Approach to Detect and Characterize the Darknet Traffic using Deep Image Learning*, ICCNS 2020.
