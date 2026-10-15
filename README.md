@@ -4,7 +4,7 @@ Projekt na przedmiot *Inżynieria ruchu* (Politechnika Wrocławska, 2026/27).
 
 Cel: sprawdzić, czy na podstawie samych statystyk przepływów (bez treści pakietów) można rozpoznać usługę — przeglądanie WWW, VoIP lub wideo — także w ruchu przez VPN, oraz rzetelnie ocenić, na ile wyniki są wiarygodne (podział losowy vs. podział po sesjach).
 
-- **Dane:** CIC-Darknet2020 (podzbiór VPN / NonVPN; Browsing, VOIP, Video-Stream)
+- **Dane:** CIC-Darknet2020 (ruch Non-Tor, NonVPN i VPN; Browsing, VOIP, Video-Stream). Ograniczenia zbioru i zmiana zakresu: [docs/decyzje.md](docs/decyzje.md)
 - **Modele:** DummyClassifier (bazowy), k-NN, drzewo decyzyjne, Random Forest
 - **Główna metryka:** F1 makro przy podziale grupowym (po sesjach)
 - **Demo:** aplikacja Streamlit
@@ -29,6 +29,7 @@ Kopia pliku `Darknet.CSV` jest w Release `data-raw-v1`:
 gh release download data-raw-v1 -D data/raw
 ```
 
+Plan projektu: [docs/plan_projektu.md](docs/plan_projektu.md), wstęp (M1): [docs/wstep_M1.md](docs/wstep_M1.md).
 Pochodzenie pliku, suma kontrolna i ustalenia z przeglądu: [docs/decyzje.md](docs/decyzje.md).
 Praca na dwóch maszynach (komputer i laptop): [docs/srodowisko.md](docs/srodowisko.md).
 
