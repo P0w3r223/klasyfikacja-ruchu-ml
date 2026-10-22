@@ -56,14 +56,19 @@ FEATURE_SETS: dict[str, Callable[[list[str]], list[str]]] = {
 
 ALL_MODELS = ("dummy", "knn", "tree", "rf")
 
+# Największa sesja VoIP w ruchu zwykłym ma 30% przepływów VoIP; przy 5 foldach jej fold
+# dostaje tylko ją (1 sesja VoIP w teście). Przy 3 foldach: 20/22/7 sesji (etap 03b).
+OUTER_FOLDS = {"uslugi3_plain": 3}
+
 EXPERIMENTS: dict[str, Experiment] = {e.name: e for e in [
     Experiment("pilot_03a", "voip_video_vpncamp", ALL_MODELS, ("random", "session")),
     # etap 03b: E1/E2 i dwie analizy wrażliwości E2 (próg sesji, grupowanie po parze IP)
-    *[Experiment(f"e1e2_{t}", t, ALL_MODELS, ("random", "session")) for t in TASKS],
-    *[Experiment(f"e2_gap15_{t}", t, ALL_MODELS, ("session",), session_gap_min=15.0)
-      for t in TASKS],
-    *[Experiment(f"e2_ippair_{t}", t, ("dummy", "rf"), ("session",), group_by="ip_pair")
-      for t in TASKS],
+    *[Experiment(f"e1e2_{t}", t, ALL_MODELS, ("random", "session"),
+                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS],
+    *[Experiment(f"e2_gap15_{t}", t, ALL_MODELS, ("session",), session_gap_min=15.0,
+                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS],
+    *[Experiment(f"e2_ippair_{t}", t, ("dummy", "rf"), ("session",), group_by="ip_pair",
+                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS],
 ]}
 
 
