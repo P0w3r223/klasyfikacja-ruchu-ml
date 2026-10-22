@@ -17,45 +17,25 @@ Autor: Piotr Cząstkiewicz. **Komunikacja po polsku.**
 
 | Plik | Co zawiera |
 | --- | --- |
-| [docs/plan_projektu.md](docs/plan_projektu.md) | Pełny plan: pytania P1–P4, eksperymenty E1–E7, kamienie milowe |
+| [docs/STATUS.md](docs/STATUS.md) | **Aktualny stan**, następny krok, otwarte decyzje (nadpisywany przez `/handoff`) |
+| [docs/prompty/README.md](docs/prompty/README.md) | Etapy do końca projektu: jeden prompt na etap, terminy, zależności |
+| [docs/plan_projektu.md](docs/plan_projektu.md) | Pełny plan z 13.10 (sprzed EDA): pytania P1–P4, eksperymenty E1–E7, kamienie milowe |
 | [docs/decyzje.md](docs/decyzje.md) | **Dziennik decyzji i ustaleń** (dane, problem kampanii, filtr tła, sesje, wyniki EDA). Aktualizuj go po każdej istotnej decyzji. |
 | [docs/wstep_M1.md](docs/wstep_M1.md) | Wstęp do projektu (M1). Eksport z Claude Docs; wersja do edycji jest tam: https://claude.ai/code/artifact/f421e726-f685-4318-8004-a358f4f6921e |
 | [docs/srodowisko.md](docs/srodowisko.md) | Konfiguracja obu maszyn, pobieranie z Releases, zasady przenośności modeli |
 | [reports/preprocess_report.md](reports/preprocess_report.md) | Liczności po każdym kroku przygotowania danych |
 | [notebooks/01_eda.ipynb](notebooks/01_eda.ipynb) | EDA z wynikami; rysunki w `reports/figures/` |
 
-## Stan na 2026-10-15
+## Stan i praca etapami
 
-Kamienie milowe:
-- M1 19.10.2026: wstęp;
-- M2 16.11: dane, EDA, definicja sesji;
-- M3 7.12: E1/E2, podział losowy vs grupowy;
-- M4 21.12: VPN, ważność cech, kampania, Audio;
-- M5 17.01.2027: Streamlit;
-- M6 koniec stycznia 2027: raport i prezentacja.
+Kamienie milowe: M1 19.10.2026 (oddany), M2 16.11, M3 7.12, M4 21.12, M5 17.01.2027, M6 koniec stycznia 2027. Bieżący stan i następny krok są w [docs/STATUS.md](docs/STATUS.md), nie tutaj.
 
-Zrobione:
-- repo i Releases;
-- przegląd surowych danych (`src/inspect_raw.py`);
-- przygotowanie danych (`src/preprocess.py`) i grupy cech (`src/features.py`);
-- notatnik EDA, wygenerowany przez `src/make_eda_notebook.py`;
-- szkic wstępu M1.
-
-Prace na M2 są więc praktycznie gotowe.
-
-**Następny krok: eksperymenty E1/E2 (M3).** Do napisania `src/train.py` i `src/evaluate.py`:
-- modele Dummy, k-NN, drzewo i RF w jednym potoku sklearn;
-- podział losowy vs `StratifiedGroupKFold` po kolumnie `session`;
-- główna metryka F1 makro.
-
-Wyniki per fold, nie tylko średnia, bo VoIP jest mały.
-
-Czeka na decyzję prowadzącego:
-- czy przyjmuje zadania wewnątrz kampanii jako główną miarę wiarygodności;
-- czy akceptuje E3 dla 2 klas.
-
-Otwarte TODO:
-- porównać SHA-256 `Darknet.CSV` z plikiem z formularza UNB (robi autor, suma jest w `docs/decyzje.md`).
+**Praca etapami:**
+- Każdy etap startuje w świeżej sesji od swojego promptu z [docs/prompty/](docs/prompty/README.md). Na starcie etapu: `git pull`, potem w `docs/STATUS.md`, w sekcji Stage, linia `Etap NN od: <sha>` (`git rev-parse --short HEAD`). `/handoff` przenosi tę linię do nowego STATUS.md, dopóki etap trwa.
+- Etap na kilka sesji: na końcu sesji `/handoff etap NN, czytaj docs/prompty/NN_….md`, żeby plik etapu (USTALENIA, NIE RUSZAJ, GOTOWE GDY) był w CZYTAJ następnej sesji. Potem commit i push STATUS.md i briefu; skill handoff sam nie commituje, więc to polecenie autora.
+- Gdy `docs/plan_projektu.md` (13.10, sprzed EDA) różni się od `docs/decyzje.md`, obowiązuje `docs/decyzje.md`.
+- Weryfikacja kodu w etapie: `/gate standard <sha startu etapu>..HEAD`. Pracujemy na `main`, więc domyślny zakres `/gate` jest pusty.
+- Zamknięcie etapu: weryfikacja wskazana w prompcie → wpis w `docs/decyzje.md` → commit i push → `/handoff następny etap: docs/prompty/<plik następnego etapu>` → commit i push `docs/STATUS.md` i `.claude/sessions/`. Ten commit to polecenie autora; zastępuje sugestię `/ship` ze skilla handoff.
 
 ## Kluczowe ustalenia (szczegóły w docs/decyzje.md)
 
@@ -70,7 +50,7 @@ Otwarte TODO:
 - E3 jako VoIP vs Video;
 - Audio tylko do E5.
 
-**Wynik EDA.** RF odróżnia kampanię na samym wideo z dokładnością zbalansowaną **0,997** (bez cech TCP 0,989). Dlatego proponujemy dwa zadania wewnątrz kampanii:
+**Wynik EDA.** RF odróżnia kampanię na samym wideo z dokładnością zbalansowaną **0,997** (bez cech TCP 0,989). Dlatego główną miarą wiarygodności są dwa zadania wewnątrz kampanii (zaakceptowane przez prowadzącego 21.10, tak samo jak E3 dla 2 klas):
 - WWW vs Video (Tor-nonTor);
 - VoIP vs Video (VPN-nonVPN, w tym E3).
 
@@ -103,3 +83,4 @@ Audio: 5 926.
 - Na Windows przy polskich znakach w konsoli: `PYTHONIOENCODING=utf-8`.
 - Pandas 3: `groupby(...).apply` gubi kolumnę grupującą. Do próbkowania per grupa używaj `pd.concat([... for _, g in df.groupby(...)])`.
 - Commity po polsku.
+- Dokumenty w `docs/` (także `docs/research/`) i `reports/` piszemy po polsku; to wyjątek od globalnej reguły knowledge-docs, bo raport i prezentacja są po polsku.

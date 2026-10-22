@@ -73,6 +73,16 @@ Po filtrze VoIP ma tylko **391 przepływów** (204 NonVPN, 187 VPN), ale to praw
 
 Różnica wyników (3 klasy vs zadania wewnątrz kampanii) mierzy wkład efektu kampanii. Cechy TCP zależne od systemu (`Fwd Seg Size Min`, `Init Win Bytes`) traktujemy jako podejrzane: w E4 wariant z nimi i bez nich.
 
+*Aktualizacja: propozycja zaakceptowana przez prowadzącego (sekcja niżej).*
+
+## 2026-10-21: Decyzje prowadzącego i zakres dalszych prac
+
+- M1 (wstęp) oddany, etap zamknięty.
+- Prowadzący zaakceptował dwa zadania wewnątrz kampanii jako **główną miarę wiarygodności**: WWW vs Video (Tor-nonTor) oraz VoIP vs Video (VPN-nonVPN). Klasyfikacja trzech usług zostaje jako punkt odniesienia; różnica wyników mierzy wkład efektu kampanii.
+- E3 w wersji dwuklasowej (VoIP vs Video, ruch zwykły kontra VPN) zaakceptowany.
+- Zakres eksperymentów (decyzja autora): E1–E5 obowiązkowe, E7 w planie (przerwa świąteczna), E6 opcjonalny. E6 zaczynamy od oceny wykonalności; jeśli nie jest łatwo wykonalny, pomijamy go i opisujemy w raporcie.
+- Prezentacja (decyzja autora): slajdy (ok. 7 min) + pokaz aplikacji Streamlit na przygotowanych plikach CSV (ok. 3 min), z nagraniem zapasowym.
+
 ## Do sprawdzenia w eksperymentach
 
 - `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.
