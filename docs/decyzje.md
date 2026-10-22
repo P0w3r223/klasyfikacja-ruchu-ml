@@ -160,6 +160,39 @@ Wartości to F1 makro, średnia z foldów.
 - **Pomocnicza F1 ważona sesjami:** dla drzewa spada do 0,91, więc pomyłki trafiają głównie w małe sesje.
 - **Wysoki wynik to jeszcze nie wniosek:** w zadaniu jest ruch zwykły i VPN, a VoIP to głównie UDP. Wkład `Protocol` i cech TCP sprawdza E4.
 
+## 2026-10-22: E1/E2, odpowiedź na P2 (etap 03b)
+
+Wyniki: `reports/results/03b_tabela.md` (F1 makro per fold, F1 per klasa, accuracy, czasy), `reports/results/e1e2_*`, `e2_gap15_*`, `e2_ippair_*`, rysunki `reports/figures/08–11`. Przebieg z commitu `8a5d4b1`, odtworzenie: `python src/train.py --experiment <nazwa>`, potem `python src/make_figures_03b.py`. Dwa przebiegi dały identyczne wyniki poza czasami.
+
+**Decyzje autora:**
+- Opcja D (grupowanie po samej nieuporządkowanej parze IP, bez czasu i etykiety) jako analiza wrażliwości E2, tylko RF i Dummy.
+- Zadanie 3 usług liczone na **3 foldach zewnętrznych** zamiast 5. Największa sesja VoIP w ruchu zwykłym ma 30% przepływów VoIP. `StratifiedGroupKFold` wyrównuje udział przepływów, nie sesji, więc przy 5 i 4 foldach jej fold dostawał tylko tę jedną sesję VoIP, a ochrona z etapu 03a przerywała przebieg. Przy 3 foldach rozkład sesji VoIP między foldy to 20/22/7. E1 i E2 mają tę samą liczbę foldów, więc różnica E1−E2 jest porównywalna wewnątrz zadania. Schemat oceny (`evaluate.py`) bez zmian.
+
+**F1 makro, średnia z foldów zewnętrznych** (E2 = sesje 5 min):
+
+| Zadanie | Model | E1 losowy | E2 po sesjach | E1−E2 | E2 15 min | E2 para IP |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| WWW vs Video (Tor-nonTor) | Dummy | 0,496 | 0,496 | 0,000 | 0,496 | 0,496 |
+| | k-NN | 0,841 | 0,808 | 0,033 | 0,812 | – |
+| | drzewo | 0,898 | 0,892 | 0,006 | 0,891 | – |
+| | RF | 0,903 | 0,896 | 0,007 | 0,898 | 0,899 |
+| VoIP vs Video (VPN-nonVPN) | Dummy | 0,515 | 0,519 | −0,004 | 0,519 | 0,517 |
+| | k-NN | 0,994 | 0,969 | 0,025 | 0,969 | – |
+| | drzewo | 0,994 | 0,979 | 0,015 | 0,977 | – |
+| | RF | 0,992 | 0,989 | 0,003 | 0,986 | 0,987 |
+| 3 usługi, ruch zwykły (3 foldy) | Dummy | 0,336 | 0,336 | 0,000 | 0,336 | 0,336 |
+| | k-NN | 0,923 | 0,763 | 0,160 | 0,794 | – |
+| | drzewo | 0,957 | 0,908 | 0,049 | 0,913 | – |
+| | RF | 0,962 | 0,955 | 0,007 | 0,935 | 0,942 |
+
+**Odpowiedź na P2:**
+- **Podział losowy zawyża wynik każdego uczonego modelu, ale skala zależy od modelu.** W zadaniach wewnątrz kampanii E1−E2 wynosi dla RF 0,003–0,007 (w granicach rozrzutu między foldami), dla drzewa 0,006–0,015, a dla k-NN 0,025–0,033. Dummy nie zmienia się, co potwierdza, że różnica pochodzi z modelu, nie z samego podziału.
+- **Najmocniej cierpi klasa z małą liczbą sesji.** W zadaniu 3 usług F1 VoIP spada z E1 do E2: k-NN 0,952 → 0,520, drzewo 0,976 → 0,843, RF 0,985 → 0,972. Rozrzut E2 jest tam duży (k-NN 0,64–0,84 między foldami): wynik zależy od tego, do którego foldu trafi kilka dużych sesji VoIP. Wniosek pasuje do mechanizmu „przepływy tej samej sesji w treningu i teście”: k-NN i drzewo dopasowują się do konkretnych sesji, RF uśrednia.
+- **Definicja sesji nie zmienia wniosku w zadaniach głównych.** Próg 15 min i grupowanie po parze IP zmieniają RF o ≤ 0,003. W 3 usługach RF spada do 0,935 (15 min) i 0,942 (para IP), głównie przez F1 VoIP (0,911 i 0,930), czyli znowu przez kilka dużych grup VoIP.
+- **Wkład efektu kampanii.** RF po sesjach: 3 usługi 0,955, WWW vs Video wewnątrz kampanii 0,896. F1 makro dla 2 i 3 klas nie jest wprost porównywalna, ale czułość Video jest: w zadaniu 3 usług RF rozpoznaje Video z kampanii VPN-nonVPN w 99,7%, a Video z Tor-nonTor (tej samej co WWW) w 84,2%. Tak samo drzewo (99,0% vs 84,1%) i k-NN (95,9% vs 62,0%). Zadanie 3 usług zawyża więc wynik, bo część Video da się odróżnić od WWW po kampanii, a nie po usłudze. Zadanie wewnątrz kampanii jest uczciwszą miarą.
+- **Czasy** (średnia na fold, WWW vs Video): predykcja RF ok. 8 µs/przepływ, drzewo < 1 µs, k-NN ok. 95 µs. Strojenie RF ok. 11 s na fold.
+- **Wniosek dla kolejnych etapów (do potwierdzenia przez autora):** E3–E5 raportujemy z podziałem po sesjach. RF jest najbardziej odporny na sposób podziału.
+
 ## Do sprawdzenia w eksperymentach
 
 - `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.
