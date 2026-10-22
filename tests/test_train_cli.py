@@ -10,6 +10,7 @@ import experiments
 from experiments import TASKS, Experiment
 from features import PROCESSED, feature_list, load_flows
 from preprocess import META_COLS, assign_sessions
+import train
 from train import main, prepare, resolve_features
 
 TRAFFIC_TYPE = {("vpn-nonvpn", "plain"): "NonVPN", ("vpn-nonvpn", "vpn"): "VPN",
@@ -133,3 +134,10 @@ def test_unknown_names_fail_with_a_list_of_options():
         resolve_features("brak")
     with pytest.raises(KeyError, match="dostępne"):
         main(["--experiment", "brak"])
+
+
+def test_prepare_takes_the_built_gap_from_features_json(flows_path, monkeypatch):
+    monkeypatch.setattr(train, "built_session_gap_min", lambda: 15.0)
+    data = prepare(load_flows(path=flows_path), TASKS["voip_video_vpncamp"],
+                   resolve_features("all"), 15.0)
+    assert data.groups.nunique() == 4 * SESSIONS_PER_GROUP

@@ -99,14 +99,19 @@ def inner_folds(data: Prepared, train_idx: np.ndarray, spec: SplitSpec) -> list[
     """Foldy strojenia w obrębie treningu foldu zewnętrznego (pozycje względem train_idx)."""
     y, groups = data.y.iloc[train_idx], data.groups.iloc[train_idx]
     folds = _split(spec.kind, spec.n_inner, spec.seed, data.strata.iloc[train_idx], groups)
-    for i, (_, val) in enumerate(folds):
-        _check_groups_per_class(y.iloc[val], groups.iloc[val], data.classes, 1,
-                                f"fold wewnętrzny {i}")
+    for i, fold in enumerate(folds):
+        for part, idx in zip(("trening", "walidacja"), fold):
+            _check_groups_per_class(y.iloc[idx], groups.iloc[idx], data.classes, 1,
+                                    f"fold wewnętrzny {i} ({part})")
     return folds
 
 
-def _fit(data: Prepared, train_idx: np.ndarray, model: ModelSpec, spec: SplitSpec,
-         n_jobs: int) -> tuple[Pipeline, dict[str, Any], float, float, float]:
+def fit_tuned(data: Prepared, train_idx: np.ndarray, model: ModelSpec, spec: SplitSpec,
+              n_jobs: int = -1) -> tuple[Pipeline, dict[str, Any], float, float, float]:
+    """Strojenie na train_idx i dopasowanie; tak samo powstaje model finalny (etap 05).
+
+    Zwraca: potok, najlepsze parametry, F1 wewnętrznej CV, czas refitu, czas całości.
+    """
     X, y = data.X.iloc[train_idx], data.y.iloc[train_idx]
     start = time.perf_counter()
     if not model.grid:
@@ -129,7 +134,7 @@ def run_cv(data: Prepared, model: ModelSpec, spec: SplitSpec,
             _check_groups_per_class(data.y.iloc[test_idx], data.groups.iloc[test_idx],
                                     data.classes, spec.min_test_groups_per_class,
                                     f"powtórzenie {repeat}, fold testowy {fold}")
-            fitted, params, inner_f1, fit_s, search_s = _fit(
+            fitted, params, inner_f1, fit_s, search_s = fit_tuned(
                 data, train_idx, model, spec, n_jobs)
             start = time.perf_counter()
             y_pred = fitted.predict(data.X.iloc[test_idx])
@@ -139,11 +144,17 @@ def run_cv(data: Prepared, model: ModelSpec, spec: SplitSpec,
 
 
 def fold_metrics(y_true: pd.Series, y_pred: np.ndarray, groups: pd.Series,
-                 classes: tuple[str, ...]) -> dict[str, Any]:
-    """Metryki jednego foldu i jego diagnostyka (liczności, udział największej sesji)."""
+                 classes: tuple[str, ...],
+                 session_sizes: pd.Series | None = None) -> dict[str, Any]:
+    """Metryki jednego foldu i jego diagnostyka (liczności, udział największej sesji).
+
+    session_sizes: rozmiary sesji w całej populacji testowej (wagi F1 ważonej sesjami).
+    Bez nich liczone w foldzie, co przy podziale losowym daje rozmiar fragmentu sesji.
+    """
     labels = list(classes)
+    in_fold = groups.value_counts()
+    sizes = groups.map(session_sizes if session_sizes is not None else in_fold).to_numpy()
     y_true, groups = y_true.to_numpy(), groups.to_numpy()
-    sizes = pd.Series(groups).map(pd.Series(groups).value_counts()).to_numpy()
     per_class = f1_score(y_true, y_pred, labels=labels, average=None, zero_division=0)
     out: dict[str, Any] = {
         "f1_macro": f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0),
@@ -151,7 +162,7 @@ def fold_metrics(y_true: pd.Series, y_pred: np.ndarray, groups: pd.Series,
         # każda sesja waży tyle samo: czy wynik nie ciągnie jedna długa rozmowa
         "f1_macro_session_weighted": f1_score(y_true, y_pred, labels=labels, average="macro",
                                               sample_weight=1.0 / sizes, zero_division=0),
-        "largest_test_session_share": sizes.max() / len(y_true),
+        "largest_test_session_share": in_fold.max() / len(y_true),
     }
     for cls, f1 in zip(labels, per_class):
         mask = y_true == cls

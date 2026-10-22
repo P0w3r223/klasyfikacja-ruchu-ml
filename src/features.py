@@ -15,6 +15,11 @@ def feature_list() -> list[str]:
     return json.loads(FEATURES_JSON.read_text(encoding="utf-8"))["features"]
 
 
+def built_session_gap_min() -> float:
+    """Próg sesji (min), z którym preprocess.py zbudował kolumnę session."""
+    return float(json.loads(FEATURES_JSON.read_text(encoding="utf-8"))["session_gap_min"])
+
+
 def load_flows(include_audio: bool = False, path: Path | None = None) -> pd.DataFrame:
     df = pd.read_parquet(path or PROCESSED / "flows.parquet")
     if not include_audio:

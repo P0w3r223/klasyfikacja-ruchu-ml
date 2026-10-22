@@ -152,3 +152,14 @@ def test_fold_metrics_on_a_hand_computed_example():
     assert (m["n_test_flows_VoIP"], m["n_test_sessions_VoIP"]) == (3, 2)
     assert (m["n_test_flows_Video"], m["n_test_sessions_Video"]) == (1, 1)
     assert m["confusion"] == [[2, 1], [0, 1]]
+
+
+def test_session_weights_use_sizes_from_the_whole_test_population():
+    y_true = pd.Series(["VoIP", "VoIP", "VoIP", "Video"])
+    y_pred = np.array(["VoIP", "VoIP", "Video", "Video"])
+    groups = pd.Series([1, 1, 2, 3])
+    # przy podziale losowym sesja 1 ma poza foldem jeszcze 2 przepływy
+    m = fold_metrics(y_true, y_pred, groups, CLASSES, pd.Series({1: 4, 2: 1, 3: 1}))
+    # VoIP: tp=0,5, fn=1 -> 0,5; Video: tp=1, fp=1 -> 2/3
+    assert m["f1_macro_session_weighted"] == pytest.approx((0.5 + 2 / 3) / 2)
+    assert m["largest_test_session_share"] == pytest.approx(0.5)

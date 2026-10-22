@@ -20,14 +20,12 @@ from sklearn.metrics import f1_score
 
 from evaluate import FoldOutcome, Prepared, SplitSpec, fold_metrics, run_cv
 from experiments import FEATURE_SETS, TASKS, Experiment, Filter, Task, get_experiment
-from features import PROCESSED, feature_list, load_flows
+from features import PROCESSED, built_session_gap_min, feature_list, load_flows
 from models import get_model
 from preprocess import assign_sessions
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "reports" / "results"
-# próg, z którym preprocess.py zbudował kolumnę session w flows.parquet
-BUILT_GAP_MIN = 5.0
 SUMMARY_METRICS = ["f1_macro", "f1_macro_session_weighted", "accuracy"]
 
 
@@ -53,7 +51,7 @@ def resolve_features(name: str) -> list[str]:
 
 def prepare(flows: pd.DataFrame, task: Task, features: list[str], gap_min: float) -> Prepared:
     """Wybiera populację zadania; przy innym progu sesji przelicza je w pamięci."""
-    if gap_min != BUILT_GAP_MIN:
+    if gap_min != built_session_gap_min():
         flows = flows.assign(session=assign_sessions(flows, gap_min))
     in_classes = flows["service"].isin(task.classes)
     train = in_classes & _matches(flows, task.train)
@@ -81,6 +79,7 @@ def _fold_row(exp: Experiment, model: str, split: str, out: FoldOutcome,
 def run_experiment(exp: Experiment, flows: pd.DataFrame, n_jobs: int = -1) -> ExperimentResult:
     data = prepare(flows, TASKS[exp.task], resolve_features(exp.feature_set),
                    exp.session_gap_min)
+    session_sizes = data.groups[data.test_mask].value_counts()
     rows, preds, confusion = [], [], {}
     for model in exp.models:
         for split in exp.splits:
@@ -88,7 +87,8 @@ def run_experiment(exp: Experiment, flows: pd.DataFrame, n_jobs: int = -1) -> Ex
             per_fold = []
             for out in run_cv(data, get_model(model), spec, n_jobs):
                 metrics = fold_metrics(data.y.iloc[out.test_idx], out.y_pred,
-                                       data.groups.iloc[out.test_idx], data.classes)
+                                       data.groups.iloc[out.test_idx], data.classes,
+                                       session_sizes)
                 per_fold.append(metrics.pop("confusion"))
                 rows.append(_fold_row(exp, model, split, out, metrics))
                 preds.append(pd.DataFrame({
@@ -132,7 +132,7 @@ def run_info(exp: Experiment, data_path: Path, flows: pd.DataFrame) -> dict[str,
         "features": resolve_features(exp.feature_set),
         "data": {"path": data_path.name,
                  "sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
-                 "n_flows": len(flows)},
+                 "n_flows": len(flows), "built_session_gap_min": built_session_gap_min()},
         "versions": {"python": platform.python_version(), "sklearn": sklearn.__version__,
                      "pandas": pd.__version__, "numpy": np.__version__},
         **_git_state(),
