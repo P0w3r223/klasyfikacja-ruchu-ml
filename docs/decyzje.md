@@ -145,6 +145,21 @@ Projekt: @architect. Decyzje: autor.
   - `src/train.py`: dane, zapis wyników, CLI.
   - Foldy definiujemy na populacji testowej, a trening to populacja treningowa minus sesje foldu testowego. To obsługuje też E3 plain→VPN na tych samych foldach VPN.
 
+**Pilotaż** (`python src/train.py --experiment pilot_03a`, wyniki w `reports/results/pilot_03a/`, commit `35c75d0`). Zadanie VoIP vs Video, kampania VPN-nonVPN, ruch zwykły i VPN razem, 5 foldów.
+
+| Model | Podział losowy | Podział po sesjach | Zakres po sesjach (min–max) |
+| --- | --- | --- | --- |
+| Dummy | 0,515 | 0,519 | 0,50–0,53 |
+| k-NN | 0,994 | 0,969 | 0,95–1,00 |
+| Drzewo | 0,994 | 0,979 | 0,97–0,99 |
+| RF | 0,992 | 0,989 | 0,985–0,996 |
+
+Wartości to F1 makro, średnia z foldów.
+
+- **Rozrzut między foldami jest mały:** odchylenie standardowe nie przekracza 0,023, także w foldzie z największą sesją VoIP. **Decyzja autora: zostajemy przy `n_repeats=1`.**
+- **Pomocnicza F1 ważona sesjami:** dla drzewa spada do 0,91, więc pomyłki trafiają głównie w małe sesje.
+- **Wysoki wynik to jeszcze nie wniosek:** w zadaniu jest ruch zwykły i VPN, a VoIP to głównie UDP. Wkład `Protocol` i cech TCP sprawdza E4.
+
 ## Do sprawdzenia w eksperymentach
 
 - `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.
