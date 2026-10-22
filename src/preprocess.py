@@ -4,7 +4,7 @@ Kroki: ujednolicenie etykiet -> wybór podzbioru -> odfiltrowanie ruchu tła
 -> czyszczenie (inf/NaN, duplikaty) -> definicja sesji -> zapis parquet.
 Każdy krok wypisuje liczby przepływów; raport trafia też do reports/preprocess_report.md.
 
-Użycie: python src/preprocess.py [--gap-min 5]
+Użycie: python src/preprocess.py [--gap-min 5] [--raw PLIK] [--out-dir KATALOG] [--reports-dir KATALOG]
 """
 import argparse
 import ipaddress
@@ -17,7 +17,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw" / "Darknet.CSV"
 OUT_DIR = ROOT / "data" / "processed"
-REPORT = ROOT / "reports" / "preprocess_report.md"
+REPORTS_DIR = ROOT / "reports"
 
 SERVICE_MAP = {
     "browsing": "WWW",
@@ -46,12 +46,14 @@ def is_multicast_or_broadcast(ip: str) -> bool:
         addr = ipaddress.ip_address(ip)
     except ValueError:
         return True
+    # Końcówka .255 to przybliżenie broadcastu podsieci (maska nieznana). Odcina też 3 przepływy
+    # TCP Video do zwykłych hostów; zostawione świadomie, patrz decyzje.md (etap 02).
     return addr.is_multicast or ip == "255.255.255.255" or ip.endswith(".255")
 
 
-def load_raw() -> pd.DataFrame:
+def load_raw(path: Path) -> pd.DataFrame:
     # Wiersz 328 jest uszkodzony (ok. 8 MB bajtów zerowych) - pomijamy go.
-    df = pd.read_csv(RAW, low_memory=False, on_bad_lines="skip")
+    df = pd.read_csv(path, low_memory=False, on_bad_lines="skip")
     df = df.rename(columns={"Label": "traffic_type", "Label.1": "service_raw"})
     df["service"] = df["service_raw"].str.lower().map(SERVICE_MAP)
     return df
@@ -80,10 +82,42 @@ def assign_sessions(df: pd.DataFrame, gap_min: float) -> pd.Series:
     return new.cumsum().reindex(df.index).astype(int)
 
 
-def main() -> None:
+def feature_columns(df: pd.DataFrame) -> list[str]:
+    return [c for c in df.columns if c not in ID_COLS + ["traffic_type", "service_raw", "service"]]
+
+
+def drop_invalid_and_duplicates(
+    df: pd.DataFrame, feat_cols: list[str]
+) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Usuwa wiersze z inf/NaN i duplikaty (te same cechy i etykiety).
+
+    Zwraca oczyszczoną ramkę i liczności: invalid, duplicates, conflicts
+    (przepływy o identycznych cechach, ale różnych etykietach - zostają).
+    """
+    num = df[feat_cols].apply(pd.to_numeric, errors="coerce")
+    bad = ~np.isfinite(num).all(axis=1)
+    valid = df[~bad]
+    dup = valid.duplicated(subset=feat_cols + ["traffic_type", "service"])
+    clean = valid[~dup].copy()
+    conflict = clean.duplicated(subset=feat_cols, keep=False)
+    stats = {"invalid": int(bad.sum()), "duplicates": int(dup.sum()),
+             "conflicts": int(conflict.sum())}
+    return clean, stats
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--gap-min", type=float, default=5.0)
-    args = p.parse_args()
+    p.add_argument("--raw", type=Path, default=RAW, help="surowy Darknet.CSV")
+    p.add_argument("--out-dir", type=Path, default=OUT_DIR,
+                   help="katalog na flows.parquet i features.json")
+    p.add_argument("--reports-dir", type=Path, default=REPORTS_DIR,
+                   help="katalog na preprocess_report.md i kopię features.json")
+    return p.parse_args(argv)
+
+
+def main() -> None:
+    args = parse_args()
 
     log: list[str] = []
 
@@ -92,7 +126,7 @@ def main() -> None:
         log.append(f"### {name}: {len(d):,} przepływów\n\n{tab.to_markdown()}\n")
         print(f"\n== {name}: {len(d):,}\n{tab}")
 
-    df = load_raw()
+    df = load_raw(args.raw)
     log.append(f"Surowy plik: {len(df):,} przepływów (po pominięciu uszkodzonego wiersza 328)\n")
 
     df = df[df["traffic_type"].isin(TRAFFIC_TYPES) & df["service"].notna()].copy()
@@ -106,18 +140,11 @@ def main() -> None:
     df = df[reason == ""].copy()
     step("2. Po odfiltrowaniu ruchu tła", df)
 
-    feat_cols = [c for c in df.columns
-                 if c not in ID_COLS + ["traffic_type", "service_raw", "service"]]
-    num = df[feat_cols].apply(pd.to_numeric, errors="coerce")
-    bad = ~np.isfinite(num).all(axis=1)
-    df = df[~bad].copy()
-    log.append(f"Usunięte wiersze z inf/NaN: {bad.sum():,}\n")
-
-    dup = df.duplicated(subset=feat_cols + ["traffic_type", "service"])
-    df = df[~dup].copy()
-    log.append(f"Usunięte duplikaty (te same cechy i etykiety): {dup.sum():,}\n")
-    conflict = df.duplicated(subset=feat_cols, keep=False)
-    log.append(f"Przepływy o identycznych cechach, ale różnych etykietach: {conflict.sum():,}"
+    feat_cols = feature_columns(df)
+    df, stats = drop_invalid_and_duplicates(df, feat_cols)
+    log.append(f"Usunięte wiersze z inf/NaN: {stats['invalid']:,}\n")
+    log.append(f"Usunięte duplikaty (te same cechy i etykiety): {stats['duplicates']:,}\n")
+    log.append(f"Przepływy o identycznych cechach, ale różnych etykietach: {stats['conflicts']:,}"
                " (zostają; ograniczają osiągalną dokładność)\n")
     step("3. Po czyszczeniu", df)
 
@@ -140,21 +167,23 @@ def main() -> None:
     log.append(f"### Sesje (przerwa > {args.gap_min:g} min = nowa sesja)\n\n{s.to_markdown()}\n")
     print(f"\n== Sesje (gap {args.gap_min:g} min)\n{s}")
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
     meta = ["traffic_type", "service", "campaign", "tunnel", "session", "ts",
             "Src IP", "Dst IP", "Src Port", "Dst Port"]
     out = df[meta + features].reset_index(drop=True)
     out[features] = out[features].astype("float64")
-    out.to_parquet(OUT_DIR / "flows.parquet", index=False)
-    (OUT_DIR / "features.json").write_text(json.dumps(
+    features_json = json.dumps(
         {"features": features, "dropped_constant": const, "session_gap_min": args.gap_min},
-        indent=2, ensure_ascii=False), encoding="utf-8")
-    # Kopia listy cech w repozytorium - mała, potrzebna aplikacji i do odtwarzalności.
-    (ROOT / "reports" / "features.json").write_text(
-        (OUT_DIR / "features.json").read_text(encoding="utf-8"), encoding="utf-8")
+        indent=2, ensure_ascii=False)
 
-    REPORT.write_text("# Raport z przygotowania danych\n\n" + "\n".join(log), encoding="utf-8")
-    print(f"\nZapisano {len(out):,} przepływów -> {OUT_DIR / 'flows.parquet'}")
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    args.reports_dir.mkdir(parents=True, exist_ok=True)
+    out.to_parquet(args.out_dir / "flows.parquet", index=False)
+    (args.out_dir / "features.json").write_text(features_json, encoding="utf-8")
+    # Kopia listy cech w repozytorium - mała, potrzebna aplikacji i do odtwarzalności.
+    (args.reports_dir / "features.json").write_text(features_json, encoding="utf-8")
+    (args.reports_dir / "preprocess_report.md").write_text(
+        "# Raport z przygotowania danych\n\n" + "\n".join(log), encoding="utf-8")
+    print(f"\nZapisano {len(out):,} przepływów -> {args.out_dir / 'flows.parquet'}")
 
 
 if __name__ == "__main__":

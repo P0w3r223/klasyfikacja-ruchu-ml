@@ -4,6 +4,7 @@ Updated: 2026-10-22 · Branch: main · Last gate: brak (etapy 00–01 tylko doku
 
 ## Stage
 M2 (dane, EDA, definicja sesji) praktycznie gotowy, M1 oddany. Etapy 00 i 01 zamknięte, następny: etap 02 (weryfikacja danych i testy przygotowania).
+Etap 02 od: 878ff21
 
 ## Done (with evidence)
 - Inicjalizacja repo i Releases - 44e96a6
