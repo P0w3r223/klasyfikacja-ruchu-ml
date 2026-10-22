@@ -99,6 +99,19 @@ Różnica wyników (3 klasy vs zadania wewnątrz kampanii) mierzy wkład efektu 
   Etap 07 pomijamy, a w raporcie E6 trafia do ograniczeń i dalszych prac. Powrót tylko wtedy, gdy formularz CIC zadziała przed 15.12.2026, a etapy do 05 będą w terminie.
 - CESNET-QUIC22 zostaje perspektywą dla pracy inżynierskiej.
 
+## 2026-10-22: Literatura (etap 01, `docs/research/literatura.md`)
+
+- **Lista literatury przyjęta.** 16 prac, każda z oceną wiarygodności. Pytania P1–P3 mają po co najmniej 2 prace z liczbami sprawdzonymi w tekście źródła. Liczby oznaczone [N] nie trafiają do raportu bez weryfikacji.
+- **Poprawki do §11 planu** (planu nie edytujemy, obowiązuje literatura.md):
+  - poz. 3 (Rust-Nguyen, Stamp) nie jest opisem zbioru. Cytujemy ją jako antyprzykład: ~0,92 F1 przy IP w cechach i podziale losowym;
+  - poz. 4 cytujemy w wersji IEEE S&P 2025, poz. 5 w wersji SIGCOMM 2025.
+- **Poz. 6 (EJCSIT) usunięta z raportu** (decyzja autora). Wydawca jest na liście Bealla, a praca nie bada podziału po sesjach. Argument za podziałem grupowym opieramy na: Sweet Danger (SIGCOMM 2025), Jerabek i in. 2025, SoK (Guideline 5) i Arp i in. (USENIX Sec 2022).
+- **Do dyskusji P3:** literatura podaje sprzeczne kierunki wpływu VPN (Draper-Gil: gorzej, FlowPic: lepiej). Razooqi i Pekár (CNSM 2026) wyjaśniają to osobnymi sesjami VPN i non-VPN w ISCX. To samo ograniczenie dotyczy naszego E3.
+- **Luki = oryginalność projektu:**
+  - brak pracy z podziałem po sesjach na CIC-Darknet2020;
+  - brak porównania grupy cech czasowych z rozmiarową na cechach CICFlowMeter dla usług.
+- **Do etapu 02:** sprawdzić duplikaty przepływów w `flows.parquet` (Jerabek i in.: w ponad połowie zbiorów ponad 50% próbek jest zbędnych).
+
 ## Do sprawdzenia w eksperymentach
 
 - `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.

@@ -4,6 +4,7 @@ Updated: 2026-10-22 · Branch: main · Last gate: brak
 
 ## Stage
 M2 (dane, EDA, definicja sesji) praktycznie gotowy, M1 oddany. Etap 00 zamknięty, następny: etap 01 (literatura, termin 2.11).
+Etap 01 od: ba5481d
 
 ## Done (with evidence)
 - Inicjalizacja repo i Releases - 44e96a6
