@@ -3,8 +3,7 @@
 Updated: 2026-10-22 · Branch: main · Last gate: brak
 
 ## Stage
-M2 (dane, EDA, definicja sesji) praktycznie gotowy, M1 oddany - start pracy etapami z docs/prompty/.
-Etap 00 od: 5543435
+M2 (dane, EDA, definicja sesji) praktycznie gotowy, M1 oddany. Etap 00 zamknięty, następny: etap 01 (literatura, termin 2.11).
 
 ## Done (with evidence)
 - Inicjalizacja repo i Releases - 44e96a6
@@ -13,14 +12,14 @@ Etap 00 od: 5543435
 - EDA, grupy cech, potwierdzony efekt kampanii - 453e516, 99ffabc
 - Kontekst w repo: CLAUDE.md, plan, wstęp M1 - 9c6278c
 - M1 oddany, decyzje prowadzącego - deklaracja autora 2026-10-21 (docs/decyzje.md)
-
-- Prompty etapów 00–13 w docs/prompty/ po dwóch recenzjach critic (6/10 → 7/10, poprawki wprowadzone) - commit z 2026-10-22
+- Prompty etapów 00–13 w docs/prompty/ - 5543435
+- Etap 00: ocena źródeł w docs/research/zrodla.md, decyzje autora w docs/decyzje.md (E6 no-go z warunkiem powrotu; pythonowy cicflowmeter do E7) - 7029514
 
 ## In progress (uncommitted)
 - brak
 
 ## Next step
-Etap 00: weryfikacja źródeł, zamienniki i go/no-go dla E6 · Scope: docs/research/zrodla.md · Done when: autor zdecydował o propozycjach z tabeli i o E6
+Etap 01: przegląd literatury · Scope: docs/research/literatura.md · Done when: P1–P3 mają po ≥ 2 prace z liczbami sprawdzonymi w tekście źródła
 
 ## Open decisions
 - brak
@@ -29,8 +28,9 @@ Etap 00: weryfikacja źródeł, zamienniki i go/no-go dla E6 · Scope: docs/rese
 - brak
 
 ## To verify
-- SHA-256 Darknet.CSV vs plik z formularza UNB (autor; etap 00)
+- SHA-256 Darknet.CSV vs plik z formularza UNB (autor; formularz CIC 22.10.2026 zwracał „Server error”)
 - Odtwarzalność flows.parquet od zera (etap 02)
+- Warunek powrotu E6: formularz CIC działa przed 15.12.2026 i etapy do 05 w terminie (docs/decyzje.md)
 
 ## Plan
 Full plan: docs/plan_projektu.md · Etapy: docs/prompty/README.md · Decyzje: docs/decyzje.md
