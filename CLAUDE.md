@@ -83,5 +83,6 @@ Audio: 5 926.
 - Na Windows przy polskich znakach w konsoli: `PYTHONIOENCODING=utf-8`.
 - Testy: `.venv/Scripts/python -m pytest -q` (`pytest.ini` dodaje `src` do ścieżki). Odtworzenie danych bez nadpisywania repo: `src/preprocess.py --raw … --out-dir … --reports-dir …`.
 - Pandas 3: `groupby(...).apply` gubi kolumnę grupującą. Do próbkowania per grupa używaj `pd.concat([... for _, g in df.groupby(...)])`. `Series.to_numpy()` zwraca tablicę tylko do odczytu, więc przed modyfikacją `to_numpy(copy=True)`.
+- `StratifiedGroupKFold` wyrównuje udział przepływów, nie sesji: gdy jedna sesja ma więcej niż 1/n_outer przepływów klasy, jej fold dostaje tylko ją i `evaluate.py` przerywa przebieg. Przed nowym zadaniem sprawdź udział największej sesji (VoIP: 30% w ruchu zwykłym); obejście to mniej foldów w `experiments.py` (decyzja autora, jak w 03b).
 - Commity po polsku.
 - Dokumenty w `docs/` (także `docs/research/`) i `reports/` piszemy po polsku; to wyjątek od globalnej reguły knowledge-docs, bo raport i prezentacja są po polsku.
