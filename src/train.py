@@ -130,8 +130,10 @@ def _git_state() -> dict[str, Any]:
     try:
         sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True,
                              text=True, check=True).stdout.strip()
-        dirty = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True,
-                               text=True, check=True).stdout.strip() != ""
+        # bez reports/results: wyniki poprzedniego eksperymentu nie zmieniają kodu ani danych
+        dirty = subprocess.run(["git", "status", "--porcelain", "--", ".", ":!reports/results"],
+                               cwd=ROOT, capture_output=True, text=True,
+                               check=True).stdout.strip() != ""
     except (OSError, subprocess.CalledProcessError) as exc:
         return {"commit": None, "dirty": None, "git_error": str(exc)}
     return {"commit": sha, "dirty": dirty}
