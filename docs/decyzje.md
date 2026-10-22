@@ -6,7 +6,7 @@
 - **Skąd:** kopia na Kaggle `peterfriedrich1/cicdarknet2020-internet-traffic` (wgrana 2020-09-25). Oficjalne źródło (UNB, http://cicresearch.ca/CICDataset/CICDarknet2020/) wymaga formularza rejestracyjnego. Rozmiar zgadza się z plikiem z serwera UNB (73,33 MB).
 - **Licencja:** UNB pozwala na redystrybucję w dowolnej formie pod warunkiem cytowania: Lashkari, Kaur, Rahali, *DIDarknet…*, ICCNS 2020.
 - **Kopia w projekcie:** GitHub Release `data-raw-v1`.
-- **TODO:** porównać SHA-256 z plikiem pobranym z UNB (formularz wypełnia autor).
+- **TODO:** porównać SHA-256 z plikiem pobranym z UNB (formularz wypełnia autor; 22.10.2026 formularz zwracał błąd serwera).
 
 ## 2026-10-13: Wstępny przegląd (`src/inspect_raw.py`)
 
@@ -82,6 +82,22 @@ Różnica wyników (3 klasy vs zadania wewnątrz kampanii) mierzy wkład efektu 
 - E3 w wersji dwuklasowej (VoIP vs Video, ruch zwykły kontra VPN) zaakceptowany.
 - Zakres eksperymentów (decyzja autora): E1–E5 obowiązkowe, E7 w planie (przerwa świąteczna), E6 opcjonalny. E6 zaczynamy od oceny wykonalności; jeśli nie jest łatwo wykonalny, pomijamy go i opisujemy w raporcie.
 - Prezentacja (decyzja autora): slajdy (ok. 7 min) + pokaz aplikacji Streamlit na przygotowanych plikach CSV (ok. 3 min), z nagraniem zapasowym.
+
+## 2026-10-22: Weryfikacja źródeł i E6 (etap 00, `docs/research/zrodla.md`)
+
+- **CIC-Darknet2020 z Kaggle zostaje.** Licencja UNB nadal pozwala na kopie, a rozmiar kopii zgadza się co do bajta. Formularz CIC (UNB) zwracał 22.10 „Server error”, więc SHA-256 z plikiem UNB nadal nieporównane. Serwer UNB jest zapasem.
+- **Lepszego zbioru nie ma.** Nie znaleziono publicznego zbioru z WWW + VoIP + wideo z jednej kampanii, z PCAP-ami lub cechami CICFlowMeter i jasną licencją.
+  - USBVPN2022 sprawdzony po pobraniu. Nie usuwa problemu: VoIP bez VPN to 72 przepływy z jednego dnia, z ruchem tuneli i routera w plikach „Non VPN”; przez VPN cały tunel to 1–2 przepływy; brak adresów IP.
+  - USBVPN2022 i VNAT (bez licencji, bez WWW) to zapas.
+- **E7: narzędzie do cech.** Pythonowy `cicflowmeter` (MIT, v0.5.0) zamiast nieutrzymywanego CICFlowMeter w Javie (Java jako zapas). W etapie 06 najpierw test zgodności cech z Darknet.CSV.
+- **CICFlowMeter ma znane błędy** (Engelen i in. 2021): `Active`/`Idle`, kończenie przepływu TCP po pierwszym FIN, PSH/URG. Dotyczą też Darknet.CSV, więc warto o nich wspomnieć w E4, bo `Idle *` jest wśród podejrzanych skrótów.
+- **E6: no-go z warunkiem powrotu** (decyzja autora). Powody:
+  - PCAP-y ISCX dostępne tylko przez niedziałający formularz;
+  - WWW w kampanii VPN-nonVPN nie ma osobnych plików;
+  - zamiennik ma za mało danych.
+  
+  Etap 07 pomijamy, a w raporcie E6 trafia do ograniczeń i dalszych prac. Powrót tylko wtedy, gdy formularz CIC zadziała przed 15.12.2026, a etapy do 05 będą w terminie.
+- CESNET-QUIC22 zostaje perspektywą dla pracy inżynierskiej.
 
 ## Do sprawdzenia w eksperymentach
 

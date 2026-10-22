@@ -30,7 +30,7 @@ Terminy, maszyny i liczba sesji są tylko w tej tabeli; przy przesunięciu termi
 | [04](04_e3_e4.md) | E3 (VPN) i E4 (ważność cech) | 18.12.2026 | PC | 2 | 03b | `/gate` |
 | [05](05_e5_modele_finalne.md) | E5 i finalne modele (zamyka M4) | 21.12.2026 | PC, potem laptop | 2 | 04 | wczytanie na laptopie, `/gate` |
 | [06](06_e7_wlasne_przechwycenia.md) | E7: własne przechwycenia | przerwa świąteczna | laptop + PC | 2 | 00, 05 | zgodność rozkładów cech, `/gate` |
-| [07](07_e6_wczesna_klasyfikacja.md) | E6: wczesna klasyfikacja (tylko przy „go” z 00) | 6.01.2027 | PC | 1–2 | 00, 03a | `/gate` |
+| [07](07_e6_wczesna_klasyfikacja.md) | E6: wczesna klasyfikacja (tylko przy „go” z 00; **22.10: no-go z warunkiem powrotu**, docs/decyzje.md) | 6.01.2027 | PC | 1–2 | 00, 03a | `/gate` |
 | [08](08_wyniki.md) | Zestawienie wyników | 10.01.2027 | PC | 1 | 03b–07 | rysunki odtwarzalne skryptem, `/gate` |
 | [09](09_streamlit.md) | Aplikacja Streamlit (M5) | 17.01.2027 | PC + laptop | 1–2 | 05 | uruchomienie na laptopie, `/gate` |
 | [10](10_dokumentacja.md) | Dokumentacja | 20.01.2027 | PC | 1 | 09 | subagent wykonuje README dosłownie |

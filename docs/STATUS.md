@@ -4,6 +4,7 @@ Updated: 2026-10-22 · Branch: main · Last gate: brak
 
 ## Stage
 M2 (dane, EDA, definicja sesji) praktycznie gotowy, M1 oddany - start pracy etapami z docs/prompty/.
+Etap 00 od: 5543435
 
 ## Done (with evidence)
 - Inicjalizacja repo i Releases - 44e96a6
