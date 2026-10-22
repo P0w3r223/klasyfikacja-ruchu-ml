@@ -9,6 +9,7 @@ Użycie: python src/preprocess.py [--gap-min 5] [--raw PLIK] [--out-dir KATALOG]
 import argparse
 import ipaddress
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -31,6 +32,8 @@ TUNNEL = {"Non-Tor": "plain", "NonVPN": "plain", "VPN": "vpn"}
 
 # Cechy-skróty: identyfikują sesję/host, a nie zachowanie ruchu. Służą tylko do definicji sesji.
 ID_COLS = ["Flow ID", "Src IP", "Src Port", "Dst IP", "Dst Port", "Timestamp"]
+META_COLS = ["traffic_type", "service", "campaign", "tunnel", "session", "ts",
+             "Src IP", "Dst IP", "Src Port", "Dst Port"]
 
 # Ruch tła systemu operacyjnego, który trafił do plików z etykietą usługi.
 BACKGROUND_PORTS = {
@@ -105,6 +108,96 @@ def drop_invalid_and_duplicates(
     return clean, stats
 
 
+def constant_features(df: pd.DataFrame, feat_cols: list[str]) -> list[str]:
+    """Cechy stałe w ruchu głównym; Audio (tylko E5) nie decyduje o liście cech."""
+    main_mask = df["service"] != "Audio"
+    return [c for c in feat_cols if df.loc[main_mask, c].nunique() <= 1]
+
+
+def add_session_columns(df: pd.DataFrame, gap_min: float) -> pd.DataFrame:
+    df = df.assign(ts=pd.to_datetime(df["Timestamp"], format="%d/%m/%Y %I:%M:%S %p"))
+    return df.assign(
+        session=assign_sessions(df, gap_min),
+        campaign=df["traffic_type"].map(CAMPAIGN),
+        tunnel=df["traffic_type"].map(TUNNEL),
+    )
+
+
+def session_summary(df: pd.DataFrame) -> pd.DataFrame:
+    s = df.groupby(["traffic_type", "service"]).agg(
+        flows=("session", "size"), sessions=("session", "nunique"))
+    largest = df.groupby(["traffic_type", "service", "session"]).size().groupby(level=[0, 1]).max()
+    return s.assign(largest_session_share=(largest / s["flows"]).round(2))
+
+
+def step_section(name: str, df: pd.DataFrame) -> str:
+    tab = pd.crosstab(df["service"], df["traffic_type"], margins=True)
+    return f"### {name}: {len(df):,} przepływów\n\n{tab.to_markdown()}\n"
+
+
+def filter_background(df: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+    """Zwraca ramkę bez ruchu tła i sekcję raportu z liczbą usuniętych przepływów."""
+    reason = background_reason(df)
+    removed = reason[reason != ""]
+    tab = pd.crosstab(removed, df.loc[removed.index, "service"])
+    return df[reason == ""].copy(), f"### Odfiltrowany ruch tła\n\n{tab.to_markdown()}\n"
+
+
+@dataclass(frozen=True)
+class PreprocessResult:
+    flows: pd.DataFrame
+    features_json: str
+    report: str
+
+
+def build(raw: pd.DataFrame, gap_min: float) -> PreprocessResult:
+    """Cały potok bez wejścia/wyjścia: ramka z load_raw -> przepływy, lista cech, raport."""
+    log = [f"Surowy plik: {len(raw):,} przepływów (po pominięciu uszkodzonego wiersza 328)\n"]
+
+    df = raw[raw["traffic_type"].isin(TRAFFIC_TYPES) & raw["service"].notna()].copy()
+    log.append(step_section("1. Podzbiór (bez Tor, 3 usługi + Audio do E5)", df))
+
+    df, background_section = filter_background(df)
+    log += [background_section, step_section("2. Po odfiltrowaniu ruchu tła", df)]
+
+    feat_cols = feature_columns(df)
+    df, stats = drop_invalid_and_duplicates(df, feat_cols)
+    log += [
+        f"Usunięte wiersze z inf/NaN: {stats['invalid']:,}\n",
+        f"Usunięte duplikaty (te same cechy i etykiety): {stats['duplicates']:,}\n",
+        f"Przepływy o identycznych cechach, ale różnych etykietach: {stats['conflicts']:,}"
+        " (zostają; ograniczają osiągalną dokładność)\n",
+        step_section("3. Po czyszczeniu", df),
+    ]
+
+    const = constant_features(df, feat_cols)
+    features = [c for c in feat_cols if c not in const]
+    log += [f"Cechy stałe usunięte ({len(const)}): {', '.join(const)}\n",
+            f"Cechy do modelowania: {len(features)}\n"]
+
+    df = add_session_columns(df, gap_min)
+    log.append(f"### Sesje (przerwa > {gap_min:g} min = nowa sesja)\n\n"
+               f"{session_summary(df).to_markdown()}\n")
+
+    out = df[META_COLS + features].reset_index(drop=True)
+    out = out.astype({c: "float64" for c in features})
+    features_json = json.dumps(
+        {"features": features, "dropped_constant": const, "session_gap_min": gap_min},
+        indent=2, ensure_ascii=False)
+    return PreprocessResult(out, features_json,
+                            "# Raport z przygotowania danych\n\n" + "\n".join(log))
+
+
+def write_outputs(result: PreprocessResult, out_dir: Path, reports_dir: Path) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    result.flows.to_parquet(out_dir / "flows.parquet", index=False)
+    (out_dir / "features.json").write_text(result.features_json, encoding="utf-8")
+    # Kopia listy cech w repozytorium - mała, potrzebna aplikacji i do odtwarzalności.
+    (reports_dir / "features.json").write_text(result.features_json, encoding="utf-8")
+    (reports_dir / "preprocess_report.md").write_text(result.report, encoding="utf-8")
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--gap-min", type=float, default=5.0)
@@ -116,74 +209,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
-def main() -> None:
-    args = parse_args()
-
-    log: list[str] = []
-
-    def step(name: str, d: pd.DataFrame) -> None:
-        tab = pd.crosstab(d["service"], d["traffic_type"], margins=True)
-        log.append(f"### {name}: {len(d):,} przepływów\n\n{tab.to_markdown()}\n")
-        print(f"\n== {name}: {len(d):,}\n{tab}")
-
-    df = load_raw(args.raw)
-    log.append(f"Surowy plik: {len(df):,} przepływów (po pominięciu uszkodzonego wiersza 328)\n")
-
-    df = df[df["traffic_type"].isin(TRAFFIC_TYPES) & df["service"].notna()].copy()
-    step("1. Podzbiór (bez Tor, 3 usługi + Audio do E5)", df)
-
-    reason = background_reason(df)
-    removed = reason[reason != ""]
-    tab = pd.crosstab(removed, df.loc[removed.index, "service"])
-    log.append(f"### Odfiltrowany ruch tła\n\n{tab.to_markdown()}\n")
-    print(f"\n== Ruch tła (usunięty)\n{tab}")
-    df = df[reason == ""].copy()
-    step("2. Po odfiltrowaniu ruchu tła", df)
-
-    feat_cols = feature_columns(df)
-    df, stats = drop_invalid_and_duplicates(df, feat_cols)
-    log.append(f"Usunięte wiersze z inf/NaN: {stats['invalid']:,}\n")
-    log.append(f"Usunięte duplikaty (te same cechy i etykiety): {stats['duplicates']:,}\n")
-    log.append(f"Przepływy o identycznych cechach, ale różnych etykietach: {stats['conflicts']:,}"
-               " (zostają; ograniczają osiągalną dokładność)\n")
-    step("3. Po czyszczeniu", df)
-
-    main_mask = df["service"] != "Audio"
-    const = [c for c in feat_cols if df.loc[main_mask, c].nunique() <= 1]
-    features = [c for c in feat_cols if c not in const]
-    log.append(f"Cechy stałe usunięte ({len(const)}): {', '.join(const)}\n")
-    log.append(f"Cechy do modelowania: {len(features)}\n")
-
-    df["ts"] = pd.to_datetime(df["Timestamp"], format="%d/%m/%Y %I:%M:%S %p")
-    df["session"] = assign_sessions(df, args.gap_min)
-    df["campaign"] = df["traffic_type"].map(CAMPAIGN)
-    df["tunnel"] = df["traffic_type"].map(TUNNEL)
-
-    s = df.groupby(["traffic_type", "service"]).agg(
-        flows=("session", "size"), sessions=("session", "nunique"))
-    s["largest_session_share"] = (
-        df.groupby(["traffic_type", "service", "session"]).size()
-        .groupby(level=[0, 1]).max() / s["flows"]).round(2)
-    log.append(f"### Sesje (przerwa > {args.gap_min:g} min = nowa sesja)\n\n{s.to_markdown()}\n")
-    print(f"\n== Sesje (gap {args.gap_min:g} min)\n{s}")
-
-    meta = ["traffic_type", "service", "campaign", "tunnel", "session", "ts",
-            "Src IP", "Dst IP", "Src Port", "Dst Port"]
-    out = df[meta + features].reset_index(drop=True)
-    out[features] = out[features].astype("float64")
-    features_json = json.dumps(
-        {"features": features, "dropped_constant": const, "session_gap_min": args.gap_min},
-        indent=2, ensure_ascii=False)
-
-    args.out_dir.mkdir(parents=True, exist_ok=True)
-    args.reports_dir.mkdir(parents=True, exist_ok=True)
-    out.to_parquet(args.out_dir / "flows.parquet", index=False)
-    (args.out_dir / "features.json").write_text(features_json, encoding="utf-8")
-    # Kopia listy cech w repozytorium - mała, potrzebna aplikacji i do odtwarzalności.
-    (args.reports_dir / "features.json").write_text(features_json, encoding="utf-8")
-    (args.reports_dir / "preprocess_report.md").write_text(
-        "# Raport z przygotowania danych\n\n" + "\n".join(log), encoding="utf-8")
-    print(f"\nZapisano {len(out):,} przepływów -> {args.out_dir / 'flows.parquet'}")
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
+    result = build(load_raw(args.raw), args.gap_min)
+    print(result.report)
+    write_outputs(result, args.out_dir, args.reports_dir)
+    print(f"\nZapisano {len(result.flows):,} przepływów -> {args.out_dir / 'flows.parquet'}")
 
 
 if __name__ == "__main__":

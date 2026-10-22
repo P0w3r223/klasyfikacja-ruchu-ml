@@ -14,6 +14,7 @@ M2 domknięty (dane zweryfikowane i pokryte testami), M1 oddany. Etapy 00–02 z
 - Etap 00: ocena źródeł w docs/research/zrodla.md (E6 no-go z warunkiem powrotu) - 7029514
 - Etap 01: literatura w docs/research/literatura.md (16 prac) - ed67593
 - Etap 02: flows.parquet odtworzony od zera identyczny bajt w bajt z data-processed-v1 (SHA-256 9cccd872…), v2 niepotrzebny; 43 testy w tests/test_preprocess.py; preprocess.py ma --raw/--out-dir/--reports-dir - a152c2a, 06d7aba, `.venv/Scripts/python -m pytest -q` → 43 passed
+- Dług z /gate etapu 02: `build()` bez I/O + `main(argv)` w preprocess.py, test integracyjny na syntetycznym CSV (tests/test_preprocess_cli.py); odtworzenie z Darknet.CSV nadal daje te same SHA-256 wszystkich 4 plików wynikowych - `pytest -q` → 51 passed
 - `.venv` odtworzony z requirements.txt (Python 3.13.2; sklearn 1.9.1, pandas 3.0.6), pytest==9.1.1 dopisany - a152c2a
 
 ## In progress (uncommitted)
@@ -34,7 +35,5 @@ Etap 03a: moduł treningu (docs/prompty/03a_modul_treningu.md) · Scope: src/tra
 - Liczby [N] w docs/research/literatura.md (m.in. DIDarknet, Marim i in. 2023) przed użyciem w raporcie
 - Znane: reguła `.255` usuwa 3 przepływy Video TCP błędnie; przy ewentualnym v2 stosować ją tylko do UDP (docs/decyzje.md, etap 02)
 - Konflikty etykiet: 1 grupa VoIP NonVPN↔VPN o identycznych cechach — uwzględnić przy interpretacji E3
-- Opcjonalnie z /gate: `main(argv)` + test integracyjny preprocess.py na syntetycznym CSV (dziś odtwarzalność sprawdzona ręcznie)
-
 ## Plan
 Full plan: docs/plan_projektu.md · Etapy: docs/prompty/README.md · Decyzje: docs/decyzje.md · Literatura: docs/research/literatura.md
