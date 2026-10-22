@@ -2,8 +2,10 @@
 
     python src/make_figures_03b.py
 
-Czyta tylko gotowe wyniki eksperymentów e1e2_*, e2_gap15_*, e2_ippair_*;
-nic nie trenuje. Zapisuje reports/results/03b_tabela.md, 03b_folds.csv
+Czyta gotowe wyniki eksperymentów e1e2_*, e2_gap15_*, e2_ippair_*; nic nie
+trenuje. Sekcja o efekcie kampanii potrzebuje lokalnych predictions.parquet
+(poza gitem) i flows.parquet, więc całość odtwarza się na maszynie, która
+liczyła eksperymenty. Zapisuje reports/results/03b_tabela.md, 03b_folds.csv
 i rysunki 08–11 w reports/figures/.
 """
 import json
@@ -20,6 +22,7 @@ from matplotlib.ticker import FuncFormatter  # noqa: E402
 
 from experiments import EXPERIMENTS, TASKS, Experiment  # noqa: E402
 from features import load_flows  # noqa: E402
+from train import task_frame  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "reports" / "results"
@@ -93,7 +96,11 @@ def summary_table(folds: pd.DataFrame) -> pd.DataFrame:
 
 
 def e1_minus_e2(table: pd.DataFrame) -> pd.DataFrame:
-    """Zawyżenie wyniku przez podział losowy: różnica średnich i jej błąd standardowy."""
+    """Zawyżenie wyniku przez podział losowy: różnica średnich i orientacyjny błąd std.
+
+    Błąd liczony jak dla niezależnych prób; foldy nie są niezależne (wspólny trening)
+    ani sparowane między E1 i E2, więc to tylko skala rozrzutu, nie test istotności.
+    """
     wide = table.pivot(index=["task", "model"], columns="variant",
                        values=["f1_mean", "f1_std", "n_folds"])
     gap = wide[("f1_mean", E1)] - wide[("f1_mean", E2)]
@@ -126,23 +133,15 @@ def campaign_markdown(recall: pd.DataFrame) -> str:
     return "\n".join(lines + [""])
 
 
-def task_population(flows: pd.DataFrame, task: str) -> pd.DataFrame:
-    """Przepływy zadania w kolejności wierszy prepare() (zadanie bez osobnego testu)."""
-    spec = TASKS[task]
-    if spec.test is not None:
-        raise ValueError(f"Zadanie {task} ma osobną populację testową")
-    mask = flows["service"].isin(spec.classes)
-    for col, values in spec.train.items():
-        mask &= flows[col].isin(values)
-    return flows[mask].reset_index(drop=True)
-
-
 def load_campaign_recall(results: Path, flows: pd.DataFrame) -> pd.DataFrame:
+    """Wymaga lokalnych predictions.parquet (poza gitem) i flows.parquet (Release)."""
     task = "uslugi3_plain"
     predictions = pd.read_parquet(results / f"e1e2_{task}" / "predictions.parquet")
-    population = task_population(flows, task)
-    if not (population["service"].to_numpy()[predictions["row"]]
-            == predictions["y_true"].to_numpy()).all():
+    population, _, _ = task_frame(flows, TASKS[task])
+    at_rows = population.iloc[predictions["row"]]
+    # zgodność usług i sesji wiersz po wierszu: przetasowanie w obrębie klasy też wyjdzie
+    if not ((at_rows["service"].to_numpy() == predictions["y_true"].to_numpy()).all()
+            and (at_rows["session"].to_numpy() == predictions["session"].to_numpy()).all()):
         raise ValueError("Wiersze predykcji nie pasują do populacji zadania; "
                          "flows.parquet zmienił się od przebiegu?")
     return video_recall_by_campaign(predictions, population)
@@ -233,7 +232,7 @@ def gap_figure(gaps: pd.DataFrame) -> plt.Figure:
                label=TASK_LABELS[task], error_kw={"ecolor": INK_MUTED, "lw": 1, "capsize": 3})
     ax.axhline(0, color=INK_MUTED, linewidth=1)
     ax.set_xticks(range(len(MODEL_ORDER)), [MODEL_LABELS[m] for m in MODEL_ORDER])
-    ax.set_ylabel("F1 makro: E1 − E2 (±1 błąd std.)", color=INK)
+    ax.set_ylabel("F1 makro: E1 − E2 (±1 błąd std., orientacyjnie)", color=INK)
     _style_axes(ax)
     ax.legend(frameon=False, fontsize=9)
     ax.set_title("Zawyżenie wyniku przez podział losowy", loc="left", fontsize=11, color=INK)

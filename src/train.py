@@ -60,21 +60,27 @@ def group_key(flows: pd.DataFrame, group_by: str, gap_min: float) -> pd.Series:
     return flows["session"]
 
 
-def prepare(flows: pd.DataFrame, task: Task, features: list[str], gap_min: float,
-            group_by: str = "session") -> Prepared:
-    """Wybiera populację zadania; kolumna session dostaje grupy podziału."""
-    flows = flows.assign(session=group_key(flows, group_by, gap_min))
+def task_frame(flows: pd.DataFrame, task: Task) -> tuple[pd.DataFrame, np.ndarray, np.ndarray]:
+    """Populacja zadania w kolejności wierszy Prepared (row w predykcjach) i maski trening/test."""
     in_classes = flows["service"].isin(task.classes)
     train = in_classes & _matches(flows, task.train)
     test = in_classes & _matches(flows, task.test or task.train)
-    df = flows[train | test].reset_index(drop=True)
+    keep = train | test
+    df = flows[keep].reset_index(drop=True)
     if df.empty:
         raise ValueError(f"Zadanie {task.name}: filtr nie wybrał żadnego przepływu")
+    return df, train[keep].to_numpy(), test[keep].to_numpy()
+
+
+def prepare(flows: pd.DataFrame, task: Task, features: list[str], gap_min: float,
+            group_by: str = "session") -> Prepared:
+    """Wybiera populację zadania; kolumna session dostaje grupy podziału."""
+    df, train_mask, test_mask = task_frame(
+        flows.assign(session=group_key(flows, group_by, gap_min)), task)
     return Prepared(
         X=df[features], y=df["service"], groups=df["session"],
         strata=df[list(task.stratify_by)].astype(str).agg("|".join, axis=1),
-        train_mask=train[train | test].to_numpy(), test_mask=test[train | test].to_numpy(),
-        classes=task.classes,
+        train_mask=train_mask, test_mask=test_mask, classes=task.classes,
     )
 
 
@@ -136,7 +142,7 @@ def _git_state() -> dict[str, Any]:
                                check=True).stdout.strip() != ""
     except (OSError, subprocess.CalledProcessError) as exc:
         return {"commit": None, "dirty": None, "git_error": str(exc)}
-    return {"commit": sha, "dirty": dirty}
+    return {"commit": sha, "dirty": dirty, "dirty_excludes": "reports/results"}
 
 
 def run_info(exp: Experiment, data_path: Path, flows: pd.DataFrame) -> dict[str, Any]:
