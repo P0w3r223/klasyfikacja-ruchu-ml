@@ -120,6 +120,31 @@ Różnica wyników (3 klasy vs zadania wewnątrz kampanii) mierzy wkład efektu 
 - **Duplikaty (wniosek z literatury).** W `flows.parquet` nie ma duplikatów o tych samych 62 cechach i tej samej etykiecie. Czyszczenie usunęło wcześniej 3043 przepływy (8,6%), w tym 2894 WWW (12,6% tej klasy), więc problem jest dużo mniejszy niż „ponad 50% zbędnych próbek” u Jerabka i in. Konflikty etykiet (identyczne cechy, różne etykiety) to 255 przepływów w 122 grupach. W zadaniach głównych (bez Audio) zostaje 163 przepływy: prawie wyłącznie WWW↔Video w Tor-nonTor oraz 1 grupa VoIP NonVPN↔VPN (istotna dla E3).
 - **Środowisko:** `.venv` na stacjonarnym był skopiowany z innej maszyny (`C:\Users\Ja\...`). Odtworzony z `requirements.txt`; do pliku dopisany `pytest==9.1.1`.
 
+## 2026-10-22: Schemat oceny modeli (etap 03a)
+
+Projekt: @architect. Decyzje: autor.
+
+- **Zagnieżdżona walidacja krzyżowa po sesjach.**
+  - Zewnętrzna: `StratifiedGroupKFold(5)`. Każda sesja jest w teście dokładnie raz, więc ocenione są wszystkie sesje VoIP: 49 w ruchu zwykłym, 25 w VPN, 74 razem.
+  - Wewnętrzna: `StratifiedGroupKFold(3)` w `GridSearchCV`, refit na F1 makro. Hiperparametry dobierane są wyłącznie na części treningowej foldu zewnętrznego.
+  - Powód: VoIP ma mało sesji, a są one bardzo nierówne (w ruchu zwykłym największa sesja to 30% przepływów, 3 największe to 50%; w VPN 3 największe to 44%). Jeden hold-out 70/30 dałby jedną liczbę bez rozrzutu, a w VoIP VPN ocenę na ok. 7 sesjach.
+- **Odstępstwa od planu (§5.1, §5.3):**
+  - CV wewnętrzna ma 3 foldy zamiast 5, bo przy 5 foldach VoIP VPN miałby po 4 sesje na fold;
+  - E1 (podział losowy) to `StratifiedKFold` 5×3 w tej samej strukturze zamiast hold-outu 70/30, więc różnica E1−E2 wynika tylko z rodzaju podziału.
+- **Wyniki** w `reports/results/<eksperyment>/`:
+  - F1 makro per fold (średnia, odchylenie, min, max) oraz F1 z predykcji spoza foldu (OOF) i zbiorcza macierz pomyłek;
+  - diagnostyka każdego foldu: liczba sesji i przepływów każdej klasy w teście, udział największej sesji testowej;
+  - pomocniczo F1 makro ważona sesjami (każda sesja waży tyle samo).
+- **Ochrona przed cichym błędem:** fold testowy z mniej niż 2 sesjami którejś klasy przerywa przebieg błędem.
+- **Powtórzenia:** `n_repeats=1`. Powtórzoną CV (R=3) dla zadań z VoIP włączamy po pilotażu, jeśli rozrzut między foldami okaże się duży.
+- **Model bazowy:** `DummyClassifier(strategy="stratified")`. Przy `most_frequent` F1 makro jest z definicji bardzo niska i nic nie mówi.
+- **Struktura kodu:**
+  - `src/evaluate.py`: schemat oceny bez I/O, zamrożony od 03a;
+  - `src/models.py`: potoki i siatki hiperparametrów;
+  - `src/experiments.py`: rejestr zadań i eksperymentów, jedyne miejsce zmian w etapach 03b–05;
+  - `src/train.py`: dane, zapis wyników, CLI.
+  - Foldy definiujemy na populacji testowej, a trening to populacja treningowa minus sesje foldu testowego. To obsługuje też E3 plain→VPN na tych samych foldach VPN.
+
 ## Do sprawdzenia w eksperymentach
 
 - `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.

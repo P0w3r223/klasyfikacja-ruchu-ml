@@ -15,8 +15,8 @@ def feature_list() -> list[str]:
     return json.loads(FEATURES_JSON.read_text(encoding="utf-8"))["features"]
 
 
-def load_flows(include_audio: bool = False) -> pd.DataFrame:
-    df = pd.read_parquet(PROCESSED / "flows.parquet")
+def load_flows(include_audio: bool = False, path: Path | None = None) -> pd.DataFrame:
+    df = pd.read_parquet(path or PROCESSED / "flows.parquet")
     if not include_audio:
         df = df[df["service"] != "Audio"]
     return df.reset_index(drop=True)

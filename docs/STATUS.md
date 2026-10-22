@@ -4,6 +4,7 @@ Updated: 2026-10-22 · Branch: main · Last gate: standard @ a152c2a - PASS with
 
 ## Stage
 M2 domknięty (dane zweryfikowane i pokryte testami), M1 oddany. Etapy 00–02 zamknięte, następny: etap 03a (moduł treningu i schemat oceny, pierwsza część M3).
+Etap 03a od: 5340b25
 
 ## Done (with evidence)
 - Inicjalizacja repo i Releases - 44e96a6
