@@ -1,6 +1,6 @@
 # STATUS - klasyfikacja-ruchu-ml
 
-Updated: 2026-10-22 · Branch: main · Last gate: standard @ a152c2a - PASS with notes (pkt 1 i 3 poprawione w 06d7aba)
+Updated: 2026-10-22 · Branch: main · Last gate: standard @ 5d20f43 - PASS with notes (pkt 1, 3, 4, 6 poprawione w 66bb9b0)
 
 ## Stage
 M2 domknięty (dane zweryfikowane i pokryte testami), M1 oddany. Etapy 00–02 zamknięte, następny: etap 03a (moduł treningu i schemat oceny, pierwsza część M3).

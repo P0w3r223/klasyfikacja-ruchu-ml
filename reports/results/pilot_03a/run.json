@@ -103,7 +103,8 @@
   "data": {
     "path": "flows.parquet",
     "sha256": "9cccd872542fd1f1b8fe9a7b1451563a18b6b85a2562f0cb8988ae02d5674ef7",
-    "n_flows": 26515
+    "n_flows": 26515,
+    "built_session_gap_min": 5.0
   },
   "versions": {
     "python": "3.13.2",
@@ -111,7 +112,7 @@
     "pandas": "3.0.6",
     "numpy": "2.5.4"
   },
-  "commit": "35c75d03cd6a1388646ff0c7f94eb4d3b55785e0",
+  "commit": "66bb9b057d916f83b2a2ddc4a2d845cfe6dfd083",
   "dirty": false,
-  "created": "2026-10-22T18:48:23+00:00"
+  "created": "2026-10-22T18:53:52+00:00"
 }

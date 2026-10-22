@@ -145,7 +145,7 @@ Projekt: @architect. Decyzje: autor.
   - `src/train.py`: dane, zapis wyników, CLI.
   - Foldy definiujemy na populacji testowej, a trening to populacja treningowa minus sesje foldu testowego. To obsługuje też E3 plain→VPN na tych samych foldach VPN.
 
-**Pilotaż** (`python src/train.py --experiment pilot_03a`, wyniki w `reports/results/pilot_03a/`, commit `35c75d0`). Zadanie VoIP vs Video, kampania VPN-nonVPN, ruch zwykły i VPN razem, 5 foldów.
+**Pilotaż** (`python src/train.py --experiment pilot_03a`, wyniki w `reports/results/pilot_03a/`, kod z commitu `66bb9b0`). Zadanie VoIP vs Video, kampania VPN-nonVPN, ruch zwykły i VPN razem, 5 foldów.
 
 | Model | Podział losowy | Podział po sesjach | Zakres po sesjach (min–max) |
 | --- | --- | --- | --- |
