@@ -1,40 +1,40 @@
 # STATUS - klasyfikacja-ruchu-ml
 
-Updated: 2026-10-22 · Branch: main · Last gate: standard @ a152c2a - PASS with notes (poprawki pkt 1 i 3 w następnym commicie)
+Updated: 2026-10-22 · Branch: main · Last gate: standard @ a152c2a - PASS with notes (pkt 1 i 3 poprawione w 06d7aba)
 
 ## Stage
-M2 (dane, EDA, definicja sesji) praktycznie gotowy, M1 oddany. Etapy 00 i 01 zamknięte, następny: etap 02 (weryfikacja danych i testy przygotowania).
-Etap 02 od: 878ff21
+M2 domknięty (dane zweryfikowane i pokryte testami), M1 oddany. Etapy 00–02 zamknięte, następny: etap 03a (moduł treningu i schemat oceny, pierwsza część M3).
 
 ## Done (with evidence)
 - Inicjalizacja repo i Releases - 44e96a6
-- Źródło danych i przegląd surowego pliku - d0103c1
 - Przygotowanie danych: filtr ruchu tła, czyszczenie, sesje - e12d93f
 - EDA, grupy cech, potwierdzony efekt kampanii - 453e516, 99ffabc
-- Kontekst w repo: CLAUDE.md, plan, wstęp M1 - 9c6278c
 - M1 oddany, decyzje prowadzącego - deklaracja autora 2026-10-21 (docs/decyzje.md)
 - Prompty etapów 00–13 w docs/prompty/ - 5543435
-- Etap 00: ocena źródeł w docs/research/zrodla.md (E6 no-go z warunkiem powrotu; pythonowy cicflowmeter do E7) - 7029514
-- Etap 01: literatura w docs/research/literatura.md: 16 prac, P1–P3 po ≥ 2 prace z liczbami sprawdzonymi u źródła; poz. 6 z §11 (EJCSIT) usunięta z raportu; wpis w docs/decyzje.md - ed67593
+- Etap 00: ocena źródeł w docs/research/zrodla.md (E6 no-go z warunkiem powrotu) - 7029514
+- Etap 01: literatura w docs/research/literatura.md (16 prac) - ed67593
+- Etap 02: flows.parquet odtworzony od zera identyczny bajt w bajt z data-processed-v1 (SHA-256 9cccd872…), v2 niepotrzebny; 43 testy w tests/test_preprocess.py; preprocess.py ma --raw/--out-dir/--reports-dir - a152c2a, 06d7aba, `.venv/Scripts/python -m pytest -q` → 43 passed
+- `.venv` odtworzony z requirements.txt (Python 3.13.2; sklearn 1.9.1, pandas 3.0.6), pytest==9.1.1 dopisany - a152c2a
 
 ## In progress (uncommitted)
 - brak
 
 ## Next step
-Etap 02: weryfikacja danych (docs/prompty/02_weryfikacja_danych.md) · Scope: src/preprocess.py, tests/, Release data-processed-v1 · Done when: flows.parquet odtworzony od zera zgadza się z data-processed-v1 (albo różnice opisane i Release v2), pytest zielony
+Etap 03a: moduł treningu (docs/prompty/03a_modul_treningu.md) · Scope: src/train.py, src/evaluate.py, tests/, reports/results/ (LARGE: najpierw @architect, akceptacja autora) · Done when: pytest zielony, jedno polecenie odtwarza pilotaż VoIP vs Video (4 modele, oba podziały), autor zaakceptował schemat oceny
 
 ## Open decisions
 - brak
 
 ## Blockers
-- `.venv` na stacjonarnym nie działa: `.venv/Scripts/python` wskazuje na `C:\Users\Ja\AppData\Local\Programs\Python\Python313\python.exe`, którego nie ma (zauważone 22.10). Przed etapem 02 odtworzyć venv z requirements.txt. Przyczyna niesprawdzona (kopia z innej maszyny?).
+- brak
 
 ## To verify
-- SHA-256 Darknet.CSV vs plik z formularza UNB (autor; formularz CIC 22.10.2026 zwracał „Server error”)
-- Odtwarzalność flows.parquet od zera (etap 02)
-- Duplikaty przepływów w flows.parquet (etap 02; wniosek z literatury, Jerabek i in. 2025)
+- SHA-256 Darknet.CSV vs plik z formularza UNB (formularz CIC 22.10.2026 zwracał „Server error”)
 - Warunek powrotu E6: formularz CIC działa przed 15.12.2026 i etapy do 05 w terminie (docs/decyzje.md)
 - Liczby [N] w docs/research/literatura.md (m.in. DIDarknet, Marim i in. 2023) przed użyciem w raporcie
+- Znane: reguła `.255` usuwa 3 przepływy Video TCP błędnie; przy ewentualnym v2 stosować ją tylko do UDP (docs/decyzje.md, etap 02)
+- Konflikty etykiet: 1 grupa VoIP NonVPN↔VPN o identycznych cechach — uwzględnić przy interpretacji E3
+- Opcjonalnie z /gate: `main(argv)` + test integracyjny preprocess.py na syntetycznym CSV (dziś odtwarzalność sprawdzona ręcznie)
 
 ## Plan
 Full plan: docs/plan_projektu.md · Etapy: docs/prompty/README.md · Decyzje: docs/decyzje.md · Literatura: docs/research/literatura.md

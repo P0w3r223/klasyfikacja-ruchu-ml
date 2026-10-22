@@ -81,6 +81,7 @@ Audio: 5 926.
 - Ładowanie danych: `from features import load_flows, feature_list, feature_groups` (z katalogu `src`).
 - Nowe dane lub modele idą do nowego Release (`gh release create ...`), nie do gita. Pobieranie z `--skip-existing`, a przy nowej wersji z `--clobber`.
 - Na Windows przy polskich znakach w konsoli: `PYTHONIOENCODING=utf-8`.
+- Testy: `.venv/Scripts/python -m pytest -q` (`pytest.ini` dodaje `src` do ścieżki). Odtworzenie danych bez nadpisywania repo: `src/preprocess.py --raw … --out-dir … --reports-dir …`.
 - Pandas 3: `groupby(...).apply` gubi kolumnę grupującą. Do próbkowania per grupa używaj `pd.concat([... for _, g in df.groupby(...)])`.
 - Commity po polsku.
 - Dokumenty w `docs/` (także `docs/research/`) i `reports/` piszemy po polsku; to wyjątek od globalnej reguły knowledge-docs, bo raport i prezentacja są po polsku.
