@@ -32,6 +32,13 @@ def test_unicast_kept(ip):
     assert not is_multicast_or_broadcast(ip)
 
 
+@pytest.mark.parametrize("ip", ["173.194.115.255", "54.145.236.255"])
+def test_dot255_known_false_positive_kept_for_v1_reproducibility(ip):
+    # Zwykłe hosty (TCP Video), które reguła .255 błędnie usuwa. Zostawione świadomie,
+    # żeby data-processed-v1 był odtwarzalny; patrz decyzje.md (etap 02).
+    assert is_multicast_or_broadcast(ip)
+
+
 # --- ruch tła ---------------------------------------------------------------
 
 def flows(*rows):
@@ -96,7 +103,8 @@ def test_gap_of_exactly_five_minutes_stays_in_session():
 
 def test_gap_just_over_five_minutes_starts_new_session():
     df = session_frame(("10.0.0.1", "10.0.0.2", "VPN", "VoIP", 0),
-                       ("10.0.0.1", "10.0.0.2", "VPN", "VoIP", 5 + 1 / 60))
+                       ("10.0.0.1", "10.0.0.2", "VPN", "VoIP", 0))
+    df.loc[1, "ts"] = T0 + pd.Timedelta(minutes=5, seconds=1)
     s = assign_sessions(df, gap_min=5)
     assert s.iloc[0] != s.iloc[1]
 

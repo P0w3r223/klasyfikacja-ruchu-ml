@@ -1,6 +1,6 @@
 # STATUS - klasyfikacja-ruchu-ml
 
-Updated: 2026-10-22 · Branch: main · Last gate: brak (etapy 00–01 tylko dokumenty)
+Updated: 2026-10-22 · Branch: main · Last gate: standard @ a152c2a - PASS with notes (poprawki pkt 1 i 3 w następnym commicie)
 
 ## Stage
 M2 (dane, EDA, definicja sesji) praktycznie gotowy, M1 oddany. Etapy 00 i 01 zamknięte, następny: etap 02 (weryfikacja danych i testy przygotowania).
