@@ -9,7 +9,7 @@ import pytest
 import experiments
 from experiments import TASKS, Experiment
 from features import PROCESSED, feature_list, load_flows
-from preprocess import META_COLS, assign_sessions
+from preprocess import META_COLS, assign_sessions, ip_pair
 import train
 from train import main, prepare, resolve_features
 
@@ -110,6 +110,25 @@ def test_prepare_recomputes_sessions_for_another_gap(flows_path):
     at_5 = prepare(flows, task, features, 5.0).groups.nunique()
     at_15 = prepare(flows, task, features, 15.0).groups.nunique()
     assert (at_5, at_15) == (4 * SESSIONS_PER_GROUP, 4 * SESSIONS_PER_GROUP // 2)
+
+
+def test_prepare_groups_by_ip_pair_regardless_of_time(flows_path):
+    flows = load_flows(path=flows_path)
+    data = prepare(flows, TASKS["voip_video_vpncamp"], resolve_features("all"), 5.0,
+                   group_by="ip_pair")
+    # 4 klasy×tunele, w każdej pary IP 10.0.g.0 … 10.0.g.4 z tym samym serwerem
+    assert data.groups.nunique() == 4 * SESSIONS_PER_GROUP // 2
+
+
+def test_ip_pair_ignores_direction():
+    df = pd.DataFrame({"Src IP": ["10.0.0.1", "9.9.9.9"], "Dst IP": ["9.9.9.9", "10.0.0.1"]})
+    assert ip_pair(df).nunique() == 1
+
+
+def test_unknown_grouping_fails_with_a_list_of_options(flows_path):
+    with pytest.raises(KeyError, match="dostępne"):
+        prepare(load_flows(path=flows_path), TASKS["voip_video_vpncamp"],
+                resolve_features("all"), 5.0, group_by="brak")
 
 
 def same_partition(a: pd.Series, b: pd.Series) -> bool:

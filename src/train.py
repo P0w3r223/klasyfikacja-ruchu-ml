@@ -22,7 +22,7 @@ from evaluate import FoldOutcome, Prepared, SplitSpec, fold_metrics, run_cv
 from experiments import FEATURE_SETS, TASKS, Experiment, Filter, Task, get_experiment
 from features import PROCESSED, built_session_gap_min, feature_list, load_flows
 from models import get_model
-from preprocess import assign_sessions
+from preprocess import assign_sessions, ip_pair
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "reports" / "results"
@@ -49,10 +49,21 @@ def resolve_features(name: str) -> list[str]:
     return FEATURE_SETS[name](feature_list())
 
 
-def prepare(flows: pd.DataFrame, task: Task, features: list[str], gap_min: float) -> Prepared:
-    """Wybiera populację zadania; przy innym progu sesji przelicza je w pamięci."""
+def group_key(flows: pd.DataFrame, group_by: str, gap_min: float) -> pd.Series:
+    """Grupy podziału; sesje z innym progiem niż w features.json liczone w pamięci."""
+    if group_by == "ip_pair":
+        return ip_pair(flows)
+    if group_by != "session":
+        raise KeyError(f"Nieznane grupowanie {group_by!r}; dostępne: ['ip_pair', 'session']")
     if gap_min != built_session_gap_min():
-        flows = flows.assign(session=assign_sessions(flows, gap_min))
+        return assign_sessions(flows, gap_min)
+    return flows["session"]
+
+
+def prepare(flows: pd.DataFrame, task: Task, features: list[str], gap_min: float,
+            group_by: str = "session") -> Prepared:
+    """Wybiera populację zadania; kolumna session dostaje grupy podziału."""
+    flows = flows.assign(session=group_key(flows, group_by, gap_min))
     in_classes = flows["service"].isin(task.classes)
     train = in_classes & _matches(flows, task.train)
     test = in_classes & _matches(flows, task.test or task.train)
@@ -78,7 +89,7 @@ def _fold_row(exp: Experiment, model: str, split: str, out: FoldOutcome,
 
 def run_experiment(exp: Experiment, flows: pd.DataFrame, n_jobs: int = -1) -> ExperimentResult:
     data = prepare(flows, TASKS[exp.task], resolve_features(exp.feature_set),
-                   exp.session_gap_min)
+                   exp.session_gap_min, exp.group_by)
     session_sizes = data.groups[data.test_mask].value_counts()
     rows, preds, confusion = [], [], {}
     for model in exp.models:

@@ -3,7 +3,8 @@
 Updated: 2026-10-22 · Branch: main · Last gate: standard @ 5d20f43 - PASS with notes (pkt 1, 3, 4, 6 poprawione w 66bb9b0)
 
 ## Stage
-M3 w toku: etap 03a (moduł treningu i schemat oceny) zamknięty, następny etap 03b (E1/E2, zamyka M3, termin 7.12). M1 oddany, M2 domknięty.
+M3 w toku: etap 03a (moduł treningu i schemat oceny) zamknięty, w toku etap 03b (E1/E2, zamyka M3, termin 7.12). M1 oddany, M2 domknięty.
+Etap 03b od: 414d8a0
 
 ## Done (with evidence)
 - Inicjalizacja repo i Releases - 44e96a6

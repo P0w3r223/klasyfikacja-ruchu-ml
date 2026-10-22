@@ -73,11 +73,16 @@ def background_reason(df: pd.DataFrame) -> pd.Series:
     return reason
 
 
-def assign_sessions(df: pd.DataFrame, gap_min: float) -> pd.Series:
-    """Sesja = ta sama nieuporządkowana para IP, ta sama etykieta, przerwa <= gap_min."""
+def ip_pair(df: pd.DataFrame) -> pd.Series:
+    """Nieuporządkowana para IP jako tekst „mniejszy|większy”."""
     a = df["Src IP"].where(df["Src IP"] < df["Dst IP"], df["Dst IP"])
     b = df["Src IP"].where(df["Src IP"] >= df["Dst IP"], df["Dst IP"])
-    key = df["traffic_type"] + "|" + df["service"] + "|" + a + "|" + b
+    return a + "|" + b
+
+
+def assign_sessions(df: pd.DataFrame, gap_min: float) -> pd.Series:
+    """Sesja = ta sama nieuporządkowana para IP, ta sama etykieta, przerwa <= gap_min."""
+    key = df["traffic_type"] + "|" + df["service"] + "|" + ip_pair(df)
     order = pd.DataFrame({"key": key, "ts": df["ts"]}).sort_values(["key", "ts"])
     new = order["key"].ne(order["key"].shift()) | (
         order["ts"].diff() > pd.Timedelta(minutes=gap_min)

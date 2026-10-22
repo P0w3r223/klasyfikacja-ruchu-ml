@@ -24,12 +24,16 @@ class Task:
 
 @dataclass(frozen=True)
 class Experiment:
+    """group_by: grupy podziału „session” (sesje z progiem session_gap_min)
+    albo „ip_pair” (sama para IP, bez czasu i etykiety; opcja D w 03b).
+    """
     name: str
     task: str
     models: tuple[str, ...]
     splits: tuple[str, ...]
     feature_set: str = "all"
     session_gap_min: float = 5.0
+    group_by: str = "session"
     n_outer: int = 5
     n_inner: int = 3
     n_repeats: int = 1
@@ -54,6 +58,12 @@ ALL_MODELS = ("dummy", "knn", "tree", "rf")
 
 EXPERIMENTS: dict[str, Experiment] = {e.name: e for e in [
     Experiment("pilot_03a", "voip_video_vpncamp", ALL_MODELS, ("random", "session")),
+    # etap 03b: E1/E2 i dwie analizy wrażliwości E2 (próg sesji, grupowanie po parze IP)
+    *[Experiment(f"e1e2_{t}", t, ALL_MODELS, ("random", "session")) for t in TASKS],
+    *[Experiment(f"e2_gap15_{t}", t, ALL_MODELS, ("session",), session_gap_min=15.0)
+      for t in TASKS],
+    *[Experiment(f"e2_ippair_{t}", t, ("dummy", "rf"), ("session",), group_by="ip_pair")
+      for t in TASKS],
 ]}
 
 
