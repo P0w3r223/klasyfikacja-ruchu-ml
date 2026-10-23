@@ -12,7 +12,7 @@ from experiments import TASKS
 from features import PROCESSED, load_flows
 from finalize import (HoldoutRule, holdout_mask, keys_from_records, keys_to_records,
                       select_holdout)
-from model_store import MODELS_DIR, load_metadata, version_mismatches
+from model_store import MODELS_DIR, load_metadata, load_pipeline, version_mismatches
 from test_train_cli import synthetic_flows, write_features_json
 from train import resolve_features, task_frame
 
@@ -71,6 +71,18 @@ def test_session_keys_survive_json_round_trip(flows):
     assert keys_from_records(records).equals(keys)
 
 
+def test_holdout_mask_ignores_flow_direction_and_includes_window_edges(flows):
+    keys = select_holdout(flows, TEST_RULE)
+    first = keys.iloc[[0]]
+    mask = holdout_mask(flows, first)
+    swapped = flows.copy()
+    swapped.loc[mask, ["Src IP", "Dst IP"]] = flows.loc[mask, ["Dst IP", "Src IP"]].to_numpy()
+
+    assert np.array_equal(holdout_mask(swapped, first), mask)
+    held_ts = flows.loc[mask, "ts"]
+    assert held_ts.min() == first["ts_min"].iloc[0] and held_ts.max() == first["ts_max"].iloc[0]
+
+
 def test_holdout_mask_rejects_a_key_matching_other_flow_count(flows):
     keys = select_holdout(flows, TEST_RULE).assign(n_flows=lambda k: k["n_flows"] + 1)
     with pytest.raises(ValueError, match="wybiera"):
@@ -120,6 +132,11 @@ def test_metadata_describes_every_pipeline_and_the_input_contract(trained):
     assert set(meta["tasks"]) == set(finalize.FINAL_TASKS)
     assert all(e["reported_cv"]["f1_macro_mean"] == 0.9 for e in meta["pipelines"])
     assert meta["git"]["changed_during_run"] is False
+    assert set(meta["holdout"]["match_rules"]) == {"ip_pair", "service", "traffic_type", "ts",
+                                                   "n_flows"}
+    for entry in meta["pipelines"]:
+        assert entry["fit_seed"] == 42
+        assert not any(isinstance(v, str) and v.isdigit() for v in entry["best_params"].values())
 
 
 def test_pipelines_never_train_on_held_out_sessions(trained, flows):
@@ -133,6 +150,9 @@ def test_pipelines_never_train_on_held_out_sessions(trained, flows):
         assert len(kept) < len(population)
         assert entry["train_flows_per_class"] == kept["service"].value_counts().reindex(
             entry["classes"], fill_value=0).to_dict()
+        # liczba próbek w korzeniu drzewa to faktyczny trening potoku, nie licznik z metadanych
+        tree = load_pipeline(entry, models_dir).named_steps["clf"]
+        assert tree.tree_.n_node_samples[0] == len(kept)
 
 
 def test_check_models_loads_and_predicts_every_pipeline(trained, capsys):
@@ -180,6 +200,16 @@ def test_e5_splits_audio_predictions_by_campaign_and_tunnel(trained):
         audio["session"].nunique() * len(MODELS))
     shares = dist.filter(like="share_").sum(axis=1)
     assert np.allclose(shares, 1.0)
+
+
+def test_e5_rejects_data_other_than_at_training(trained, tmp_path):
+    data_path, models_dir, _ = trained
+    other = tmp_path / "flows.parquet"
+    load_flows(include_audio=True, path=data_path).iloc[1:].to_parquet(other, index=False)
+
+    with pytest.raises(ValueError, match="inny plik"):
+        e5_audio.main(["--data", str(other), "--models-dir", str(models_dir),
+                       "--out", str(tmp_path / "out")])
 
 
 @pytest.mark.skipif(not ((MODELS_DIR / "metadata.json").exists()

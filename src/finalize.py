@@ -53,6 +53,18 @@ HOLDOUT_STRATA = ["service", "campaign", "tunnel"]
 KEY_COLUMNS = ["traffic_type", "service", "campaign", "tunnel", "ip_a", "ip_b",
                "ts_min", "ts_max", "n_flows"]
 TS_FORMAT = "%Y-%m-%d %H:%M:%S"
+# podział i ziarno strojenia; ziarno trafia też do drzewa i RF (models.ModelSpec.pipeline)
+FINAL_SPLIT = SplitSpec("session")
+# jak dopasować klucz sesji w surowym Darknet.CSV (etap 09)
+KEY_MATCH_RULES = {
+    "ip_pair": "ip_a i ip_b to mniejszy i większy adres w porównaniu tekstowym "
+               "(preprocess.ip_pair), niezależnie od kierunku przepływu",
+    "service": "po ujednoliceniu pisowni Label.1 przez preprocess.SERVICE_MAP",
+    "traffic_type": "kolumna Label bez zmian",
+    "ts": "Timestamp z Darknet.CSV (%d/%m/%Y %I:%M:%S %p), okno [ts_min, ts_max] włącznie",
+    "n_flows": "liczone po filtrze ruchu tła, usunięciu wierszy z inf/NaN i duplikatów "
+               "(preprocess.build); w surowym CSV to samo okno może mieć więcej wierszy",
+}
 
 
 @dataclass(frozen=True)
@@ -146,8 +158,10 @@ def fit_final(train_flows: pd.DataFrame, task: str, model: str, features: list[s
     data = prepare(train_flows, TASKS[task], features, gap_min, built_gap_min=gap_min)
     train_idx = np.flatnonzero(data.train_mask)
     pipeline, params, inner_f1, _, search_s = fit_tuned(
-        data, train_idx, get_model(model), SplitSpec("session"), n_jobs)
+        data, train_idx, get_model(model), FINAL_SPLIT, n_jobs)
     y = data.y.iloc[train_idx]
+    # typy numpy zapisałyby się w JSON jako napisy albo przerwały zapis
+    params = {k: v.item() if isinstance(v, np.generic) else v for k, v in params.items()}
     return FinalModel(task, model, pipeline, params, inner_f1,
                       {c: int((y == c).sum()) for c in data.classes},
                       int(data.groups.iloc[train_idx].nunique()), search_s)
@@ -167,6 +181,7 @@ def reported_cv(results_dir: Path, task: str) -> dict[str, dict[str, Any]]:
 def pipeline_entry(fm: FinalModel, path: Path, cv: dict[str, Any]) -> dict[str, Any]:
     return {"task": fm.task, "model": fm.model, "classes": list(TASKS[fm.task].classes),
             "file": path.name, "sha256": file_sha256(path), "best_params": fm.best_params,
+            "fit_seed": FINAL_SPLIT.seed, "inner_cv_folds": FINAL_SPLIT.n_inner,
             "inner_cv_f1_macro": fm.inner_f1, "train_flows_per_class": fm.train_flows_per_class,
             "n_train_sessions": fm.n_train_sessions, "search_s": round(fm.search_s, 1),
             "reported_cv": cv}
@@ -186,8 +201,7 @@ def build_metadata(entries: list[dict[str, Any]], features: list[str], keys: pd.
         "label_column": "Label.1",
         "data": data,
         "holdout": {"rule": asdict(rule), "ts_format": TS_FORMAT,
-                    "ts_note": "ts to Timestamp z Darknet.CSV (%d/%m/%Y %I:%M:%S %p)",
-                    "sessions": keys_to_records(keys)},
+                    "match_rules": KEY_MATCH_RULES, "sessions": keys_to_records(keys)},
         "versions": library_versions(),
         "git": git,
         "created": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -211,16 +225,17 @@ def main(argv: list[str] | None = None) -> None:
     keys = select_holdout(flows, rule)
     train_flows = flows[~holdout_mask(flows, keys)]
     features = resolve_features(FINAL_FEATURE_SET)
+    # przed treningiem: brak wyniku E4 nie może wyjść dopiero po kilku minutach
+    cv = {task: reported_cv(args.results, task) for task in FINAL_TASKS}
     git_before = _git_state()
     args.models_dir.mkdir(parents=True, exist_ok=True)
     entries = []
     for task in FINAL_TASKS:
-        cv = reported_cv(args.results, task)
         for model in FINAL_MODELS:
             fm = fit_final(train_flows, task, model, features, gap_min, args.n_jobs)
             path = args.models_dir / f"{task}__{model}.joblib"
             joblib.dump(fm.pipeline, path, compress=3)
-            entries.append(pipeline_entry(fm, path, cv[model]))
+            entries.append(pipeline_entry(fm, path, cv[task][model]))
             print(f"{task}/{model}: F1 wewn. CV {fm.inner_f1:.3f}, {fm.best_params}, "
                   f"{fm.search_s:.0f} s")
     data = {"release": DATA_RELEASE, "file": args.data.name,
@@ -228,7 +243,7 @@ def main(argv: list[str] | None = None) -> None:
     metadata = build_metadata(entries, features, keys, rule, data,
                               git_provenance(git_before, _git_state()))
     (args.models_dir / METADATA_FILE).write_text(
-        json.dumps(metadata, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+        json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Odłożone sesje: {len(keys)} ({int(keys['n_flows'].sum())} przepływów); "
           f"potoki i {METADATA_FILE}: {args.models_dir}")
 

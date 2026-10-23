@@ -16,8 +16,8 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 
 from features import PROCESSED, load_flows
-from model_store import (MODELS_DIR, check_versions, file_sha256, find_pipeline, load_metadata,
-                         load_pipeline)
+from model_store import (MODELS_DIR, check_data, check_versions, file_sha256, find_pipeline,
+                         load_metadata, load_pipeline)
 from train import RESULTS, _git_state, git_provenance
 
 TASK = "uslugi3_plain"
@@ -42,9 +42,10 @@ def _shares(df: pd.DataFrame, classes: list[str], unit: str) -> pd.DataFrame:
 
 
 def distribution(preds: pd.DataFrame, classes: list[str]) -> pd.DataFrame:
-    """Rozkład klas per model × kampania × tunel: dla przepływów i dla sesji (większość)."""
+    """Rozkład klas per model × kampania × tunel: dla przepływów i dla sesji (większość;
+    remis rozstrzyga kolejność alfabetyczna, żeby nie zależał od kolejności wierszy)."""
     majority = (preds.groupby(["model", *SPLIT_BY, "session"])["y_pred"]
-                .agg(lambda s: s.value_counts().index[0]).reset_index())
+                .agg(lambda s: s.mode().iloc[0]).reset_index())
     return pd.concat([_shares(preds, classes, "flows"), _shares(majority, classes, "sessions")],
                      ignore_index=True)
 
@@ -77,6 +78,7 @@ def main(argv: list[str] | None = None) -> None:
 
     metadata = load_metadata(args.models_dir)
     check_versions(metadata)
+    check_data(args.data, metadata)
     models = [e["model"] for e in metadata["pipelines"] if e["task"] == TASK]
     pipelines = {m: load_pipeline(find_pipeline(metadata, TASK, m), args.models_dir)
                  for m in models}

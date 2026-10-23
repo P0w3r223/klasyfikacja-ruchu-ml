@@ -17,7 +17,7 @@ from sklearn.metrics import accuracy_score, f1_score
 from experiments import TASKS
 from features import PROCESSED, load_flows
 from finalize import holdout_mask, keys_from_records
-from model_store import MODELS_DIR, check_versions, file_sha256, load_metadata, load_pipeline
+from model_store import MODELS_DIR, check_data, check_versions, load_metadata, load_pipeline
 from train import task_frame
 
 
@@ -53,9 +53,7 @@ def main(argv: list[str] | None = None) -> None:
 
     metadata = load_metadata(args.models_dir)
     check_versions(metadata)
-    if file_sha256(args.data) != metadata["data"]["sha256"]:
-        raise ValueError(f"{args.data} to inny plik niż przy treningu; pobierz "
-                         f"{metadata['data']['release']} (docs/srodowisko.md)")
+    check_data(args.data, metadata)
     result = check_pipelines(load_flows(path=args.data), metadata, args.models_dir)
     print(result.round(3).to_string(index=False))
     print(f"OK: {len(result)} potoków wczytanych i sprawdzonych na sesjach odłożonych "

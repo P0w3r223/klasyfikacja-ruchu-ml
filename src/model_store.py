@@ -57,6 +57,13 @@ def check_versions(metadata: dict[str, Any]) -> None:
                            "zainstaluj requirements.txt")
 
 
+def check_data(path: Path, metadata: dict[str, Any]) -> None:
+    """Dane muszą być tym samym plikiem co przy treningu (np. przy szukaniu sesji odłożonych)."""
+    if file_sha256(path) != metadata["data"]["sha256"]:
+        raise ValueError(f"{path} to inny plik niż przy treningu; pobierz "
+                         f"{metadata['data']['release']} (docs/srodowisko.md)")
+
+
 def load_pipeline(entry: dict[str, Any], models_dir: Path = MODELS_DIR) -> Pipeline:
     """Wczytuje jeden potok z metadata["pipelines"]; ostrzeżenie przy wczytaniu to błąd."""
     path = models_dir / entry["file"]
