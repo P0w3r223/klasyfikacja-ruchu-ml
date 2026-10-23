@@ -170,7 +170,13 @@
       "seed": 42
     },
     "ts_format": "%Y-%m-%d %H:%M:%S",
-    "ts_note": "ts to Timestamp z Darknet.CSV (%d/%m/%Y %I:%M:%S %p)",
+    "match_rules": {
+      "ip_pair": "ip_a i ip_b to mniejszy i większy adres w porównaniu tekstowym (preprocess.ip_pair), niezależnie od kierunku przepływu",
+      "service": "po ujednoliceniu pisowni Label.1 przez preprocess.SERVICE_MAP",
+      "traffic_type": "kolumna Label bez zmian",
+      "ts": "Timestamp z Darknet.CSV (%d/%m/%Y %I:%M:%S %p), okno [ts_min, ts_max] włącznie",
+      "n_flows": "liczone po filtrze ruchu tła, usunięciu wierszy z inf/NaN i duplikatów (preprocess.build); w surowym CSV to samo okno może mieć więcej wierszy"
+    },
     "sessions": [
       {
         "traffic_type": "Non-Tor",
@@ -315,12 +321,12 @@
     "joblib": "1.6.0"
   },
   "git": {
-    "commit": "e45bdf6671b97b238d4a63b1b477c49cfd8b12ff",
+    "commit": "b31a7119222af8a340cb0ffc35ba461f49a9f30b",
     "dirty": false,
     "dirty_excludes": "reports/results",
     "changed_during_run": false
   },
-  "created": "2026-10-23T17:39:43+00:00",
+  "created": "2026-10-23T17:46:48+00:00",
   "pipelines": [
     {
       "task": "www_video_tor",
@@ -336,13 +342,15 @@
         "n_neighbors": 5,
         "weights": "uniform"
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.7939155462680274,
       "train_flows_per_class": {
         "WWW": 20021,
         "Video": 2348
       },
       "n_train_sessions": 3650,
-      "search_s": 13.0,
+      "search_s": 12.9,
       "reported_cv": {
         "experiment": "e4_bez_skrotow_www_video_tor",
         "f1_macro_mean": 0.7913951512479745,
@@ -363,6 +371,8 @@
         "max_depth": null,
         "min_samples_leaf": 1
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.7840929931543846,
       "train_flows_per_class": {
         "WWW": 20021,
@@ -390,13 +400,15 @@
         "max_features": 0.3,
         "min_samples_leaf": 1
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.8010643729320303,
       "train_flows_per_class": {
         "WWW": 20021,
         "Video": 2348
       },
       "n_train_sessions": 3650,
-      "search_s": 28.4,
+      "search_s": 29.1,
       "reported_cv": {
         "experiment": "e4_bez_skrotow_www_video_tor",
         "f1_macro_mean": 0.7970391376630679,
@@ -417,6 +429,8 @@
         "n_neighbors": 3,
         "weights": "distance"
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.9437337711115793,
       "train_flows_per_class": {
         "VoIP": 361,
@@ -444,13 +458,15 @@
         "max_depth": 10,
         "min_samples_leaf": 1
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.9387352802582795,
       "train_flows_per_class": {
         "VoIP": 361,
         "Video": 3702
       },
       "n_train_sessions": 666,
-      "search_s": 0.4,
+      "search_s": 0.5,
       "reported_cv": {
         "experiment": "e4_bez_skrotow_voip_video_vpncamp",
         "f1_macro_mean": 0.92609183946316,
@@ -471,13 +487,15 @@
         "max_features": "sqrt",
         "min_samples_leaf": 1
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.9501753738139239,
       "train_flows_per_class": {
         "VoIP": 361,
         "Video": 3702
       },
       "n_train_sessions": 666,
-      "search_s": 2.8,
+      "search_s": 2.9,
       "reported_cv": {
         "experiment": "e4_bez_skrotow_voip_video_vpncamp",
         "f1_macro_mean": 0.9566654661372198,
@@ -499,6 +517,8 @@
         "n_neighbors": 3,
         "weights": "distance"
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.718555039381703,
       "train_flows_per_class": {
         "WWW": 20021,
@@ -528,6 +548,8 @@
         "max_depth": 20,
         "min_samples_leaf": 1
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.7739129729030356,
       "train_flows_per_class": {
         "WWW": 20021,
@@ -535,7 +557,7 @@
         "Video": 5045
       },
       "n_train_sessions": 4157,
-      "search_s": 3.4,
+      "search_s": 3.5,
       "reported_cv": {
         "experiment": "e4_bez_skrotow_uslugi3_plain",
         "f1_macro_mean": 0.6981277948059743,
@@ -557,6 +579,8 @@
         "max_features": "sqrt",
         "min_samples_leaf": 1
       },
+      "fit_seed": 42,
+      "inner_cv_folds": 3,
       "inner_cv_f1_macro": 0.7232036794216059,
       "train_flows_per_class": {
         "WWW": 20021,
@@ -564,7 +588,7 @@
         "Video": 5045
       },
       "n_train_sessions": 4157,
-      "search_s": 27.9,
+      "search_s": 28.1,
       "reported_cv": {
         "experiment": "e4_bez_skrotow_uslugi3_plain",
         "f1_macro_mean": 0.7131367528601066,
