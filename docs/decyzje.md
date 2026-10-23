@@ -284,7 +284,7 @@ Dummy: 0,496 / 0,519 / 0,336. Pozostałe modele w `04_e4_tabela.md`.
 
 ## 2026-10-23: Modele finalne i E5 (etap 05)
 
-Kod: `src/finalize.py`, `src/model_store.py`, `src/check_models.py`, `src/e5_audio.py`, testy `tests/test_finalize.py`. Potoki z przebiegu `e45bdf6` (`dirty=false`), Release `models-v1`; `models/metadata.json` w gicie (`0512d29`). E5 z commitu `0512d29` (`dirty=false`), wyniki w `reports/results/05_e5/`. Odtworzenie: `python src/finalize.py`, potem `python src/e5_audio.py`.
+Kod: `src/finalize.py`, `src/model_store.py`, `src/check_models.py`, `src/e5_audio.py`, testy `tests/test_finalize.py`. Potoki z przebiegu `e45bdf6`, powtórzonego po /gate z `b31a711` z identycznymi plikami `.joblib` (`dirty=false`), Release `models-v1`; `models/metadata.json` w gicie (`856aa2e`). E5 z commitu `856aa2e` (`dirty=false`), wyniki w `reports/results/05_e5/`. Odtworzenie: `python src/finalize.py`, potem `python src/e5_audio.py`.
 
 **Decyzje autora:**
 - **Zadania aplikacji:** WWW vs Video (Tor-nonTor) i VoIP vs Video (VPN-nonVPN, ruch zwykły + VPN) jako główne, 3 usługi w ruchu zwykłym jako odniesienie z opisem efektu kampanii. Dla każdego k-NN, drzewo i RF, razem 9 potoków. Opisy zadań są w `metadata.json` (`tasks`).
@@ -304,7 +304,7 @@ Kod: `src/finalize.py`, `src/model_store.py`, `src/check_models.py`, `src/e5_aud
 
 - **Audio model uznaje głównie za Video, prawie nigdy za VoIP.** VoIP to najwyżej 1,5% przepływów i 1,5% sesji (klasa większości w sesji), we wszystkich modelach. Pod względem cech przepływu strumień audio przypomina strumień wideo, a nie rozmowę.
 - **Efekt kampanii widać także tu.** W kampanii Tor-nonTor Audio dostaje WWW ok. 12 razy częściej niż w ruchu zwykłym VPN-nonVPN (RF 29,1% vs 2,4%). WWW występuje tylko w kampanii Tor-nonTor, więc część cech kampanii model wiąże z WWW.
-- **Przesunięcie VPN jest umiarkowane:** udział WWW rośnie w RF z 2,4% do 10,8%, przy modelu uczonym tylko na ruchu zwykłym. Rozkład per sesja daje ten sam obraz (`e5_tabela.md`).
+- **Przesunięcie VPN jest umiarkowane:** udział WWW rośnie w RF z 2,4% do 10,8%, przy modelu uczonym tylko na ruchu zwykłym. Rozkład per sesja daje ten sam obraz (`e5_tabela.md`). Remis głosów w sesji rozstrzyga kolejność alfabetyczna, więc w krótkich sesjach z remisem wygrywa Video; dlatego główną miarą E5 są przepływy.
 - k-NN rozprasza Audio najbardziej (WWW 52,5% w Tor-nonTor), drzewa są bardziej zdecydowane.
 
 ## Do sprawdzenia w eksperymentach

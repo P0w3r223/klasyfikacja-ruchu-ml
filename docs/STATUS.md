@@ -1,6 +1,6 @@
 # STATUS - klasyfikacja-ruchu-ml
 
-Updated: 2026-10-23 · Branch: main · Last gate: deep @ 8e81ad5 - PASS with notes (etapy 02–04, ed67593..HEAD); 9 uwag poprawionych w 85b856c i 102e2c4 (pytest 113 passed)
+Updated: 2026-10-23 · Branch: main · Last gate: standard @ 79baed5 - PASS with notes (etap 05, fe83fca..79baed5); 7 uwag poprawionych w b31a711, quick po poprawkach: PASS (pytest 128 passed)
 
 ## Stage
 Etap 04 (E3/E4) zamknięty: P3 i P1 odpowiedziane, P2 zrewidowane. Trwa etap 05 (E5 i modele finalne, zamyka M4 21.12). M1 oddany, M2 i M3 domknięte.
@@ -14,14 +14,15 @@ Etap 05 od: fe83fca
 - Wrażliwość E2 bez skrótów (`e2_bez_skrotow_*`): wniosek z 03b się utrzymuje - 102e2c4
 - Efekt kampanii bez przecieku: 0,982 bez skrótów (wpis E4 w decyzje.md) - 102e2c4
 - Poprawki po /gate: próg sesji z features.json obok `--data`, stan gita przed/po przebiegu, kontrola uszkodzonych wierszy, udział sesji per klasa, testy - 85b856c
-- Etap 05: kod finalize/model_store/check_models/e5_audio + testy - e45bdf6; 9 potoków `bez_skrotow`, 12 sesji odłożonych, metadata.json - 0512d29; Release models-v1 opublikowany; E5 (`reports/results/05_e5/`, `dirty=false`), wpis w decyzje.md
-- `.venv/Scripts/python -m pytest -q` → 125 passed, 1 skipped (e45bdf6)
+- Etap 05: kod finalize/model_store/check_models/e5_audio + testy - e45bdf6; 9 potoków `bez_skrotow`, 12 sesji odłożonych, metadata.json - 856aa2e (po /gate; .joblib bit w bit jak w e45bdf6); Release models-v1 opublikowany, metadata.json podmieniony; E5 (`reports/results/05_e5/`, `dirty=false`), wpis w decyzje.md
+- Lokalnie `src/check_models.py`: 9 potoków wczytanych i przewidzianych bez ostrzeżeń
+- `.venv/Scripts/python -m pytest -q` → 128 passed (b31a711)
 
 ## In progress (uncommitted)
 - brak (poza tym STATUS.md i briefem)
 
 ## Next step
-Etap 05, reszta: /gate standard fe83fca..HEAD, potem sprawdzenie na laptopie (docs/srodowisko.md: pobranie models-v1 + `src/check_models.py`) · Done when: na laptopie w czystym klonie skrypt wczytuje każdy potok z models-v1 i przewiduje na odłożonych sesjach bez błędów i ostrzeżeń o wersjach
+Etap 05, ostatni krok: sprawdzenie na laptopie (docs/srodowisko.md: pobranie models-v1 + `src/check_models.py`) · Done when: na laptopie w czystym klonie skrypt wczytuje każdy potok z models-v1 i przewiduje na odłożonych sesjach bez błędów i ostrzeżeń o wersjach
 
 ## Open decisions
 - brak (P2 zaakceptowana, cechy `bez_skrotow`, metadata.json w gicie i Release - decyzje.md, etap 05)
