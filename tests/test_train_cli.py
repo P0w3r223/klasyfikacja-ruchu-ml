@@ -9,7 +9,7 @@ import pytest
 from evaluate import SplitSpec, outer_folds
 import experiments
 from experiments import TASKS, Experiment
-from features import PROCESSED, feature_list, load_flows
+from features import PROCESSED, feature_groups, feature_list, load_flows
 from preprocess import META_COLS, assign_sessions, ip_pair
 import train
 from train import main, prepare, resolve_features
@@ -171,6 +171,46 @@ def test_feature_sets_drop_idle_and_tcp_shortcuts():
     assert len(no_idle) == len(all_features) - 4
     assert set(all_features) - set(no_shortcuts) == (
         set(all_features) - set(no_idle)) | set(experiments.TCP_SHORTCUTS)
+
+
+def test_e4_feature_sets_follow_feature_groups():
+    groups = feature_groups()
+    no_idle = resolve_features("bez_idle")
+    assert resolve_features("tylko_czasowe") == groups["czasowe"]
+    assert set(resolve_features("czasowe_tempo")) == set(groups["czasowe"] + groups["tempo"])
+    assert resolve_features("tylko_rozmiarowe") == groups["rozmiarowe"]
+    assert resolve_features("bez_protocol") == [f for f in no_idle if f != "Protocol"]
+    for name in experiments.E4_FEATURE_SETS:
+        if name != "all":
+            assert not set(resolve_features(name)) & set(groups["przeciek_czasu"])
+
+
+def test_e4_covers_every_feature_set_and_03b_task_with_rf_importance():
+    e4 = [e for e in experiments.EXPERIMENTS.values() if e.name.startswith("e4_")]
+    assert {(e.feature_set, e.task) for e in e4} == {
+        (fs, t) for fs in experiments.E4_FEATURE_SETS for t in experiments.TASKS_03B}
+    assert all(e.importance_models == ("rf",) for e in e4)
+    assert all(e.n_outer == experiments.OUTER_FOLDS.get(e.task, 5) for e in e4)
+
+
+def test_cli_writes_group_importance_only_for_selected_models(flows_path, tmp_path,
+                                                               monkeypatch):
+    exp = Experiment("test_imp", "voip_video_vpncamp", ("dummy", "tree"), ("session",),
+                     importance_models=("tree",))
+    monkeypatch.setitem(experiments.EXPERIMENTS, exp.name, exp)
+    imp = pd.read_csv(run_cli(flows_path, tmp_path, exp) / "importance.csv")
+
+    n_groups = len(feature_groups())
+    assert len(imp) == 5 * n_groups
+    assert set(imp["model"]) == {"tree"}
+    assert imp.groupby("fold")["gini"].sum().to_numpy() == pytest.approx(np.ones(5))
+    assert {"group", "n_features", "f1_base", "perm_mean", "perm_std", "split",
+            "repeat"} <= set(imp.columns)
+
+
+def test_cli_skips_importance_file_when_not_requested(flows_path, tmp_path,
+                                                      small_experiment):
+    assert not (run_cli(flows_path, tmp_path, small_experiment) / "importance.csv").exists()
 
 
 def test_unknown_names_fail_with_a_list_of_options():

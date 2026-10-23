@@ -28,13 +28,19 @@ def load_flows(include_audio: bool = False, path: Path | None = None) -> pd.Data
 
 
 def feature_group(name: str) -> str:
-    """Grupa cechy: czasowe / rozmiarowe / tempo / liczności / TCP i protokół."""
+    """Grupa cechy: czasowe / rozmiarowe / tempo / liczności / TCP i protokół / przeciek czasu.
+
+    Idle * osobno: w 51% przepływów to bezwzględny czas przepływu, czyli data nagrania
+    (docs/decyzje.md, 23.10); w EDA (etap 02) była jeszcze w grupie czasowe.
+    """
     n = name.lower()
+    if n.startswith("idle "):
+        return "przeciek_czasu"
     if "init win" in n or "flag" in n or n in {"protocol", "fwd seg size min"}:
         return "tcp_protokol"
     if "/s" in n or "rate" in n:
         return "tempo"
-    if "iat" in n or "idle" in n or n == "flow duration":
+    if "iat" in n or n == "flow duration":
         return "czasowe"
     if any(k in n for k in ["length", "size", "bytes", "header"]):
         return "rozmiarowe"

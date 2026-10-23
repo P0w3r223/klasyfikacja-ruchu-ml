@@ -5,6 +5,8 @@ Etapy 03b–05 dopisują tu nowe wpisy; schemat oceny (evaluate.py) się nie zmi
 from dataclasses import dataclass
 from typing import Callable
 
+from features import feature_group
+
 Filter = dict[str, tuple[str, ...]]
 
 
@@ -26,6 +28,7 @@ class Task:
 class Experiment:
     """group_by: grupy podziału „session” (sesje z progiem session_gap_min)
     albo „ip_pair” (sama para IP, bez czasu i etykiety; opcja D w 03b).
+    importance_models: modele, dla których w każdym foldzie liczona jest ważność grup cech.
     """
     name: str
     task: str
@@ -38,6 +41,7 @@ class Experiment:
     n_inner: int = 3
     n_repeats: int = 1
     seed: int = 42
+    importance_models: tuple[str, ...] = ()
 
 
 TASKS: dict[str, Task] = {t.name: t for t in [
@@ -68,7 +72,11 @@ TCP_SHORTCUTS = ("Fwd Seg Size Min", "FWD Init Win Bytes", "Bwd Init Win Bytes")
 
 
 def _is_idle(feature: str) -> bool:
-    return feature.startswith("Idle ")
+    return feature_group(feature) == "przeciek_czasu"
+
+
+def _in_groups(features: list[str], *groups: str) -> list[str]:
+    return [f for f in features if feature_group(f) in groups]
 
 
 FEATURE_SETS: dict[str, Callable[[list[str]], list[str]]] = {
@@ -76,6 +84,13 @@ FEATURE_SETS: dict[str, Callable[[list[str]], list[str]]] = {
     "bez_idle": lambda features: [f for f in features if not _is_idle(f)],
     "bez_skrotow": lambda features: [f for f in features
                                      if not _is_idle(f) and f not in TCP_SHORTCUTS],
+    # etap 04, E4 (P1); żaden z tych zestawów nie ma Idle *
+    "bez_protocol": lambda features: [f for f in features
+                                      if not _is_idle(f) and f != "Protocol"],
+    "tylko_czasowe": lambda features: _in_groups(features, "czasowe"),
+    # cechy czasowe Draper-Gil i in. (2016) obejmują też tempo (bajty i pakiety na sekundę)
+    "czasowe_tempo": lambda features: _in_groups(features, "czasowe", "tempo"),
+    "tylko_rozmiarowe": lambda features: _in_groups(features, "rozmiarowe"),
 }
 
 ALL_MODELS = ("dummy", "knn", "tree", "rf")
@@ -83,6 +98,12 @@ ALL_MODELS = ("dummy", "knn", "tree", "rf")
 # Największa sesja VoIP w ruchu zwykłym ma 30% przepływów VoIP; przy 5 foldach jej fold
 # dostaje tylko ją (1 sesja VoIP w teście). Przy 3 foldach: 20/22/7 sesji (etap 03b).
 OUTER_FOLDS = {"uslugi3_plain": 3}
+
+E4_FEATURE_SETS: dict[str, tuple[str, ...]] = {
+    "all": ("session",), "bez_idle": ("random", "session"),
+    **{fs: ("session",) for fs in ("bez_skrotow", "bez_protocol", "tylko_czasowe",
+                                    "czasowe_tempo", "tylko_rozmiarowe")},
+}
 
 EXPERIMENTS: dict[str, Experiment] = {e.name: e for e in [
     Experiment("pilot_03a", "voip_video_vpncamp", ALL_MODELS, ("random", "session")),
@@ -99,6 +120,11 @@ EXPERIMENTS: dict[str, Experiment] = {e.name: e for e in [
     # E3 bez przecieku daty (Idle *) i bez wszystkich skrótów: oddziela tunel od daty nagrania
     *[Experiment(f"e3_{fs}_{t}", t, ALL_MODELS, ("session",), feature_set=fs, n_outer=3)
       for fs in ("bez_idle", "bez_skrotow") for t in E3_TASKS],
+    # etap 04, E4: foldy jak w 03b; all daje ranking z grupą przeciek_czasu, bez_idle
+    # z podziałem losowym to E1/E2 bez Idle (uzupełnienie P2)
+    *[Experiment(f"e4_{fs}_{t}", t, ALL_MODELS, splits, feature_set=fs,
+                 n_outer=OUTER_FOLDS.get(t, 5), importance_models=("rf",))
+      for fs, splits in E4_FEATURE_SETS.items() for t in TASKS_03B],
 ]}
 
 

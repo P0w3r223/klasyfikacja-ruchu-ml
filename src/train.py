@@ -8,7 +8,7 @@ import json
 import platform
 import subprocess
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,6 +21,7 @@ from sklearn.metrics import f1_score
 from evaluate import FoldOutcome, Prepared, SplitSpec, fold_metrics, run_cv
 from experiments import FEATURE_SETS, TASKS, Experiment, Filter, Task, get_experiment
 from features import PROCESSED, built_session_gap_min, feature_list, load_flows
+from importance import fold_importance
 from models import get_model
 from preprocess import assign_sessions, ip_pair
 
@@ -34,6 +35,8 @@ class ExperimentResult:
     folds: pd.DataFrame
     predictions: pd.DataFrame
     confusion: dict[str, Any]
+    # ważność grup cech per fold; pusta, gdy Experiment.importance_models jest puste
+    importance: pd.DataFrame = field(default_factory=pd.DataFrame)
 
 
 def _matches(df: pd.DataFrame, flt: Filter) -> pd.Series:
@@ -97,7 +100,7 @@ def run_experiment(exp: Experiment, flows: pd.DataFrame, n_jobs: int = -1) -> Ex
     data = prepare(flows, TASKS[exp.task], resolve_features(exp.feature_set),
                    exp.session_gap_min, exp.group_by)
     session_sizes = data.groups[data.test_mask].value_counts()
-    rows, preds, confusion = [], [], {}
+    rows, preds, confusion, importance = [], [], {}, []
     for model in exp.models:
         for split in exp.splits:
             spec = SplitSpec(split, exp.n_outer, exp.n_inner, exp.n_repeats, exp.seed)
@@ -112,10 +115,15 @@ def run_experiment(exp: Experiment, flows: pd.DataFrame, n_jobs: int = -1) -> Ex
                     "model": model, "split": split, "repeat": out.repeat, "fold": out.fold,
                     "row": out.test_idx, "session": data.groups.iloc[out.test_idx].to_numpy(),
                     "y_true": data.y.iloc[out.test_idx].to_numpy(), "y_pred": out.y_pred}))
+                if model in exp.importance_models:
+                    importance.append(fold_importance(data, out, exp.seed).assign(
+                        model=model, split=split, repeat=out.repeat, fold=out.fold))
             confusion[f"{model}/{split}"] = {
                 "classes": list(data.classes), "per_fold": per_fold,
                 "total": np.sum(per_fold, axis=0).tolist()}
-    return ExperimentResult(pd.DataFrame(rows), pd.concat(preds, ignore_index=True), confusion)
+    return ExperimentResult(pd.DataFrame(rows), pd.concat(preds, ignore_index=True), confusion,
+                            pd.concat(importance, ignore_index=True) if importance
+                            else pd.DataFrame())
 
 
 def summarize(result: ExperimentResult, classes: tuple[str, ...]) -> pd.DataFrame:
@@ -170,6 +178,8 @@ def write_results(result: ExperimentResult, summary: pd.DataFrame, info: dict[st
                                       encoding="utf-8")
     # predykcje OOF tylko lokalnie (*.parquet jest w .gitignore)
     result.predictions.to_parquet(out_dir / "predictions.parquet", index=False)
+    if not result.importance.empty:
+        result.importance.to_csv(out_dir / "importance.csv", index=False)
 
 
 def main(argv: list[str] | None = None) -> None:
