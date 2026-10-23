@@ -1,6 +1,6 @@
 # STATUS - klasyfikacja-ruchu-ml
 
-Updated: 2026-10-23 · Branch: main · Last gate: standard @ 6634fda - PASS with notes (etap 03b; etap 04 jeszcze bez /gate)
+Updated: 2026-10-23 · Branch: main · Last gate: deep @ 8e81ad5 - PASS with notes (etapy 02–04, ed67593..HEAD; 9 uwag do decyzji autora)
 
 ## Stage
 Etap 04 (E3/E4, część M4, termin 21.12) w toku: sesja 1 (E3 + P3) zrobiona, sesja 2 to E4 + P1. M1 oddany, M2 i M3 domknięte.
