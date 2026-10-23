@@ -193,6 +193,17 @@ Wyniki: `reports/results/03b_tabela.md` (F1 makro per fold, F1 per klasa, accura
 - **Czasy** (średnia na fold, WWW vs Video): predykcja RF ok. 8 µs/przepływ, drzewo < 1 µs, k-NN ok. 95 µs. Strojenie RF ok. 11 s na fold.
 - **Wniosek dla kolejnych etapów (do potwierdzenia przez autora):** E3–E5 raportujemy z podziałem po sesjach. RF jest najbardziej odporny na sposób podziału.
 
+## 2026-10-23: `Idle *` to znacznik czasu przepływu (przeciek daty nagrania, etap 04)
+
+Wykryte w E3: RF wytrenowany na ruchu zwykłym i testowany na VPN spadł do F1 makro 0,486 (poziom Dummy). Trzy cechy o największej ważności Gini (`Idle Max`, `Idle Mean`, `Idle Min`, razem 0,45) mają wartości rzędu 1,43·10¹⁵.
+
+- **W 16 557 z 32 441 przepływów (51%) `Idle Max` to bezwzględny czas przepływu w µs od 1970 roku (UTC).** Różnica względem kolumny `ts` (czas lokalny) wynosi zawsze 3,0–4,0 h, czyli tyle, co strefa czasowa Kanady ze zmianą czasu. Pozostałe przepływy mają `Idle *` = 0 albo realne wartości (334 przepływy, 5–45 s).
+- Udział przepływów ze znacznikiem czasu: od 61% (WWW) do 80% (VoIP zwykły) w każdej grupie usługa × tunel. To błąd CICFlowMeter w liczeniu `Active`/`Idle` (Engelen i in. 2021, wpis z 22.10).
+- **Skutek:** model może odczytać datę i godzinę nagrania. W kampanii VPN-nonVPN mediana `Idle Max` to dla VoIP zwykłego 1,4303·10¹⁵, dla Video zwykłego 1,4277·10¹⁵, a dla VoIP VPN i Video VPN 1,4323 i 1,4325·10¹⁵. RF trenowany na ruchu zwykłym uczy się reguły „później → VoIP”, więc 574 z 1015 przepływów Video VPN uznaje za VoIP.
+- **Decyzja autora:** `Idle *` traktujemy jako udowodniony przeciek, nie tylko „podejrzany skrót”. E3 liczymy dodatkowo bez `Idle *` (`bez_idle`) i bez wszystkich skrótów (`bez_skrotow`: `Idle *`, `Fwd Seg Size Min`, `FWD/Bwd Init Win Bytes`); zestawy są w `src/experiments.py`.
+- **Ryzyko dla E1/E2:** usługi nagrywano w różnych dniach i godzinach, więc wyniki z 03b mogą być zawyżone przez datę także przy podziale po sesjach. Wyników 03b nie zmieniamy; E4 policzy zadania z 03b na zestawach bez `Idle *` i bez skrótów, a raport poda obie wersje.
+- **Dla E4 (P1):** `feature_group` w `src/features.py` zalicza `Idle *` do cech czasowych. Wariant „tylko czasowe” z `Idle *` mierzyłby więc datę, a nie dynamikę ruchu. E4 musi to uwzględnić.
+
 ## Do sprawdzenia w eksperymentach
 
 - `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.
