@@ -1,0 +1,575 @@
+{
+  "models_release": "models-v1",
+  "tasks": {
+    "www_video_tor": {
+      "title": "WWW vs Video (kampania Tor-nonTor)",
+      "role": "główne",
+      "description": "Obie klasy z tej samej kampanii nagrań, więc model nie może ich odróżnić po kampanii; uczciwa miara.",
+      "classes": [
+        "WWW",
+        "Video"
+      ]
+    },
+    "voip_video_vpncamp": {
+      "title": "VoIP vs Video (kampania VPN-nonVPN, ruch zwykły i VPN)",
+      "role": "główne",
+      "description": "Obie klasy z tej samej kampanii nagrań; model widział ruch zwykły i ruch wewnątrz tunelu VPN.",
+      "classes": [
+        "VoIP",
+        "Video"
+      ]
+    },
+    "uslugi3_plain": {
+      "title": "WWW / VoIP / Video (ruch zwykły)",
+      "role": "odniesienie",
+      "description": "Wynik zawyżony przez efekt kampanii: część Video model rozpoznaje po kampanii nagrań, a nie po usłudze.",
+      "classes": [
+        "WWW",
+        "VoIP",
+        "Video"
+      ]
+    }
+  },
+  "feature_set": "bez_skrotow",
+  "features": [
+    "Protocol",
+    "Flow Duration",
+    "Total Fwd Packet",
+    "Total Bwd packets",
+    "Total Length of Fwd Packet",
+    "Total Length of Bwd Packet",
+    "Fwd Packet Length Max",
+    "Fwd Packet Length Min",
+    "Fwd Packet Length Mean",
+    "Fwd Packet Length Std",
+    "Bwd Packet Length Max",
+    "Bwd Packet Length Min",
+    "Bwd Packet Length Mean",
+    "Bwd Packet Length Std",
+    "Flow Bytes/s",
+    "Flow Packets/s",
+    "Flow IAT Mean",
+    "Flow IAT Std",
+    "Flow IAT Max",
+    "Flow IAT Min",
+    "Fwd IAT Total",
+    "Fwd IAT Mean",
+    "Fwd IAT Std",
+    "Fwd IAT Max",
+    "Fwd IAT Min",
+    "Bwd IAT Total",
+    "Bwd IAT Mean",
+    "Bwd IAT Std",
+    "Bwd IAT Max",
+    "Bwd IAT Min",
+    "Fwd PSH Flags",
+    "Fwd Header Length",
+    "Bwd Header Length",
+    "Fwd Packets/s",
+    "Bwd Packets/s",
+    "Packet Length Min",
+    "Packet Length Max",
+    "Packet Length Mean",
+    "Packet Length Std",
+    "Packet Length Variance",
+    "FIN Flag Count",
+    "SYN Flag Count",
+    "RST Flag Count",
+    "PSH Flag Count",
+    "ACK Flag Count",
+    "Down/Up Ratio",
+    "Average Packet Size",
+    "Fwd Segment Size Avg",
+    "Bwd Segment Size Avg",
+    "Bwd Packet/Bulk Avg",
+    "Bwd Bulk Rate Avg",
+    "Subflow Fwd Packets",
+    "Subflow Fwd Bytes",
+    "Subflow Bwd Bytes",
+    "Fwd Act Data Pkts"
+  ],
+  "input_columns": [
+    "Protocol",
+    "Src Port",
+    "Dst Port",
+    "Dst IP",
+    "Flow Duration",
+    "Total Fwd Packet",
+    "Total Bwd packets",
+    "Total Length of Fwd Packet",
+    "Total Length of Bwd Packet",
+    "Fwd Packet Length Max",
+    "Fwd Packet Length Min",
+    "Fwd Packet Length Mean",
+    "Fwd Packet Length Std",
+    "Bwd Packet Length Max",
+    "Bwd Packet Length Min",
+    "Bwd Packet Length Mean",
+    "Bwd Packet Length Std",
+    "Flow Bytes/s",
+    "Flow Packets/s",
+    "Flow IAT Mean",
+    "Flow IAT Std",
+    "Flow IAT Max",
+    "Flow IAT Min",
+    "Fwd IAT Total",
+    "Fwd IAT Mean",
+    "Fwd IAT Std",
+    "Fwd IAT Max",
+    "Fwd IAT Min",
+    "Bwd IAT Total",
+    "Bwd IAT Mean",
+    "Bwd IAT Std",
+    "Bwd IAT Max",
+    "Bwd IAT Min",
+    "Fwd PSH Flags",
+    "Fwd Header Length",
+    "Bwd Header Length",
+    "Fwd Packets/s",
+    "Bwd Packets/s",
+    "Packet Length Min",
+    "Packet Length Max",
+    "Packet Length Mean",
+    "Packet Length Std",
+    "Packet Length Variance",
+    "FIN Flag Count",
+    "SYN Flag Count",
+    "RST Flag Count",
+    "PSH Flag Count",
+    "ACK Flag Count",
+    "Down/Up Ratio",
+    "Average Packet Size",
+    "Fwd Segment Size Avg",
+    "Bwd Segment Size Avg",
+    "Bwd Packet/Bulk Avg",
+    "Bwd Bulk Rate Avg",
+    "Subflow Fwd Packets",
+    "Subflow Fwd Bytes",
+    "Subflow Bwd Bytes",
+    "Fwd Act Data Pkts"
+  ],
+  "filter_columns": [
+    "Protocol",
+    "Src Port",
+    "Dst Port",
+    "Dst IP"
+  ],
+  "label_column": "Label.1",
+  "data": {
+    "release": "data-processed-v1",
+    "file": "flows.parquet",
+    "sha256": "9cccd872542fd1f1b8fe9a7b1451563a18b6b85a2562f0cb8988ae02d5674ef7",
+    "n_flows": 26515,
+    "session_gap_min": 5.0
+  },
+  "holdout": {
+    "rule": {
+      "per_group": 2,
+      "min_flows": 5,
+      "max_share": 0.1,
+      "seed": 42
+    },
+    "ts_format": "%Y-%m-%d %H:%M:%S",
+    "ts_note": "ts to Timestamp z Darknet.CSV (%d/%m/%Y %I:%M:%S %p)",
+    "sessions": [
+      {
+        "traffic_type": "Non-Tor",
+        "service": "Video",
+        "campaign": "tor-nontor",
+        "tunnel": "plain",
+        "ip_a": "10.152.152.11",
+        "ip_b": "173.194.112.3",
+        "ts_min": "2015-07-15 09:10:36",
+        "ts_max": "2015-07-15 09:13:28",
+        "n_flows": 5
+      },
+      {
+        "traffic_type": "Non-Tor",
+        "service": "Video",
+        "campaign": "tor-nontor",
+        "tunnel": "plain",
+        "ip_a": "10.152.152.11",
+        "ip_b": "74.125.136.113",
+        "ts_min": "2015-07-15 10:27:42",
+        "ts_max": "2015-07-15 10:29:43",
+        "n_flows": 11
+      },
+      {
+        "traffic_type": "NonVPN",
+        "service": "Video",
+        "campaign": "vpn-nonvpn",
+        "tunnel": "plain",
+        "ip_a": "131.202.240.150",
+        "ip_b": "23.235.40.239",
+        "ts_min": "2015-04-01 13:09:13",
+        "ts_max": "2015-04-01 13:09:14",
+        "n_flows": 5
+      },
+      {
+        "traffic_type": "NonVPN",
+        "service": "Video",
+        "campaign": "vpn-nonvpn",
+        "tunnel": "plain",
+        "ip_a": "131.202.240.150",
+        "ip_b": "23.195.213.206",
+        "ts_min": "2015-04-01 14:48:38",
+        "ts_max": "2015-04-01 14:50:56",
+        "n_flows": 10
+      },
+      {
+        "traffic_type": "VPN",
+        "service": "Video",
+        "campaign": "vpn-nonvpn",
+        "tunnel": "vpn",
+        "ip_a": "10.8.8.138",
+        "ip_b": "54.243.70.179",
+        "ts_min": "2015-05-24 14:17:57",
+        "ts_max": "2015-05-24 14:20:13",
+        "n_flows": 5
+      },
+      {
+        "traffic_type": "VPN",
+        "service": "Video",
+        "campaign": "vpn-nonvpn",
+        "tunnel": "vpn",
+        "ip_a": "10.8.8.138",
+        "ip_b": "74.125.226.41",
+        "ts_min": "2015-05-24 14:48:38",
+        "ts_max": "2015-05-24 14:55:39",
+        "n_flows": 5
+      },
+      {
+        "traffic_type": "NonVPN",
+        "service": "VoIP",
+        "campaign": "vpn-nonvpn",
+        "tunnel": "plain",
+        "ip_a": "131.202.240.242",
+        "ip_b": "131.202.6.26",
+        "ts_min": "2015-04-29 10:50:23",
+        "ts_max": "2015-04-29 10:52:46",
+        "n_flows": 6
+      },
+      {
+        "traffic_type": "NonVPN",
+        "service": "VoIP",
+        "campaign": "vpn-nonvpn",
+        "tunnel": "plain",
+        "ip_a": "131.202.240.242",
+        "ip_b": "131.202.6.26",
+        "ts_min": "2015-04-29 11:39:28",
+        "ts_max": "2015-04-29 11:42:36",
+        "n_flows": 8
+      },
+      {
+        "traffic_type": "VPN",
+        "service": "VoIP",
+        "campaign": "vpn-nonvpn",
+        "tunnel": "vpn",
+        "ip_a": "10.8.8.222",
+        "ip_b": "161.69.13.21",
+        "ts_min": "2015-05-22 13:51:02",
+        "ts_max": "2015-05-22 13:52:52",
+        "n_flows": 8
+      },
+      {
+        "traffic_type": "VPN",
+        "service": "VoIP",
+        "campaign": "vpn-nonvpn",
+        "tunnel": "vpn",
+        "ip_a": "10.8.8.246",
+        "ip_b": "131.202.6.26",
+        "ts_min": "2015-05-22 14:21:59",
+        "ts_max": "2015-05-22 14:23:20",
+        "n_flows": 8
+      },
+      {
+        "traffic_type": "Non-Tor",
+        "service": "WWW",
+        "campaign": "tor-nontor",
+        "tunnel": "plain",
+        "ip_a": "10.152.152.11",
+        "ip_b": "2.20.188.186",
+        "ts_min": "2016-02-24 13:53:46",
+        "ts_max": "2016-02-24 13:55:49",
+        "n_flows": 6
+      },
+      {
+        "traffic_type": "Non-Tor",
+        "service": "WWW",
+        "campaign": "tor-nontor",
+        "tunnel": "plain",
+        "ip_a": "10.152.152.11",
+        "ip_b": "199.16.156.200",
+        "ts_min": "2016-02-25 09:07:46",
+        "ts_max": "2016-02-25 09:15:26",
+        "n_flows": 6
+      }
+    ]
+  },
+  "versions": {
+    "python": "3.13.2",
+    "sklearn": "1.9.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "joblib": "1.6.0"
+  },
+  "git": {
+    "commit": "e45bdf6671b97b238d4a63b1b477c49cfd8b12ff",
+    "dirty": false,
+    "dirty_excludes": "reports/results",
+    "changed_during_run": false
+  },
+  "created": "2026-10-23T17:39:43+00:00",
+  "pipelines": [
+    {
+      "task": "www_video_tor",
+      "model": "knn",
+      "classes": [
+        "WWW",
+        "Video"
+      ],
+      "file": "www_video_tor__knn.joblib",
+      "sha256": "71cb1d73a4e818121c2a30aabd0128266d20078bcdf2e9259a24bf6d8996a11c",
+      "best_params": {
+        "metric": "manhattan",
+        "n_neighbors": 5,
+        "weights": "uniform"
+      },
+      "inner_cv_f1_macro": 0.7939155462680274,
+      "train_flows_per_class": {
+        "WWW": 20021,
+        "Video": 2348
+      },
+      "n_train_sessions": 3650,
+      "search_s": 13.0,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_www_video_tor",
+        "f1_macro_mean": 0.7913951512479745,
+        "f1_macro_std": 0.0072312800480982
+      }
+    },
+    {
+      "task": "www_video_tor",
+      "model": "tree",
+      "classes": [
+        "WWW",
+        "Video"
+      ],
+      "file": "www_video_tor__tree.joblib",
+      "sha256": "d11381ed02e20d73e8901295a5d050dad917680560ffaa858a06dd5833109334",
+      "best_params": {
+        "criterion": "entropy",
+        "max_depth": null,
+        "min_samples_leaf": 1
+      },
+      "inner_cv_f1_macro": 0.7840929931543846,
+      "train_flows_per_class": {
+        "WWW": 20021,
+        "Video": 2348
+      },
+      "n_train_sessions": 3650,
+      "search_s": 2.6,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_www_video_tor",
+        "f1_macro_mean": 0.7815889344628445,
+        "f1_macro_std": 0.0086753401140332
+      }
+    },
+    {
+      "task": "www_video_tor",
+      "model": "rf",
+      "classes": [
+        "WWW",
+        "Video"
+      ],
+      "file": "www_video_tor__rf.joblib",
+      "sha256": "4bd1988ce7a457df881a3c0edca09bf7dd7a1e2281f79160802b1f8d4bba94a1",
+      "best_params": {
+        "max_depth": null,
+        "max_features": 0.3,
+        "min_samples_leaf": 1
+      },
+      "inner_cv_f1_macro": 0.8010643729320303,
+      "train_flows_per_class": {
+        "WWW": 20021,
+        "Video": 2348
+      },
+      "n_train_sessions": 3650,
+      "search_s": 28.4,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_www_video_tor",
+        "f1_macro_mean": 0.7970391376630679,
+        "f1_macro_std": 0.0119003631133174
+      }
+    },
+    {
+      "task": "voip_video_vpncamp",
+      "model": "knn",
+      "classes": [
+        "VoIP",
+        "Video"
+      ],
+      "file": "voip_video_vpncamp__knn.joblib",
+      "sha256": "db8a8f6a54260f726dbf6fcfcb1ce4b98d7adca6006d2dc7a7bc3b6b3e16e92c",
+      "best_params": {
+        "metric": "manhattan",
+        "n_neighbors": 3,
+        "weights": "distance"
+      },
+      "inner_cv_f1_macro": 0.9437337711115793,
+      "train_flows_per_class": {
+        "VoIP": 361,
+        "Video": 3702
+      },
+      "n_train_sessions": 666,
+      "search_s": 0.6,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_voip_video_vpncamp",
+        "f1_macro_mean": 0.9424115323795832,
+        "f1_macro_std": 0.0158899006143661
+      }
+    },
+    {
+      "task": "voip_video_vpncamp",
+      "model": "tree",
+      "classes": [
+        "VoIP",
+        "Video"
+      ],
+      "file": "voip_video_vpncamp__tree.joblib",
+      "sha256": "31dd19e14dac95fbdc249dcba96586e338dc06e5a348e1396c89c1ed5e0c4032",
+      "best_params": {
+        "criterion": "entropy",
+        "max_depth": 10,
+        "min_samples_leaf": 1
+      },
+      "inner_cv_f1_macro": 0.9387352802582795,
+      "train_flows_per_class": {
+        "VoIP": 361,
+        "Video": 3702
+      },
+      "n_train_sessions": 666,
+      "search_s": 0.4,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_voip_video_vpncamp",
+        "f1_macro_mean": 0.92609183946316,
+        "f1_macro_std": 0.0399916096096367
+      }
+    },
+    {
+      "task": "voip_video_vpncamp",
+      "model": "rf",
+      "classes": [
+        "VoIP",
+        "Video"
+      ],
+      "file": "voip_video_vpncamp__rf.joblib",
+      "sha256": "067af072cb291b3352b9a1a383710acb3c5067204a35597472958d1e5797dae4",
+      "best_params": {
+        "max_depth": 10,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1
+      },
+      "inner_cv_f1_macro": 0.9501753738139239,
+      "train_flows_per_class": {
+        "VoIP": 361,
+        "Video": 3702
+      },
+      "n_train_sessions": 666,
+      "search_s": 2.8,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_voip_video_vpncamp",
+        "f1_macro_mean": 0.9566654661372198,
+        "f1_macro_std": 0.0220017204860033
+      }
+    },
+    {
+      "task": "uslugi3_plain",
+      "model": "knn",
+      "classes": [
+        "WWW",
+        "VoIP",
+        "Video"
+      ],
+      "file": "uslugi3_plain__knn.joblib",
+      "sha256": "1ca2a8b983261ab04bb241ac9335d6be338dc22ac328ff61ef2a722d516555a3",
+      "best_params": {
+        "metric": "manhattan",
+        "n_neighbors": 3,
+        "weights": "distance"
+      },
+      "inner_cv_f1_macro": 0.718555039381703,
+      "train_flows_per_class": {
+        "WWW": 20021,
+        "VoIP": 190,
+        "Video": 5045
+      },
+      "n_train_sessions": 4157,
+      "search_s": 13.7,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_uslugi3_plain",
+        "f1_macro_mean": 0.7167340709843839,
+        "f1_macro_std": 0.088308700416426
+      }
+    },
+    {
+      "task": "uslugi3_plain",
+      "model": "tree",
+      "classes": [
+        "WWW",
+        "VoIP",
+        "Video"
+      ],
+      "file": "uslugi3_plain__tree.joblib",
+      "sha256": "ea57ddefcc492ab6c7062a5847a3a4577aef2daa4b8a3703e199e059c7356dc3",
+      "best_params": {
+        "criterion": "entropy",
+        "max_depth": 20,
+        "min_samples_leaf": 1
+      },
+      "inner_cv_f1_macro": 0.7739129729030356,
+      "train_flows_per_class": {
+        "WWW": 20021,
+        "VoIP": 190,
+        "Video": 5045
+      },
+      "n_train_sessions": 4157,
+      "search_s": 3.4,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_uslugi3_plain",
+        "f1_macro_mean": 0.6981277948059743,
+        "f1_macro_std": 0.0918416286848275
+      }
+    },
+    {
+      "task": "uslugi3_plain",
+      "model": "rf",
+      "classes": [
+        "WWW",
+        "VoIP",
+        "Video"
+      ],
+      "file": "uslugi3_plain__rf.joblib",
+      "sha256": "513e57307f1dd7f2a087dda90fa58b06e67e467dfacda0c1071e9900d83b18ca",
+      "best_params": {
+        "max_depth": 20,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1
+      },
+      "inner_cv_f1_macro": 0.7232036794216059,
+      "train_flows_per_class": {
+        "WWW": 20021,
+        "VoIP": 190,
+        "Video": 5045
+      },
+      "n_train_sessions": 4157,
+      "search_s": 27.9,
+      "reported_cv": {
+        "experiment": "e4_bez_skrotow_uslugi3_plain",
+        "f1_macro_mean": 0.7131367528601066,
+        "f1_macro_std": 0.0947524981177346
+      }
+    }
+  ]
+}
