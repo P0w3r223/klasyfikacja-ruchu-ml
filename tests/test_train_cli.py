@@ -163,6 +163,16 @@ def test_assign_sessions_reproduces_the_real_session_column():
     assert same_partition(flows["session"], assign_sessions(flows, 5.0))
 
 
+def test_feature_sets_drop_idle_and_tcp_shortcuts():
+    all_features = resolve_features("all")
+    no_idle = resolve_features("bez_idle")
+    no_shortcuts = resolve_features("bez_skrotow")
+    assert not any(f.startswith("Idle") for f in no_idle + no_shortcuts)
+    assert len(no_idle) == len(all_features) - 4
+    assert set(all_features) - set(no_shortcuts) == (
+        set(all_features) - set(no_idle)) | set(experiments.TCP_SHORTCUTS)
+
+
 def test_unknown_names_fail_with_a_list_of_options():
     with pytest.raises(KeyError, match="dostępne"):
         resolve_features("brak")

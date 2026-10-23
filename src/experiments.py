@@ -62,8 +62,20 @@ TASKS: dict[str, Task] = {t.name: t for t in [
 TASKS_03B = ("uslugi3_plain", "www_video_tor", "voip_video_vpncamp")
 E3_TASKS = ("voip_video_plain", "voip_video_vpn", "voip_video_plain2vpn", "voip_video_vpncamp")
 
+# Idle * w 51% przepływów to bezwzględny czas przepływu w µs (błąd CICFlowMeter), czyli
+# data nagrania; cechy TCP zależą od systemu operacyjnego nagrywającego (docs/decyzje.md)
+TCP_SHORTCUTS = ("Fwd Seg Size Min", "FWD Init Win Bytes", "Bwd Init Win Bytes")
+
+
+def _is_idle(feature: str) -> bool:
+    return feature.startswith("Idle ")
+
+
 FEATURE_SETS: dict[str, Callable[[list[str]], list[str]]] = {
     "all": lambda features: list(features),
+    "bez_idle": lambda features: [f for f in features if not _is_idle(f)],
+    "bez_skrotow": lambda features: [f for f in features
+                                     if not _is_idle(f) and f not in TCP_SHORTCUTS],
 }
 
 ALL_MODELS = ("dummy", "knn", "tree", "rf")
@@ -84,6 +96,9 @@ EXPERIMENTS: dict[str, Experiment] = {e.name: e for e in [
     # etap 04, E3: 3 foldy we wszystkich wariantach (decyzja autora), bo w ruchu zwykłym
     # przy 4–5 foldach największa sesja VoIP zostaje sama w foldzie; rozrzuty porównywalne
     *[Experiment(f"e3_{t}", t, ALL_MODELS, ("session",), n_outer=3) for t in E3_TASKS],
+    # E3 bez przecieku daty (Idle *) i bez wszystkich skrótów: oddziela tunel od daty nagrania
+    *[Experiment(f"e3_{fs}_{t}", t, ALL_MODELS, ("session",), feature_set=fs, n_outer=3)
+      for fs in ("bez_idle", "bez_skrotow") for t in E3_TASKS],
 ]}
 
 
