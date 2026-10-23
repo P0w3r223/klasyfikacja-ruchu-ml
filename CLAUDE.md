@@ -10,7 +10,7 @@ Autor: Piotr Cząstkiewicz. **Komunikacja po polsku.**
 - Duże pliki (dane, modele) **nie trafiają do historii gita** (patrz `.gitignore`). Wymienia się je przez **GitHub Releases**:
   - `data-raw-v1`: `darknet2020_kaggle.zip` (surowy `Darknet.CSV`);
   - `data-processed-v1`: `flows.parquet` i `features.json`;
-  - `models-vN`: wytrenowane potoki `.joblib` i `metadata.json` (jeszcze nie ma).
+  - `models-v1`: 9 potoków `.joblib` (k-NN, drzewo, RF × 3 zadania, zestaw `bez_skrotow`) i `metadata.json` (ten ostatni także w gicie); kontrola: `src/check_models.py`.
 - Ten sam projekt jest używany na dwóch maszynach. Komputer stacjonarny (~1 TB) robi ciężkie etapy (dane, trening). Laptop ma mało miejsca, więc tylko uruchamia gotowe modele i Streamlit. Szczegóły: [docs/srodowisko.md](docs/srodowisko.md).
 
 ## Dokumenty: czytaj najpierw

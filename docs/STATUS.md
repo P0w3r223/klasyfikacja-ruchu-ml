@@ -14,24 +14,22 @@ Etap 05 od: fe83fca
 - Wrażliwość E2 bez skrótów (`e2_bez_skrotow_*`): wniosek z 03b się utrzymuje - 102e2c4
 - Efekt kampanii bez przecieku: 0,982 bez skrótów (wpis E4 w decyzje.md) - 102e2c4
 - Poprawki po /gate: próg sesji z features.json obok `--data`, stan gita przed/po przebiegu, kontrola uszkodzonych wierszy, udział sesji per klasa, testy - 85b856c
-- `.venv/Scripts/python -m pytest -q` → 113 passed (102e2c4)
+- Etap 05: kod finalize/model_store/check_models/e5_audio + testy - e45bdf6; 9 potoków `bez_skrotow`, 12 sesji odłożonych, metadata.json - 0512d29; Release models-v1 opublikowany; E5 (`reports/results/05_e5/`, `dirty=false`), wpis w decyzje.md
+- `.venv/Scripts/python -m pytest -q` → 125 passed, 1 skipped (e45bdf6)
 
 ## In progress (uncommitted)
 - brak (poza tym STATUS.md i briefem)
 
 ## Next step
-Etap 05: E5 i modele finalne (docs/prompty/05_e5_modele_finalne.md) · Scope: wybór zadań dla aplikacji (najpierw propozycja dla autora), sesje odłożone na pokaz, potoki k-NN/drzewo/RF, models/metadata.json, E5 (Audio), Release models-v1 · Done when: na laptopie w czystym klonie skrypt wczytuje każdy potok z models-v1 i przewiduje na odłożonych sesjach bez błędów i ostrzeżeń o wersjach
+Etap 05, reszta: /gate standard fe83fca..HEAD, potem sprawdzenie na laptopie (docs/srodowisko.md: pobranie models-v1 + `src/check_models.py`) · Done when: na laptopie w czystym klonie skrypt wczytuje każdy potok z models-v1 i przewiduje na odłożonych sesjach bez błędów i ostrzeżeń o wersjach
 
 ## Open decisions
-- Akceptacja rewizji P2 (decyzje.md, wpis E4): „RF najbardziej odporny na podział” było artefaktem `Idle *`; bez niego podział losowy zawyża wszystkie modele o 0,11–0,14 w 3 usługach - rekomendacja: akceptować
-- Zestaw cech modeli finalnych - rekomendacja: `bez_skrotow` (CLAUDE.md, wynik E4)
-- models/metadata.json w gicie czy tylko w Release models-v1 - decyzja w etapie 05
+- brak (P2 zaakceptowana, cechy `bez_skrotow`, metadata.json w gicie i Release - decyzje.md, etap 05)
 
 ## Blockers
 - brak
 
 ## To verify
-- Etap 05: model finalny przez `evaluate.fit_tuned`; potoki zapisują całą kolejność cech z `bez_skrotow`
 - `reports/figures/` nie jest wyłączony z flagi dirty: skrypty rysunków uruchamiaj po przebiegach i commituj przed kolejnymi
 - Zwykły → VPN trenuje ten sam model w każdym foldzie 3×: koszt, nie błąd
 - Notatnik EDA (02) ma dawną grupę „czasowe” z `Idle *`; nieprzeliczany, opisane w decyzje.md

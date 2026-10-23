@@ -1,0 +1,17 @@
+{
+  "task": "uslugi3_plain",
+  "models_release": "models-v1",
+  "pipelines": {
+    "knn": "1ca2a8b983261ab04bb241ac9335d6be338dc22ac328ff61ef2a722d516555a3",
+    "tree": "ea57ddefcc492ab6c7062a5847a3a4577aef2daa4b8a3703e199e059c7356dc3",
+    "rf": "513e57307f1dd7f2a087dda90fa58b06e67e467dfacda0c1071e9900d83b18ca"
+  },
+  "data": {
+    "path": "flows.parquet",
+    "sha256": "9cccd872542fd1f1b8fe9a7b1451563a18b6b85a2562f0cb8988ae02d5674ef7"
+  },
+  "commit": "0512d29538d3545f58bfdd8614c4412ee5d26d15",
+  "dirty": false,
+  "dirty_excludes": "reports/results",
+  "changed_during_run": false
+}

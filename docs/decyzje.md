@@ -280,6 +280,33 @@ Dummy: 0,496 / 0,519 / 0,336. Pozostałe modele w `04_e4_tabela.md`.
 - Wewnątrz kampanii różnice bez `Idle *` są małe dla wszystkich modeli: WWW vs Video RF 0,018, drzewo 0,019, k-NN 0,032; VoIP vs Video RF 0,004, drzewo 0,030, k-NN 0,005.
 - **Poprawiony wniosek:** podział losowy zawyża wynik wszystkich modeli tam, gdzie klasa ma mało sesji (3 usługi, VoIP), o 0,11–0,14. Wewnątrz kampanii zawyżenie wynosi do 0,03. Wyniki E3–E5 raportujemy z podziałem po sesjach i bez skrótów. Wniosek z 22.10 zostaje w dzienniku jako zrewidowany.
 
+**Akceptacja (23.10, etap 05):** autor zaakceptował rewizję P2.
+
+## 2026-10-23: Modele finalne i E5 (etap 05)
+
+Kod: `src/finalize.py`, `src/model_store.py`, `src/check_models.py`, `src/e5_audio.py`, testy `tests/test_finalize.py`. Potoki z przebiegu `e45bdf6` (`dirty=false`), Release `models-v1`; `models/metadata.json` w gicie (`0512d29`). E5 z commitu `0512d29` (`dirty=false`), wyniki w `reports/results/05_e5/`. Odtworzenie: `python src/finalize.py`, potem `python src/e5_audio.py`.
+
+**Decyzje autora:**
+- **Zadania aplikacji:** WWW vs Video (Tor-nonTor) i VoIP vs Video (VPN-nonVPN, ruch zwykły + VPN) jako główne, 3 usługi w ruchu zwykłym jako odniesienie z opisem efektu kampanii. Dla każdego k-NN, drzewo i RF, razem 9 potoków. Opisy zadań są w `metadata.json` (`tasks`).
+- **Zestaw cech:** `bez_skrotow` (55 cech), zgodnie z wynikiem E4.
+- **Sesje na pokaz:** jeden wspólny zbiór, wyłączony z treningu każdego potoku. W każdej grupie usługa × kampania × tunel losujemy (ziarno 42) 2 sesje mające ≥ 5 przepływów i < 10% przepływów grupy, więc duże rozmowy VoIP zostają w treningu. Daje to 12 sesji i 83 przepływy. Klucz sesji jest trwały: etykieta, usługa, nieuporządkowana para IP, zakres `ts`, liczba przepływów. Pasuje także do surowego `Darknet.CSV` (etap 09). Dopasowanie klucza do innej liczby przepływów przerywa pracę.
+- **`metadata.json` w gicie i w Release**, bo zmiany kontraktu z aplikacją mają być widoczne w historii.
+
+**Potoki.** Hiperparametry wybiera wewnętrzna CV po sesjach (3 foldy) na całej populacji zadania bez sesji odłożonych (`evaluate.fit_tuned`). Raportowanym wynikiem zostaje CV z E4 (`e4_bez_skrotow_*`); `metadata.json` do niego odsyła. F1 makro wewnętrznej CV: WWW vs Video k-NN 0,794 / drzewo 0,784 / RF 0,801; VoIP vs Video 0,944 / 0,939 / 0,950; 3 usługi 0,719 / 0,774 / 0,723. To ta sama skala co w E4, więc trening finalny nie odbiega od ocenianego. Na sesjach odłożonych (28–57 przepływów, wynik tylko orientacyjny) RF ma 0,82 / 0,95 / 0,73.
+
+**E5: Audio (5 926 przepływów) przez model 3-klasowy.** Odsetek przepływów RF (drzewo, k-NN):
+
+| Kampania, tunel | WWW | VoIP | Video |
+| --- | ---: | ---: | ---: |
+| Tor-nonTor, zwykły (1 321) | 29,1 (36,5; 52,5) | 0,2 (0,4; 1,0) | 70,7 (63,1; 46,6) |
+| VPN-nonVPN, zwykły (1 081) | 2,4 (4,5; 9,6) | 0,0 (1,5; 1,2) | 97,6 (94,0; 89,2) |
+| VPN-nonVPN, VPN (3 524) | 10,8 (14,4; 24,0) | 0,7 (0,5; 1,1) | 88,5 (85,0; 74,9) |
+
+- **Audio model uznaje głównie za Video, prawie nigdy za VoIP.** VoIP to najwyżej 1,5% przepływów i 1,5% sesji (klasa większości w sesji), we wszystkich modelach. Pod względem cech przepływu strumień audio przypomina strumień wideo, a nie rozmowę.
+- **Efekt kampanii widać także tu.** W kampanii Tor-nonTor Audio dostaje WWW ok. 12 razy częściej niż w ruchu zwykłym VPN-nonVPN (RF 29,1% vs 2,4%). WWW występuje tylko w kampanii Tor-nonTor, więc część cech kampanii model wiąże z WWW.
+- **Przesunięcie VPN jest umiarkowane:** udział WWW rośnie w RF z 2,4% do 10,8%, przy modelu uczonym tylko na ruchu zwykłym. Rozkład per sesja daje ten sam obraz (`e5_tabela.md`).
+- k-NN rozprasza Audio najbardziej (WWW 52,5% w Tor-nonTor), drzewa są bardziej zdecydowane.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.
