@@ -3,7 +3,8 @@
 Updated: 2026-10-22 · Branch: main · Last gate: standard @ 6634fda - PASS with notes (pkt 1–8 poprawione w 4e2f68d)
 
 ## Stage
-M3 domknięty (etap 03b, E1/E2, odpowiedź na P2), następny etap 04: E3/E4 (część M4, termin 21.12). M1 oddany, M2 domknięty.
+M3 domknięty (etap 03b, E1/E2, odpowiedź na P2), w toku etap 04: E3/E4 (część M4, termin 21.12). M1 oddany, M2 domknięty.
+Etap 04 od: 669190d
 
 ## Done (with evidence)
 - Inicjalizacja repo, dane, EDA, efekt kampanii - 44e96a6, e12d93f, 453e516, 99ffabc

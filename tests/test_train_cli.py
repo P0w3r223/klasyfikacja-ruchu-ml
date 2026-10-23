@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from evaluate import SplitSpec, outer_folds
 import experiments
 from experiments import TASKS, Experiment
 from features import PROCESSED, feature_list, load_flows
@@ -102,6 +103,20 @@ def test_prepare_selects_task_population(flows_path):
     assert set(data.y) == {"VoIP", "Video"}
     assert data.train_mask.all() and data.test_mask.all()
     assert set(data.strata) == {"VoIP|plain", "VoIP|vpn", "Video|plain", "Video|vpn"}
+
+
+def test_e3_plain_to_vpn_trains_on_all_plain_and_reuses_vpn_folds(flows_path):
+    flows, features = load_flows(path=flows_path), resolve_features("all")
+    cross = prepare(flows, TASKS["voip_video_plain2vpn"], features, 5.0)
+    vpn = prepare(flows, TASKS["voip_video_vpn"], features, 5.0)
+    spec = SplitSpec("session", n_outer=3)
+    plain_rows = np.flatnonzero(cross.train_mask)
+    assert set(cross.X.index[cross.test_mask]).isdisjoint(plain_rows)
+    for (train_idx, test_idx), (_, vpn_test) in zip(outer_folds(cross, spec, 0),
+                                                    outer_folds(vpn, spec, 0)):
+        np.testing.assert_array_equal(train_idx, plain_rows)
+        pd.testing.assert_series_equal(cross.groups.iloc[test_idx].reset_index(drop=True),
+                                       vpn.groups.iloc[vpn_test].reset_index(drop=True))
 
 
 def test_prepare_recomputes_sessions_for_another_gap(flows_path):

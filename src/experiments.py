@@ -48,7 +48,19 @@ TASKS: dict[str, Task] = {t.name: t for t in [
     # ruch zwykły i VPN razem; oba tunele w każdym foldzie
     Task("voip_video_vpncamp", ("VoIP", "Video"), {"campaign": ("vpn-nonvpn",)},
          stratify_by=("service", "tunnel")),
+    # etap 04, E3: warianty tunelu w kampanii VPN-nonVPN (mieszany to voip_video_vpncamp)
+    Task("voip_video_plain", ("VoIP", "Video"),
+         {"campaign": ("vpn-nonvpn",), "tunnel": ("plain",)}),
+    Task("voip_video_vpn", ("VoIP", "Video"),
+         {"campaign": ("vpn-nonvpn",), "tunnel": ("vpn",)}),
+    # trening na całym ruchu zwykłym, foldy te same co w voip_video_vpn
+    Task("voip_video_plain2vpn", ("VoIP", "Video"),
+         {"campaign": ("vpn-nonvpn",), "tunnel": ("plain",)},
+         test={"campaign": ("vpn-nonvpn",), "tunnel": ("vpn",)}),
 ]}
+
+TASKS_03B = ("uslugi3_plain", "www_video_tor", "voip_video_vpncamp")
+E3_TASKS = ("voip_video_plain", "voip_video_vpn", "voip_video_plain2vpn", "voip_video_vpncamp")
 
 FEATURE_SETS: dict[str, Callable[[list[str]], list[str]]] = {
     "all": lambda features: list(features),
@@ -64,11 +76,14 @@ EXPERIMENTS: dict[str, Experiment] = {e.name: e for e in [
     Experiment("pilot_03a", "voip_video_vpncamp", ALL_MODELS, ("random", "session")),
     # etap 03b: E1/E2 i dwie analizy wrażliwości E2 (próg sesji, grupowanie po parze IP)
     *[Experiment(f"e1e2_{t}", t, ALL_MODELS, ("random", "session"),
-                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS],
+                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS_03B],
     *[Experiment(f"e2_gap15_{t}", t, ALL_MODELS, ("session",), session_gap_min=15.0,
-                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS],
+                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS_03B],
     *[Experiment(f"e2_ippair_{t}", t, ("dummy", "rf"), ("session",), group_by="ip_pair",
-                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS],
+                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS_03B],
+    # etap 04, E3: 3 foldy we wszystkich wariantach (decyzja autora), bo w ruchu zwykłym
+    # przy 4–5 foldach największa sesja VoIP zostaje sama w foldzie; rozrzuty porównywalne
+    *[Experiment(f"e3_{t}", t, ALL_MODELS, ("session",), n_outer=3) for t in E3_TASKS],
 ]}
 
 
