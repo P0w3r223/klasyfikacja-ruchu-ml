@@ -204,6 +204,41 @@ Wykryte w E3: RF wytrenowany na ruchu zwykłym i testowany na VPN spadł do F1 m
 - **Ryzyko dla E1/E2:** usługi nagrywano w różnych dniach i godzinach, więc wyniki z 03b mogą być zawyżone przez datę także przy podziale po sesjach. Wyników 03b nie zmieniamy; E4 policzy zadania z 03b na zestawach bez `Idle *` i bez skrótów, a raport poda obie wersje.
 - **Dla E4 (P1):** `feature_group` w `src/features.py` zalicza `Idle *` do cech czasowych. Wariant „tylko czasowe” z `Idle *` mierzyłby więc datę, a nie dynamikę ruchu. E4 musi to uwzględnić.
 
+## 2026-10-23: E3, odpowiedź na P3 (etap 04)
+
+Wyniki: `reports/results/04_e3_tabela.md` (F1 makro per fold, F1 per klasa, F1 ważone sesjami, sesje VoIP w foldach), `reports/results/e3_*`, rysunek `reports/figures/12_e3_warianty.png`. Przebieg z commitu `83ecc31` (`dirty=false`), odtworzenie: `python src/train.py --experiment <nazwa>`, potem `python src/make_figures_04.py`. Dwa przebiegi dały identyczne wyniki poza czasami.
+
+**Decyzja autora:** wszystkie 4 warianty na **3 foldach zewnętrznych**, żeby rozrzuty były porównywalne. W ruchu zwykłym przy 5 i 4 foldach największa sesja VoIP (62 z 204 przepływów) zostaje sama w foldzie i ochrona z 03a przerywa przebieg. Sesje VoIP w foldach testowych: ruch zwykły 20/7/22, VPN 8/8/9. Wariant zwykły → VPN ma te same foldy VPN co VPN → VPN, a trening to cały ruch zwykły (test w `tests/test_train_cli.py`). Wariant mieszany to zadanie `voip_video_vpncamp` z 03b, tu na 3 foldach.
+
+**Co mierzy E3 w tych danych:**
+- Przepływy „VPN” to ruch wewnątrz tunelu (adres interfejsu 10.8.x, prawdziwe adresy docelowe, porty 443/80), nie zaszyfrowany tunel. E3 pyta więc, czy ruch kierowany przez VPN, widziany po dekapsulacji, ma inne cechy przepływu, a nie czy da się sklasyfikować sam tunel.
+- Każda grupa usługa × tunel to osobne dni nagrań: Video zwykłe 30.03–1.04.2015, VoIP zwykły 29.04, VoIP VPN 22.05, Video VPN 24.05. Różnica „VPN vs zwykły” to zawsze także różnica sesji i dnia (Razooqi i Pekár [15]).
+- E3 jest dwuklasowy, bo w danych nie ma VPN × Browsing.
+
+**F1 makro, średnia (odchylenie) z 3 foldów po sesjach:**
+
+| Zestaw cech | Model | zwykły → zwykły | VPN → VPN | zwykły → VPN | mieszany |
+| --- | --- | ---: | ---: | ---: | ---: |
+| wszystkie | k-NN | 0,786 (0,202) | 0,972 (0,020) | 0,972 (0,022) | 0,966 (0,026) |
+| | drzewo | 0,965 (0,028) | 0,962 (0,025) | 0,838 (0,024) | 0,983 (0,014) |
+| | RF | 0,976 (0,031) | 0,985 (0,010) | **0,486** (0,061) | 0,991 (0,007) |
+| bez `Idle *` | k-NN | 0,792 (0,194) | 0,971 (0,018) | 0,977 (0,021) | 0,975 (0,033) |
+| | drzewo | 0,765 (0,181) | 0,951 (0,028) | 0,922 (0,011) | 0,944 (0,016) |
+| | RF | 0,813 (0,236) | 0,976 (0,001) | 0,971 (0,018) | 0,977 (0,015) |
+| bez skrótów | k-NN | 0,751 (0,164) | 0,955 (0,012) | 0,936 (0,018) | 0,915 (0,022) |
+| | drzewo | 0,752 (0,180) | 0,822 (0,213) | 0,893 (0,007) | 0,865 (0,056) |
+| | RF | 0,791 (0,236) | 0,897 (0,111) | 0,947 (0,018) | 0,960 (0,016) |
+
+Dummy: 0,487–0,500 we wszystkich wariantach.
+
+**Odpowiedź na P3:**
+- **Nie znaleźliśmy dowodu, że tunel VPN utrudnia rozpoznanie VoIP vs Video.** Bez `Idle *` RF osiąga w VPN → VPN 0,976, a model wytrenowany na ruchu zwykłym i testowany na VPN 0,971. Różnica 0,005 mieści się w rozrzucie między foldami (0,001–0,018). k-NN: 0,971 vs 0,977, drzewo: 0,951 vs 0,922. Bez wszystkich skrótów zwykły → VPN jest wręcz wyżej niż VPN → VPN (RF 0,947 vs 0,897), ale VPN → VPN ma tam duży rozrzut (0,770–0,976) przy 8–9 sesjach VoIP na fold.
+- **Pozorny spadek przy przenoszeniu modelu to przeciek daty.** Na wszystkich cechach RF zwykły → VPN spada do 0,486 (poziom Dummy), a drzewo do 0,838. Model uczy się z `Idle *` reguły „później → VoIP”, a wideo VPN nagrano po VoIP zwykłym. Po usunięciu `Idle *` RF wraca do 0,971. Bez tej kontroli E3 dałby fałszywą odpowiedź „VPN bardzo utrudnia przenoszenie modelu”. k-NN jest odporny, bo po skalowaniu 4 cechy `Idle *` to 4 z 62 wymiarów.
+- **Ruch zwykły jest trudniejszy od VPN, ale przez jedną sesję.** W wariancie zwykły → zwykły wynik zależy od foldu z największą sesją VoIP (62 przepływy, jedna rozmowa): bez `Idle *` RF rozpoznaje w niej 3% przepływów VoIP (pozostałe sesje VoIP 91%), a na wszystkich cechach 100%, bo rozpoznaje ją po dacie. Stąd rozrzut 0,54–0,97. F1 ważone sesjami tego nie ciągnie: RF bez `Idle *` 0,901 w ruchu zwykłym i 0,952 w VPN. To ta sama rozmowa, która w 03b wymusiła 3 foldy.
+- **Porównanie z literaturą.** Draper-Gil i in. [1] (C4.5, same cechy czasowe, 10-fold CV losowo, 7 kategorii) podają gorszą precyzję w VPN (0,84 vs 0,89). FlowPic [9] (histogram rozmiar × czas, podział chroniący tylko 5-krotkę) podaje lepszy wynik w VPN (98,4 vs 85,0) i dobre przeniesienie non-VPN → VPN (VoIP 99,4, Video 98,8). Nasz wynik po usunięciu przecieku jest bliżej FlowPic: przeniesienie zwykły → VPN działa. Różnice warunków: 2 klasy zamiast 5–7, cechy CICFlowMeter, podział po sesjach. Razooqi i Pekár [15] zastrzegają, że w ISCX VPN i non-VPN to osobne sesje, więc żaden z tych wyników nie izoluje samego tunelu. Nasze dane mają to samo ograniczenie, a do tego cechy liczone są z ruchu wewnątrz tunelu.
+- **Wniosek dla raportu:** pytanie P3 da się na tych danych rozstrzygnąć tylko w wersji „czy ruch przez VPN widziany od środka ma inne cechy przepływu”. Odpowiedź: w zadaniu VoIP vs Video praktycznie nie. Pytanie o sam zaszyfrowany tunel wymaga zbioru z tymi samymi przepływami przed tunelem i po nim (np. [15]) i trafia do ograniczeń.
+- **Ranking modeli:** bez `Idle *` RF ≈ k-NN > drzewo w wariantach z testem na VPN. Na wszystkich cechach ranking zwykły → VPN jest odwrócony (k-NN 0,972 > drzewo 0,838 > RF 0,486). To też efekt przecieku.
+
 ## Do sprawdzenia w eksperymentach
 
 - `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.
