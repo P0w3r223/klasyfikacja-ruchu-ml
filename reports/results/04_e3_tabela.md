@@ -64,3 +64,19 @@ Wygenerowane przez `src/make_figures_04.py` z `reports/results/e3_*`. Podział p
 | RF | VPN → VPN | 0,897 | 0,111 | 0,770–0,976 | 0,770 · 0,976 · 0,946 | 0,904 | 0,820 (0,200) | 0,975 (0,023) | 8 · 8 · 9 |
 | RF | zwykły → VPN | 0,947 | 0,018 | 0,926–0,960 | 0,926 · 0,960 · 0,955 | 0,887 | 0,909 (0,032) | 0,985 (0,005) | 8 · 8 · 9 |
 | RF | mieszany | 0,960 | 0,016 | 0,949–0,979 | 0,949 · 0,979 · 0,953 | 0,945 | 0,928 (0,030) | 0,992 (0,003) | 29 · 30 · 15 |
+
+## Zwykły → VPN minus VPN → VPN, parami po foldach
+
+Te same foldy testowe VPN w obu wariantach, więc różnica per fold usuwa zmienność testu. Ujemna = model z ruchu zwykłego gorszy na VPN niż model uczony na VPN.
+
+| Zestaw cech | Model | różnica F1 makro per fold | średnia | różnica F1 VoIP | różnica F1 Video |
+| --- | --- | --- | ---: | ---: | ---: |
+| wszystkie cechy | k-NN | -0,001 · 0,020 · -0,020 | -0,000 | -0,001 | 0,000 |
+| wszystkie cechy | drzewo | -0,082 · -0,138 · -0,155 | -0,125 | -0,196 | -0,054 |
+| wszystkie cechy | RF | -0,433 · -0,504 · -0,562 | -0,500 | -0,601 | -0,399 |
+| bez Idle * | k-NN | 0,004 · 0,035 · -0,020 | 0,006 | 0,011 | 0,002 |
+| bez Idle * | drzewo | -0,030 · 0,007 · -0,063 | -0,029 | -0,048 | -0,010 |
+| bez Idle * | RF | -0,025 · 0,010 · -0,001 | -0,005 | -0,009 | -0,001 |
+| bez skrótów | k-NN | -0,043 · 0,015 · -0,029 | -0,019 | -0,033 | -0,005 |
+| bez skrótów | drzewo | 0,316 · -0,085 · -0,019 | 0,071 | 0,119 | 0,023 |
+| bez skrótów | RF | 0,156 · -0,015 · 0,009 | 0,050 | 0,090 | 0,010 |

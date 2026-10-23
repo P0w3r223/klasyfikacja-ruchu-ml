@@ -2,9 +2,9 @@
 
     python src/make_figures_04_e4.py
 
-Czyta gotowe wyniki eksperymentów e4_* (folds.csv, importance.csv) oraz e1e2_* z etapu
-03b do porównania E1/E2 bez Idle *; nic nie trenuje. Zapisuje
-reports/results/04_e4_tabela.md, 04_e4_folds.csv, 04_e4_importance.csv
+Czyta gotowe wyniki eksperymentów e4_* (folds.csv, importance.csv), e1e2_* z etapu 03b
+(porównanie E1/E2 bez Idle *) i e2_bez_skrotow_* (wrażliwość E2 bez skrótów); nic nie
+trenuje. Zapisuje reports/results/04_e4_tabela.md, 04_e4_folds.csv, 04_e4_importance.csv
 i rysunki 13–14 w reports/figures/.
 """
 import sys
@@ -38,6 +38,7 @@ GROUP_LABELS = {"czasowe": "czasowe (IAT, Duration)", "rozmiarowe": "rozmiarowe"
 # ranking ważności na tych zestawach: z przeciekiem, bez niego i bez wszystkich skrótów
 IMPORTANCE_SETS = ["all", "bez_idle", "bez_skrotow"]
 TRAINED_MODELS = [m for m in MODEL_ORDER if m != "dummy"]
+SENSITIVITY_RUNS = {"gap15": "sesje 15 min", "ippair": "para IP"}
 # kolejność barw stała jak w rysunkach 08–12; kształt znacznika to drugie kodowanie
 SERIES_STYLE = [("#2a78d6", "o"), ("#eb6834", "s"), ("#1baf7a", "D")]
 
@@ -98,6 +99,34 @@ def importance_table(importance: pd.DataFrame) -> pd.DataFrame:
             .reset_index())
 
 
+def grouping_sensitivity(results: Path, folds: pd.DataFrame) -> pd.DataFrame:
+    """F1 makro (średnia, odchylenie) bez skrótów: sesje 5 min, sesje 15 min, para IP."""
+    base = folds[(folds["feature_set"] == "bez_skrotow") & (folds["split"] == "session")]
+    frames = [base.assign(grouping="sesje 5 min")]
+    for suffix, label in SENSITIVITY_RUNS.items():
+        frames += [_read(results, f"e2_bez_skrotow_{suffix}_{t}", "folds.csv")
+                   .assign(task=t, grouping=label) for t in TASK_ORDER]
+    both = pd.concat(frames, ignore_index=True)
+    return (both.groupby(["task", "model", "grouping"])["f1_macro"].agg(["mean", "std"])
+            .unstack("grouping"))
+
+
+def _sensitivity_section(sens: pd.DataFrame) -> list[str]:
+    labels = ["sesje 5 min", *SENSITIVITY_RUNS.values()]
+    lines = ["## Wrażliwość E2 bez skrótów (grupowanie do podziału)", "",
+             "Powtórzenie analizy wrażliwości z 03b na zestawie bez skrótów; tamta liczona "
+             "na cechach z `Idle *`. Para IP liczona tylko dla RF i Dummy.", "",
+             "| Zadanie | Model | " + " | ".join(labels) + " |",
+             "| --- | --- |" + " ---: |" * len(labels)]
+    for task in TASK_ORDER:
+        for m in MODEL_ORDER:
+            cells = [_pm(sens.loc[(task, m), ("mean", g)], sens.loc[(task, m), ("std", g)])
+                     if pd.notna(sens.loc[(task, m), ("mean", g)]) else "–" for g in labels]
+            lines.append(f"| {TASK_LABELS[task]} | {MODEL_LABELS[m]} | "
+                         + " | ".join(cells) + " |")
+    return lines + [""]
+
+
 def _pm(mean: float, std: float) -> str:
     return f"{_num(mean)} ± {_num(std)}"
 
@@ -144,7 +173,8 @@ def _importance_section(imp: pd.DataFrame, task: str) -> list[str]:
     return lines + [""]
 
 
-def markdown_report(table: pd.DataFrame, splits: pd.DataFrame, imp: pd.DataFrame) -> str:
+def markdown_report(table: pd.DataFrame, splits: pd.DataFrame, imp: pd.DataFrame,
+                    sens: pd.DataFrame) -> str:
     lines = ["# Etap 04: E4, zestawy cech i ważność grup cech", "",
              "Wygenerowane przez `src/make_figures_04_e4.py` z `reports/results/e4_*` "
              "(i `e1e2_*` z 03b). Podział po sesjach, foldy jak w 03b (5, dla 3 usług 3). "
@@ -162,6 +192,7 @@ def markdown_report(table: pd.DataFrame, splits: pd.DataFrame, imp: pd.DataFrame
         lines += _split_section(splits, task)
         lines += ["### Ważność grup cech (RF)", ""]
         lines += _importance_section(imp, task)
+    lines += _sensitivity_section(sens)
     return "\n".join(lines)
 
 
@@ -240,7 +271,8 @@ def main() -> None:
     importance = load_e4(RESULTS, "importance.csv")
     table, imp = feature_set_table(folds), importance_table(importance)
     out_table = RESULTS / "04_e4_tabela.md"
-    out_table.write_text(markdown_report(table, split_comparison(RESULTS, folds), imp),
+    out_table.write_text(markdown_report(table, split_comparison(RESULTS, folds), imp,
+                                         grouping_sensitivity(RESULTS, folds)),
                          encoding="utf-8")
     folds.to_csv(RESULTS / "04_e4_folds.csv", index=False)
     importance.to_csv(RESULTS / "04_e4_importance.csv", index=False)

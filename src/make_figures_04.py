@@ -72,6 +72,45 @@ def e3_table(folds: pd.DataFrame) -> pd.DataFrame:
     return table.sort_values(["feature_set", "model", "task"]).reset_index(drop=True)
 
 
+def paired_vpn_difference(folds: pd.DataFrame) -> pd.DataFrame:
+    """Zwykły → VPN minus VPN → VPN na tych samych foldach testowych VPN, per fold.
+
+    Odchylenia obu wariantów są nieporównywalne: w zwykły → VPN każdy fold trenuje ten sam
+    model (cały ruch zwykły), więc jego rozrzut to tylko zmienność testu.
+    """
+    keys = ["feature_set", "model", "fold"]
+    cols = ["f1_macro"] + [f"f1_{c}" for c in CLASSES]
+    cross = folds[folds["task"] == "voip_video_plain2vpn"].set_index(keys)[cols]
+    vpn = folds[folds["task"] == "voip_video_vpn"].set_index(keys)[cols]
+    diff = (cross - vpn).reset_index()
+    rows = []
+    for (feature_set, model), g in diff.groupby(["feature_set", "model"]):
+        g = g.sort_values("fold")
+        rows.append({"feature_set": feature_set, "model": model,
+                     "diff_folds": g["f1_macro"].tolist(), "diff_mean": g["f1_macro"].mean(),
+                     **{f"diff_{c}": g[f"f1_{c}"].mean() for c in CLASSES}})
+    table = pd.DataFrame(rows)
+    table["feature_set"] = pd.Categorical(table["feature_set"], FEATURE_SET_ORDER, ordered=True)
+    table["model"] = pd.Categorical(table["model"], MODEL_ORDER, ordered=True)
+    return table.sort_values(["feature_set", "model"]).reset_index(drop=True)
+
+
+def paired_markdown(diff: pd.DataFrame) -> list[str]:
+    lines = ["## Zwykły → VPN minus VPN → VPN, parami po foldach", "",
+             "Te same foldy testowe VPN w obu wariantach, więc różnica per fold usuwa "
+             "zmienność testu. Ujemna = model z ruchu zwykłego gorszy na VPN niż model "
+             "uczony na VPN.", "",
+             "| Zestaw cech | Model | różnica F1 makro per fold | średnia | "
+             "różnica F1 VoIP | różnica F1 Video |",
+             "| --- | --- | --- | ---: | ---: | ---: |"]
+    for r in diff[diff["model"] != "dummy"].itertuples():
+        folds = " · ".join(_num(v) for v in r.diff_folds)
+        lines.append(f"| {FEATURE_SET_LABELS[r.feature_set].split(' (')[0]} | "
+                     f"{MODEL_LABELS[r.model]} | {folds} | {_num(r.diff_mean)} | "
+                     f"{_num(r.diff_VoIP)} | {_num(r.diff_Video)} |")
+    return lines + [""]
+
+
 def markdown_table(table: pd.DataFrame) -> str:
     lines = ["# Etap 04: E3, wpływ tunelu VPN (VoIP vs Video, kampania VPN-nonVPN)", "",
              "Wygenerowane przez `src/make_figures_04.py` z `reports/results/e3_*`. "
@@ -130,7 +169,8 @@ def e3_figure(folds: pd.DataFrame, models: list[str]) -> plt.Figure:
 def main() -> None:
     folds = load_e3_folds(RESULTS)
     out_table = RESULTS / "04_e3_tabela.md"
-    out_table.write_text(markdown_table(e3_table(folds)), encoding="utf-8")
+    paired = "\n".join(paired_markdown(paired_vpn_difference(folds)))
+    out_table.write_text(markdown_table(e3_table(folds)) + "\n" + paired, encoding="utf-8")
     folds.to_csv(RESULTS / "04_e3_folds.csv", index=False)
     FIGURES.mkdir(parents=True, exist_ok=True)
     fig = e3_figure(folds, [m for m in MODEL_ORDER if m != "dummy"])

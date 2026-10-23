@@ -54,8 +54,9 @@ Kamienie milowe: M1 19.10.2026 (oddany), M2 16.11, M3 7.12, M4 21.12, M5 17.01.2
 - WWW vs Video (Tor-nonTor);
 - VoIP vs Video (VPN-nonVPN, w tym E3).
 
-Podejrzane skróty: `Fwd Seg Size Min`, `Init Win Bytes`, `Idle *`. W E4 robimy wariant z nimi i bez nich.
-**`Idle *` to przeciek:** w 51% przepływów zawiera bezwzględny czas przepływu (data nagrania; każda grupa usługa × tunel to inne dni). Wynik na cechach z `Idle *` zawsze zestawiaj z zestawem `bez_idle` (decyzje.md, 23.10).
+Ten test kampanii daje bez wszystkich skrótów nadal 0,982, więc efekt kampanii nie jest artefaktem przecieku (decyzje.md, wpis E4).
+
+**Skróty (wynik E4, decyzje.md 23.10).** `Idle *` to przeciek: w 51% przepływów zawiera bezwzględny czas przepływu (data nagrania; każda grupa usługa × tunel to inne dni). `Fwd Seg Size Min` i `FWD/Bwd Init Win Bytes` zależą od systemu nagrywającego i przejmują rolę `Idle *`, gdy go usunąć. Wiarygodny wynik to zestaw `bez_skrotow` (`src/experiments.py`); wynik na innych zestawach zestawiaj z nim. Grupa `Idle *` w `feature_group` to `przeciek_czasu`, nie „czasowe”.
 
 **Ruch tła usunięty po portach.** DNS, mDNS, LLMNR, NetBIOS, SSDP, DHCP, NTP, SNMP, Dropbox, do tego multicast/broadcast oraz protokoły inne niż TCP/UDP. Porty służą tylko do filtrowania i nie są cechami modelu.
 
@@ -82,7 +83,7 @@ Audio: 5 926.
 - Ładowanie danych: `from features import load_flows, feature_list, feature_groups` (z katalogu `src`).
 - Nowe dane lub modele idą do nowego Release (`gh release create ...`), nie do gita. Pobieranie z `--skip-existing`, a przy nowej wersji z `--clobber`.
 - Na Windows przy polskich znakach w konsoli: `PYTHONIOENCODING=utf-8`.
-- Testy: `.venv/Scripts/python -m pytest -q` (`pytest.ini` dodaje `src` do ścieżki). Odtworzenie danych bez nadpisywania repo: `src/preprocess.py --raw … --out-dir … --reports-dir …`.
+- Testy: `.venv/Scripts/python -m pytest -q` (`pytest.ini` dodaje `src` do ścieżki). Odtworzenie danych bez nadpisywania repo: `src/preprocess.py --raw … --out-dir … --reports-dir …`. `train.py --data` czyta próg sesji z `features.json` w katalogu danych (preprocess.py zapisuje go obok `flows.parquet`).
 - Pandas 3: `groupby(...).apply` gubi kolumnę grupującą. Do próbkowania per grupa używaj `pd.concat([... for _, g in df.groupby(...)])`. `Series.to_numpy()` zwraca tablicę tylko do odczytu, więc przed modyfikacją `to_numpy(copy=True)`.
 - `StratifiedGroupKFold` wyrównuje udział przepływów, nie sesji: gdy jedna sesja ma więcej niż 1/n_outer przepływów klasy, jej fold dostaje tylko ją i `evaluate.py` przerywa przebieg. Przed nowym zadaniem sprawdź udział największej sesji (VoIP: 30% w ruchu zwykłym); obejście to mniej foldów w `experiments.py` (decyzja autora, jak w 03b).
 - Eksperymenty uruchamiaj z czystego drzewa (commit przed przebiegiem) i nie edytuj w trakcie plików śledzonych ani nie zostawiaj nowych plików poza `reports/results/`, bo `run.json` dostanie `dirty=true`.

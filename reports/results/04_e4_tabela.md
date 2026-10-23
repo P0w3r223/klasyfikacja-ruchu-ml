@@ -105,3 +105,22 @@ Ważność grup: RF z każdego foldu, liczona na jego teście. Permutacja = spad
 | czasowe (IAT, Duration) | 15 | 0,095 ± 0,040 | 0,194 ± 0,056 | 0,285 ± 0,055 | 0,164 | 0,282 | 0,437 |
 | tempo (B/s, pakiety/s) | 5 | 0,005 ± 0,013 | 0,007 ± 0,013 | -0,023 ± 0,020 | 0,055 | 0,053 | 0,098 |
 | liczności | 6 | 0,000 ± 0,000 | 0,007 ± 0,010 | 0,002 ± 0,002 | 0,010 | 0,015 | 0,049 |
+
+## Wrażliwość E2 bez skrótów (grupowanie do podziału)
+
+Powtórzenie analizy wrażliwości z 03b na zestawie bez skrótów; tamta liczona na cechach z `Idle *`. Para IP liczona tylko dla RF i Dummy.
+
+| Zadanie | Model | sesje 5 min | sesje 15 min | para IP |
+| --- | --- | ---: | ---: | ---: |
+| WWW vs Video (Tor-nonTor) | Dummy | 0,496 ± 0,000 | 0,496 ± 0,000 | 0,496 ± 0,000 |
+| WWW vs Video (Tor-nonTor) | k-NN | 0,791 ± 0,007 | 0,793 ± 0,015 | – |
+| WWW vs Video (Tor-nonTor) | drzewo | 0,782 ± 0,009 | 0,781 ± 0,005 | – |
+| WWW vs Video (Tor-nonTor) | RF | 0,797 ± 0,012 | 0,802 ± 0,011 | 0,799 ± 0,013 |
+| VoIP vs Video (VPN-nonVPN) | Dummy | 0,519 ± 0,012 | 0,519 ± 0,012 | 0,517 ± 0,012 |
+| VoIP vs Video (VPN-nonVPN) | k-NN | 0,942 ± 0,016 | 0,934 ± 0,024 | – |
+| VoIP vs Video (VPN-nonVPN) | drzewo | 0,926 ± 0,040 | 0,938 ± 0,055 | – |
+| VoIP vs Video (VPN-nonVPN) | RF | 0,957 ± 0,022 | 0,953 ± 0,038 | 0,954 ± 0,034 |
+| 3 usługi, ruch zwykły (odniesienie) | Dummy | 0,336 ± 0,000 | 0,336 ± 0,000 | 0,336 ± 0,000 |
+| 3 usługi, ruch zwykły (odniesienie) | k-NN | 0,717 ± 0,088 | 0,717 ± 0,092 | – |
+| 3 usługi, ruch zwykły (odniesienie) | drzewo | 0,698 ± 0,092 | 0,687 ± 0,065 | – |
+| 3 usługi, ruch zwykły (odniesienie) | RF | 0,713 ± 0,095 | 0,698 ± 0,063 | 0,691 ± 0,078 |
