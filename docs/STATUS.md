@@ -3,7 +3,8 @@
 Updated: 2026-10-23 · Branch: main · Last gate: deep @ 8e81ad5 - PASS with notes (etapy 02–04, ed67593..HEAD); 9 uwag poprawionych w 85b856c i 102e2c4 (pytest 113 passed)
 
 ## Stage
-Etap 04 (E3/E4) zamknięty: P3 i P1 odpowiedziane, P2 zrewidowane. Następny etap 05 (E5 i modele finalne, zamyka M4 21.12). M1 oddany, M2 i M3 domknięte.
+Etap 04 (E3/E4) zamknięty: P3 i P1 odpowiedziane, P2 zrewidowane. Trwa etap 05 (E5 i modele finalne, zamyka M4 21.12). M1 oddany, M2 i M3 domknięte.
+Etap 05 od: fe83fca
 
 ## Done (with evidence)
 - Etapy 00–03b: źródła, literatura, dane, moduł treningu, E1/E2 - 7029514, ed67593, a152c2a, 66bb9b0, 4e2f68d

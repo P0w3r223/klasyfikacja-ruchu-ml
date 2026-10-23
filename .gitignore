@@ -3,6 +3,7 @@ data/*
 !data/.gitkeep
 models/*
 !models/.gitkeep
+!models/metadata.json
 *.pcap
 *.pcapng
 *.parquet
