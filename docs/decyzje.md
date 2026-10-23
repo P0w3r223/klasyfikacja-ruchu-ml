@@ -191,7 +191,7 @@ Wyniki: `reports/results/03b_tabela.md` (F1 makro per fold, F1 per klasa, accura
 - **Definicja sesji nie zmienia wniosku w zadaniach wewnątrz kampanii.** Tam próg 15 min zmienia wyniki o ≤ 0,004 (wszystkie modele), a grupowanie po parze IP (liczone tylko dla RF i Dummy) zmienia RF o ≤ 0,003. W 3 usługach RF spada do 0,935 (15 min) i 0,942 (para IP), głównie przez F1 VoIP (0,911 i 0,930), czyli znowu przez kilka dużych grup VoIP.
 - **Wkład efektu kampanii.** RF po sesjach: 3 usługi 0,955, WWW vs Video wewnątrz kampanii 0,896. F1 makro dla 2 i 3 klas nie jest wprost porównywalna, ale czułość Video jest: w zadaniu 3 usług RF rozpoznaje Video z kampanii VPN-nonVPN w 99,7%, a Video z Tor-nonTor (tej samej co WWW) w 84,2%. Tak samo drzewo (99,0% vs 84,1%) i k-NN (95,9% vs 62,0%). Zadanie 3 usług zawyża więc wynik, bo część Video da się odróżnić od WWW po kampanii, a nie po usłudze. Zadanie wewnątrz kampanii jest uczciwszą miarą.
 - **Czasy** (średnia na fold, WWW vs Video): predykcja RF ok. 8 µs/przepływ, drzewo < 1 µs, k-NN ok. 95 µs. Strojenie RF ok. 11 s na fold.
-- **Wniosek dla kolejnych etapów (do potwierdzenia przez autora):** E3–E5 raportujemy z podziałem po sesjach. RF jest najbardziej odporny na sposób podziału.
+- **Wniosek dla kolejnych etapów (do potwierdzenia przez autora):** E3–E5 raportujemy z podziałem po sesjach. RF jest najbardziej odporny na sposób podziału. **Zrewidowane 23.10 (wpis E4): odporność RF wynikała z `Idle *`.**
 
 ## 2026-10-23: `Idle *` to znacznik czasu przepływu (przeciek daty nagrania, etap 04)
 
@@ -239,7 +239,46 @@ Dummy: 0,487–0,500 we wszystkich wariantach.
 - **Wniosek dla raportu:** pytanie P3 da się na tych danych rozstrzygnąć tylko w wersji „czy ruch przez VPN widziany od środka ma inne cechy przepływu”. Odpowiedź: w zadaniu VoIP vs Video praktycznie nie. Pytanie o sam zaszyfrowany tunel wymaga zbioru z tymi samymi przepływami przed tunelem i po nim (np. [15]) i trafia do ograniczeń.
 - **Ranking modeli:** bez `Idle *` RF ≈ k-NN > drzewo w wariantach z testem na VPN. Na wszystkich cechach ranking zwykły → VPN jest odwrócony (k-NN 0,972 > drzewo 0,838 > RF 0,486). To też efekt przecieku.
 
+## 2026-10-23: E4, odpowiedź na P1 i rewizja P2 (etap 04)
+
+Wyniki: `reports/results/04_e4_tabela.md` (F1 makro dla zestawów cech, E1/E2 bez `Idle *`, ważność grup), `reports/results/e4_*` (w tym `importance.csv`), rysunki `reports/figures/13_e4_zestawy_cech.png` i `14_e4_waznosc_grup.png`. Przebieg z commitu `c6d9f5f` (`dirty=false`), odtworzenie: `python src/train.py --experiment <nazwa>`, potem `python src/make_figures_04_e4.py`. `e4_all_*` odtwarza E2 z 03b bit w bit (różnica F1 na każdym foldzie 0,0).
+
+**Decyzje autora:**
+- `Idle *` jest w osobnej grupie `przeciek_czasu`, a grupa „czasowe” to tylko `Flow Duration` i IAT (15 cech). W EDA (etap 02, notatnik nieprzeliczany) „czasowe” obejmowały jeszcze `Idle *`.
+- Dwa warianty czasowe: `tylko_czasowe` (15 cech) i `czasowe_tempo` (plus 5 cech B/s i pakiety/s, jak cechy czasowe u Draper-Gil i in. [1]). `tylko_rozmiarowe` ma 22 cechy. Żaden zestaw E4 poza „wszystkie” nie ma `Idle *`; `bez_protocol` = `bez_idle` bez `Protocol`.
+- Ważność permutacyjna: wszystkie kolumny grupy dostają jedną wspólną permutację wierszy (5 powtórzeń, spadek F1 makro na teście foldu), bo cechy w grupie są silnie skorelowane i permutacja pojedynczych cech zaniża wkład grupy. Obok Gini zsumowany w grupach. Tylko RF, podział po sesjach.
+- E1/E2 przeliczone bez `Idle *` jako uzupełnienie P2; wyniki 03b bez zmian.
+
+**F1 makro RF, podział po sesjach** (średnia ± odchylenie po foldach; foldy jak w 03b):
+
+| Zestaw cech | WWW vs Video (Tor-nonTor) | VoIP vs Video (VPN-nonVPN) | 3 usługi (odniesienie, 3 foldy) |
+| --- | ---: | ---: | ---: |
+| wszystkie (62) | 0,896 ± 0,009 | 0,989 ± 0,006 | 0,955 ± 0,011 |
+| bez `Idle *` (58) | 0,853 ± 0,010 | 0,983 ± 0,010 | 0,802 ± 0,124 |
+| bez skrótów (55) | 0,797 ± 0,012 | 0,957 ± 0,022 | 0,713 ± 0,095 |
+| bez `Idle *` i `Protocol` (57) | 0,852 ± 0,011 | 0,979 ± 0,015 | 0,798 ± 0,121 |
+| tylko czasowe (15) | 0,777 ± 0,012 | 0,895 ± 0,040 | 0,643 ± 0,061 |
+| czasowe + tempo (20) | 0,785 ± 0,015 | 0,897 ± 0,053 | 0,663 ± 0,062 |
+| tylko rozmiarowe (22) | 0,689 ± 0,012 | 0,933 ± 0,040 | 0,715 ± 0,138 |
+
+Dummy: 0,496 / 0,519 / 0,336. Pozostałe modele w `04_e4_tabela.md`.
+
+**Odpowiedź na P1:**
+- **Która grupa cech lepiej odróżnia usługi, zależy od pary usług.** WWW vs Video odróżniają głównie cechy czasowe: same czasowe dają RF 0,777, same rozmiarowe 0,689 (wszystkie 3 modele w tej kolejności). VoIP vs Video odróżniają głównie rozmiary: 0,933 vs 0,895 (u k-NN 0,932 vs 0,855). Ważność permutacyjna w modelu bez skrótów mówi to samo: WWW vs Video czasowe 0,263, rozmiarowe 0,047; VoIP vs Video rozmiarowe 0,355, czasowe 0,160. W zadaniu 3 usług wynik jest niejednoznaczny (rozmiarowe 0,715 vs czasowe 0,643 przy odchyleniu do 0,14; permutacja czasowe 0,285 vs rozmiarowe 0,236).
+- **Żadna grupa sama nie dorównuje obu razem.** Bez skrótów RF ma 0,797 (WWW vs Video) i 0,957 (VoIP vs Video), czyli więcej niż najlepsza pojedyncza grupa (0,777 i 0,933).
+- **Tempo prawie nic nie wnosi.** Dodanie 5 cech B/s i pakiety/s do czasowych zmienia RF o +0,008 / +0,002 / +0,020, a ich ważność permutacyjna wynosi od −0,04 do 0,007 (ujemna = permutacja nieco pomaga, czyli szum).
+- **Ile dają skróty.** Spadek RF od „wszystkie” do „bez skrótów”: WWW vs Video 0,099 (z tego `Idle *` 0,043), VoIP vs Video 0,032 (`Idle *` 0,006), 3 usługi 0,242 (`Idle *` 0,153). Na zestawie „wszystkie” `Idle *` (4 cechy) to najważniejsza grupa we wszystkich trzech zadaniach: permutacja obniża F1 o 0,40 / 0,33 / 0,50.
+- **Skróty się zastępują.** Po usunięciu `Idle *` jego rolę przejmuje grupa TCP i protokół (permutacja VoIP vs Video 0,258 → 0,393, 3 usługi 0,156 → 0,255). Dopiero po usunięciu `Fwd Seg Size Min` i `Init Win Bytes` spada ona do 0,03–0,06, a ważność przenosi się na czasowe i rozmiarowe. Raport musi więc pokazywać wynik bez wszystkich skrótów, nie tylko bez `Idle *`.
+- **`Protocol` jest neutralny.** `bez_idle` → `bez_protocol` zmienia RF o ≤ 0,004 we wszystkich zadaniach (drzewo w 3 usługach −0,059, ale przy odchyleniu 0,13).
+- **Czy usunięcie skrótów zmienia ranking modeli: tak, a różnice się zacierają.** Na wszystkich cechach ranking to RF > drzewo > k-NN w każdym zadaniu. Bez skrótów: WWW vs Video RF 0,797 > k-NN 0,791 > drzewo 0,782 (odchylenia ok. 0,01); VoIP vs Video RF 0,957 > k-NN 0,942 > drzewo 0,926 (odchylenia 0,02–0,04); 3 usługi k-NN 0,717 ≈ RF 0,713 > drzewo 0,698 (odchylenia ok. 0,09). Drzewo traci najwięcej (0,110 / 0,053 / 0,210), k-NN najmniej (0,017 / 0,027 / 0,046), więc przewaga drzew na pełnym zestawie wynika w dużej części ze skrótów. RF zostaje najlepszy wewnątrz kampanii, ale z przewagą rzędu odchylenia między foldami.
+- **Porównanie z Draper-Gil i in. [1].** Najbliższy ich warunkom jest wariant „czasowe + tempo”: RF 0,785 (WWW vs Video) i 0,897 (VoIP vs Video), drzewo 0,768 i 0,856. Oni podają średnią precyzję C4.5 0,84 (VPN) i 0,89 (non-VPN). Liczby nie są porównywalne wprost. Różnice: narzędzie (ISCXFlowMeter vs CICFlowMeter), liczba cech (23 vs 20; u nas bez `Active *`, które są stałe, i bez `Idle *`, które są przeciekiem), timeout przepływu (u nich 15–120 s, u nas taki, jak w CSV zbioru), klasyfikatory (C4.5 i KNN w Weka vs drzewo, k-NN i RF w scikit-learn ze strojeniem), podział (10-fold CV losowo vs CV po sesjach), metryka (precyzja vs F1 makro), liczba klas (7 kategorii vs 2–3) i zbiór (ISCXVPN2016 vs CIC-Darknet2020).
+
+**Rewizja P2 (wpis z 22.10):**
+- **Wniosek „RF najbardziej odporny na sposób podziału” był artefaktem `Idle *`.** Bez `Idle *` E1−E2 w zadaniu 3 usług wynosi RF 0,140 (było 0,008), drzewo 0,113 (było 0,048), k-NN 0,136 (było 0,160). `Idle *` niesie datę nagrania, która jest wspólna dla klasy także między sesjami, więc podział po sesjach nie odcinał RF od tej informacji.
+- Wewnątrz kampanii różnice bez `Idle *` są małe dla wszystkich modeli: WWW vs Video RF 0,018, drzewo 0,019, k-NN 0,032; VoIP vs Video RF 0,004, drzewo 0,030, k-NN 0,005.
+- **Poprawiony wniosek:** podział losowy zawyża wynik wszystkich modeli tam, gdzie klasa ma mało sesji (3 usługi, VoIP), o 0,11–0,14. Wewnątrz kampanii zawyżenie wynosi do 0,03. Wyniki E3–E5 raportujemy z podziałem po sesjach i bez skrótów. Wniosek z 22.10 zostaje w dzienniku jako zrewidowany.
+
 ## Do sprawdzenia w eksperymentach
 
-- `FWD Init Win Bytes`, `Bwd Init Win Bytes` (początkowe okno TCP) zależą od systemu operacyjnego hosta, więc mogą działać jak skrót „która kampania”. W teście kampanii (EDA) okazały się jednymi z najsilniejszych skrótów. Sprawdzić ich ważność w E4.
-- `Protocol`: VoIP to w ok. 60–70% UDP, a WWW praktycznie 0%. To uczciwa cecha, ale warto zobaczyć wynik bez niej.
+- ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.
+- ~~`Protocol`: zobaczyć wynik bez niej.~~ Sprawdzone 23.10: zmiana RF ≤ 0,004.

@@ -1,0 +1,74 @@
+{
+  "experiment": {
+    "name": "e4_tylko_czasowe_www_video_tor",
+    "task": "www_video_tor",
+    "models": [
+      "dummy",
+      "knn",
+      "tree",
+      "rf"
+    ],
+    "splits": [
+      "session"
+    ],
+    "feature_set": "tylko_czasowe",
+    "session_gap_min": 5.0,
+    "group_by": "session",
+    "n_outer": 5,
+    "n_inner": 3,
+    "n_repeats": 1,
+    "seed": 42,
+    "importance_models": [
+      "rf"
+    ]
+  },
+  "task": {
+    "name": "www_video_tor",
+    "classes": [
+      "WWW",
+      "Video"
+    ],
+    "train": {
+      "campaign": [
+        "tor-nontor"
+      ]
+    },
+    "test": null,
+    "stratify_by": [
+      "service"
+    ]
+  },
+  "features": [
+    "Flow Duration",
+    "Flow IAT Mean",
+    "Flow IAT Std",
+    "Flow IAT Max",
+    "Flow IAT Min",
+    "Fwd IAT Total",
+    "Fwd IAT Mean",
+    "Fwd IAT Std",
+    "Fwd IAT Max",
+    "Fwd IAT Min",
+    "Bwd IAT Total",
+    "Bwd IAT Mean",
+    "Bwd IAT Std",
+    "Bwd IAT Max",
+    "Bwd IAT Min"
+  ],
+  "data": {
+    "path": "flows.parquet",
+    "sha256": "9cccd872542fd1f1b8fe9a7b1451563a18b6b85a2562f0cb8988ae02d5674ef7",
+    "n_flows": 26515,
+    "built_session_gap_min": 5.0
+  },
+  "versions": {
+    "python": "3.13.2",
+    "sklearn": "1.9.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.4"
+  },
+  "commit": "c6d9f5ff461513d2bfddedf232788bae049fa427",
+  "dirty": false,
+  "dirty_excludes": "reports/results",
+  "created": "2026-10-23T12:39:06+00:00"
+}

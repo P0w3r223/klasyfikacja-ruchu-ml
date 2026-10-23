@@ -1,0 +1,82 @@
+{
+  "experiment": {
+    "name": "e4_tylko_rozmiarowe_voip_video_vpncamp",
+    "task": "voip_video_vpncamp",
+    "models": [
+      "dummy",
+      "knn",
+      "tree",
+      "rf"
+    ],
+    "splits": [
+      "session"
+    ],
+    "feature_set": "tylko_rozmiarowe",
+    "session_gap_min": 5.0,
+    "group_by": "session",
+    "n_outer": 5,
+    "n_inner": 3,
+    "n_repeats": 1,
+    "seed": 42,
+    "importance_models": [
+      "rf"
+    ]
+  },
+  "task": {
+    "name": "voip_video_vpncamp",
+    "classes": [
+      "VoIP",
+      "Video"
+    ],
+    "train": {
+      "campaign": [
+        "vpn-nonvpn"
+      ]
+    },
+    "test": null,
+    "stratify_by": [
+      "service",
+      "tunnel"
+    ]
+  },
+  "features": [
+    "Total Length of Fwd Packet",
+    "Total Length of Bwd Packet",
+    "Fwd Packet Length Max",
+    "Fwd Packet Length Min",
+    "Fwd Packet Length Mean",
+    "Fwd Packet Length Std",
+    "Bwd Packet Length Max",
+    "Bwd Packet Length Min",
+    "Bwd Packet Length Mean",
+    "Bwd Packet Length Std",
+    "Fwd Header Length",
+    "Bwd Header Length",
+    "Packet Length Min",
+    "Packet Length Max",
+    "Packet Length Mean",
+    "Packet Length Std",
+    "Packet Length Variance",
+    "Average Packet Size",
+    "Fwd Segment Size Avg",
+    "Bwd Segment Size Avg",
+    "Subflow Fwd Bytes",
+    "Subflow Bwd Bytes"
+  ],
+  "data": {
+    "path": "flows.parquet",
+    "sha256": "9cccd872542fd1f1b8fe9a7b1451563a18b6b85a2562f0cb8988ae02d5674ef7",
+    "n_flows": 26515,
+    "built_session_gap_min": 5.0
+  },
+  "versions": {
+    "python": "3.13.2",
+    "sklearn": "1.9.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.4"
+  },
+  "commit": "c6d9f5ff461513d2bfddedf232788bae049fa427",
+  "dirty": false,
+  "dirty_excludes": "reports/results",
+  "created": "2026-10-23T12:45:13+00:00"
+}
