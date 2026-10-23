@@ -7,7 +7,7 @@ import pytest
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.pipeline import Pipeline
 
-from evaluate import Prepared, SplitSpec, fold_metrics, outer_folds, run_cv
+from evaluate import Prepared, SplitSpec, fold_metrics, inner_folds, outer_folds, run_cv
 from models import ModelSpec, get_model
 
 CLASSES = ("VoIP", "Video")
@@ -52,6 +52,15 @@ def test_every_test_row_is_tested_exactly_once(kind):
     assert sorted(tested) == list(np.flatnonzero(data.test_mask))
     for train_idx, test_idx in folds:
         assert not set(train_idx) & set(test_idx)
+
+
+def test_inner_session_folds_never_share_a_session():
+    data = make_data()
+    spec = SplitSpec("session")
+    for train_idx, _ in outer_folds(data, spec, repeat=0):
+        groups = data.groups.iloc[train_idx]
+        for tr, va in inner_folds(data, train_idx, spec):
+            assert not set(groups.iloc[tr]) & set(groups.iloc[va])
 
 
 def test_random_split_keeps_rest_of_session_in_training():
@@ -149,6 +158,8 @@ def test_fold_metrics_on_a_hand_computed_example():
     # wagi 1/rozmiar sesji: sesja 1 liczy się jak jeden przepływ -> VoIP tp=1, fn=1
     assert m["f1_macro_session_weighted"] == pytest.approx(2 / 3)
     assert m["largest_test_session_share"] == pytest.approx(0.5)
+    assert m["largest_test_session_share_VoIP"] == pytest.approx(2 / 3)
+    assert m["largest_test_session_share_Video"] == pytest.approx(1.0)
     assert (m["n_test_flows_VoIP"], m["n_test_sessions_VoIP"]) == (3, 2)
     assert (m["n_test_flows_Video"], m["n_test_sessions_Video"]) == (1, 1)
     assert m["confusion"] == [[2, 1], [0, 1]]

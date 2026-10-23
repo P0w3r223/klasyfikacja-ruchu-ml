@@ -15,9 +15,16 @@ def feature_list() -> list[str]:
     return json.loads(FEATURES_JSON.read_text(encoding="utf-8"))["features"]
 
 
-def built_session_gap_min() -> float:
-    """Próg sesji (min), z którym preprocess.py zbudował kolumnę session."""
-    return float(json.loads(FEATURES_JSON.read_text(encoding="utf-8"))["session_gap_min"])
+def built_session_gap_min(features_json: Path = FEATURES_JSON) -> float:
+    """Próg sesji (min), z którym preprocess.py zbudował kolumnę session.
+
+    preprocess.py zapisuje features.json obok flows.parquet, więc dla innego pliku danych
+    podaj features.json z jego katalogu.
+    """
+    if not features_json.exists():
+        raise FileNotFoundError(f"Brak {features_json}: nie wiadomo, z jakim progiem "
+                                "zbudowano kolumnę session")
+    return float(json.loads(features_json.read_text(encoding="utf-8"))["session_gap_min"])
 
 
 def load_flows(include_audio: bool = False, path: Path | None = None) -> pd.DataFrame:

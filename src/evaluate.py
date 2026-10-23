@@ -169,5 +169,8 @@ def fold_metrics(y_true: pd.Series, y_pred: np.ndarray, groups: pd.Series,
         out[f"f1_{cls}"] = f1
         out[f"n_test_flows_{cls}"] = int(mask.sum())
         out[f"n_test_sessions_{cls}"] = int(pd.unique(groups[mask]).size)
+        # w klasie z kilkoma sesjami (VoIP) jedna rozmowa potrafi zdominować fold
+        out[f"largest_test_session_share_{cls}"] = (
+            pd.Series(groups[mask]).value_counts().max() / mask.sum() if mask.any() else 0.0)
     out["confusion"] = confusion_matrix(y_true, y_pred, labels=labels).tolist()
     return out

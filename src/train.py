@@ -52,13 +52,14 @@ def resolve_features(name: str) -> list[str]:
     return FEATURE_SETS[name](feature_list())
 
 
-def group_key(flows: pd.DataFrame, group_by: str, gap_min: float) -> pd.Series:
-    """Grupy podziału; sesje z innym progiem niż w features.json liczone w pamięci."""
+def group_key(flows: pd.DataFrame, group_by: str, gap_min: float,
+              built_gap_min: float) -> pd.Series:
+    """Grupy podziału; sesje z progiem innym niż przy budowie danych liczone w pamięci."""
     if group_by == "ip_pair":
         return ip_pair(flows)
     if group_by != "session":
         raise KeyError(f"Nieznane grupowanie {group_by!r}; dostępne: ['ip_pair', 'session']")
-    if gap_min != built_session_gap_min():
+    if gap_min != built_gap_min:
         return assign_sessions(flows, gap_min)
     return flows["session"]
 
@@ -76,10 +77,13 @@ def task_frame(flows: pd.DataFrame, task: Task) -> tuple[pd.DataFrame, np.ndarra
 
 
 def prepare(flows: pd.DataFrame, task: Task, features: list[str], gap_min: float,
-            group_by: str = "session") -> Prepared:
-    """Wybiera populację zadania; kolumna session dostaje grupy podziału."""
+            group_by: str = "session", *, built_gap_min: float) -> Prepared:
+    """Wybiera populację zadania; kolumna session dostaje grupy podziału.
+
+    built_gap_min: próg, z którym preprocess.py zbudował kolumnę session w flows.
+    """
     df, train_mask, test_mask = task_frame(
-        flows.assign(session=group_key(flows, group_by, gap_min)), task)
+        flows.assign(session=group_key(flows, group_by, gap_min, built_gap_min)), task)
     return Prepared(
         X=df[features], y=df["service"], groups=df["session"],
         strata=df[list(task.stratify_by)].astype(str).agg("|".join, axis=1),
@@ -96,31 +100,42 @@ def _fold_row(exp: Experiment, model: str, split: str, out: FoldOutcome,
             "fit_s": out.fit_s, "search_s": out.search_s, "predict_s": out.predict_s}
 
 
-def run_experiment(exp: Experiment, flows: pd.DataFrame, n_jobs: int = -1) -> ExperimentResult:
+def _confusion_total(per_fold: list[list[list[int]]], repeats: list[int]) -> list:
+    """Liczności z jednego przejścia CV; przy kilku powtórzeniach średnia z przejść."""
+    per_repeat = [np.sum([c for c, r in zip(per_fold, repeats) if r == k], axis=0)
+                  for k in sorted(set(repeats))]
+    total = per_repeat[0] if len(per_repeat) == 1 else np.mean(per_repeat, axis=0)
+    return total.tolist()
+
+
+def run_experiment(exp: Experiment, flows: pd.DataFrame, built_gap_min: float,
+                   n_jobs: int = -1) -> ExperimentResult:
     data = prepare(flows, TASKS[exp.task], resolve_features(exp.feature_set),
-                   exp.session_gap_min, exp.group_by)
+                   exp.session_gap_min, exp.group_by, built_gap_min=built_gap_min)
     session_sizes = data.groups[data.test_mask].value_counts()
     rows, preds, confusion, importance = [], [], {}, []
     for model in exp.models:
         for split in exp.splits:
             spec = SplitSpec(split, exp.n_outer, exp.n_inner, exp.n_repeats, exp.seed)
-            per_fold = []
+            per_fold, repeats = [], []
             for out in run_cv(data, get_model(model), spec, n_jobs):
                 metrics = fold_metrics(data.y.iloc[out.test_idx], out.y_pred,
                                        data.groups.iloc[out.test_idx], data.classes,
                                        session_sizes)
                 per_fold.append(metrics.pop("confusion"))
+                repeats.append(out.repeat)
                 rows.append(_fold_row(exp, model, split, out, metrics))
                 preds.append(pd.DataFrame({
                     "model": model, "split": split, "repeat": out.repeat, "fold": out.fold,
                     "row": out.test_idx, "session": data.groups.iloc[out.test_idx].to_numpy(),
                     "y_true": data.y.iloc[out.test_idx].to_numpy(), "y_pred": out.y_pred}))
-                if model in exp.importance_models:
+                # ważność raportujemy tylko przy podziale po sesjach (E4)
+                if model in exp.importance_models and split == "session":
                     importance.append(fold_importance(data, out, exp.seed).assign(
                         model=model, split=split, repeat=out.repeat, fold=out.fold))
             confusion[f"{model}/{split}"] = {
                 "classes": list(data.classes), "per_fold": per_fold,
-                "total": np.sum(per_fold, axis=0).tolist()}
+                "total": _confusion_total(per_fold, repeats)}
     return ExperimentResult(pd.DataFrame(rows), pd.concat(preds, ignore_index=True), confusion,
                             pd.concat(importance, ignore_index=True) if importance
                             else pd.DataFrame())
@@ -153,16 +168,25 @@ def _git_state() -> dict[str, Any]:
     return {"commit": sha, "dirty": dirty, "dirty_excludes": "reports/results"}
 
 
-def run_info(exp: Experiment, data_path: Path, flows: pd.DataFrame) -> dict[str, Any]:
+def git_provenance(before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
+    """Stan gita z chwili startu; commit lub zmiana plików w trakcie przebiegu oznacza dirty."""
+    changed = (before.get("commit"), before.get("dirty")) != (after.get("commit"),
+                                                              after.get("dirty"))
+    return {**before, "dirty": True if changed else before.get("dirty"),
+            "changed_during_run": changed}
+
+
+def run_info(exp: Experiment, data_path: Path, flows: pd.DataFrame, built_gap_min: float,
+             git: dict[str, Any]) -> dict[str, Any]:
     return {
         "experiment": asdict(exp), "task": asdict(TASKS[exp.task]),
         "features": resolve_features(exp.feature_set),
         "data": {"path": data_path.name,
                  "sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
-                 "n_flows": len(flows), "built_session_gap_min": built_session_gap_min()},
+                 "n_flows": len(flows), "built_session_gap_min": built_gap_min},
         "versions": {"python": platform.python_version(), "sklearn": sklearn.__version__,
                      "pandas": pd.__version__, "numpy": np.__version__},
-        **_git_state(),
+        **git,
         "created": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -192,9 +216,14 @@ def main(argv: list[str] | None = None) -> None:
 
     exp = get_experiment(args.experiment)
     flows = load_flows(path=args.data)
-    result = run_experiment(exp, flows, args.n_jobs)
+    # preprocess.py zapisuje features.json obok flows.parquet
+    built_gap_min = built_session_gap_min(args.data.with_name("features.json"))
+    git_before = _git_state()
+    result = run_experiment(exp, flows, built_gap_min, args.n_jobs)
+    git = git_provenance(git_before, _git_state())
     summary = summarize(result, TASKS[exp.task].classes)
-    write_results(result, summary, run_info(exp, args.data, flows), args.out / exp.name)
+    write_results(result, summary, run_info(exp, args.data, flows, built_gap_min, git),
+                  args.out / exp.name)
     cols = ["model", "split", "f1_macro_mean", "f1_macro_std", "f1_macro_min",
             "f1_macro_max", "f1_macro_oof"]
     print(summary[cols].round(3).to_string(index=False))

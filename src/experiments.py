@@ -125,6 +125,14 @@ EXPERIMENTS: dict[str, Experiment] = {e.name: e for e in [
     *[Experiment(f"e4_{fs}_{t}", t, ALL_MODELS, splits, feature_set=fs,
                  n_outer=OUTER_FOLDS.get(t, 5), importance_models=("rf",))
       for fs, splits in E4_FEATURE_SETS.items() for t in TASKS_03B],
+    # wrażliwość E2 (03b) powtórzona bez skrótów: tamta liczona na cechach z przeciekiem Idle *;
+    # punkt odniesienia (sesje 5 min) to e4_bez_skrotow_*
+    *[Experiment(f"e2_bez_skrotow_gap15_{t}", t, ALL_MODELS, ("session",),
+                 feature_set="bez_skrotow", session_gap_min=15.0,
+                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS_03B],
+    *[Experiment(f"e2_bez_skrotow_ippair_{t}", t, ("dummy", "rf"), ("session",),
+                 feature_set="bez_skrotow", group_by="ip_pair",
+                 n_outer=OUTER_FOLDS.get(t, 5)) for t in TASKS_03B],
 ]}
 
 

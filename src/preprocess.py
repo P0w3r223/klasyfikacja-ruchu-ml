@@ -17,6 +17,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw" / "Darknet.CSV"
+KNOWN_BAD_LINES = 1  # wiersz 328 w Darknet.CSV z data-raw-v1
 OUT_DIR = ROOT / "data" / "processed"
 REPORTS_DIR = ROOT / "reports"
 
@@ -54,9 +55,20 @@ def is_multicast_or_broadcast(ip: str) -> bool:
     return addr.is_multicast or ip == "255.255.255.255" or ip.endswith(".255")
 
 
+def _count_data_lines(path: Path) -> int:
+    """Niepuste wiersze pliku bez nagłówka (puste pandas pomija i nie są uszkodzone)."""
+    with path.open("rb") as f:
+        return sum(1 for line in f if line.strip()) - 1
+
+
 def load_raw(path: Path) -> pd.DataFrame:
-    # Wiersz 328 jest uszkodzony (ok. 8 MB bajtów zerowych) - pomijamy go.
+    # Wiersz 328 jest uszkodzony (ok. 8 MB bajtów zerowych) - pomijamy go. Każdy inny
+    # pominięty wiersz oznacza inny plik niż data-raw-v1, więc przerywamy.
     df = pd.read_csv(path, low_memory=False, on_bad_lines="skip")
+    skipped = _count_data_lines(path) - len(df)
+    if skipped != KNOWN_BAD_LINES:
+        raise ValueError(f"{path}: pominięto {skipped} uszkodzonych wierszy, oczekiwano "
+                         f"{KNOWN_BAD_LINES} (wiersz 328); sprawdź, czy to plik z data-raw-v1")
     df = df.rename(columns={"Label": "traffic_type", "Label.1": "service_raw"})
     df["service"] = df["service_raw"].str.lower().map(SERVICE_MAP)
     return df

@@ -111,6 +111,14 @@ def test_gap_min_flag_reaches_sessions_and_features_json(raw_csv, tmp_path):
     assert features["session_gap_min"] == 1.0
 
 
+def test_load_raw_fails_when_other_lines_are_corrupt(tmp_path):
+    path = tmp_path / "Darknet.CSV"
+    lines = [HEADER, *KEPT[:3], BAD_LINE, *KEPT[3:], BAD_LINE, *DROPPED]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="pominięto 2 uszkodzonych wierszy"):
+        load_raw(path)
+
+
 def test_build_does_not_modify_input(raw_csv):
     raw = load_raw(raw_csv)
     before = raw.copy()
