@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raport postępów projektu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f3ec; --paper: #fffdf8; --ink: #1c1b19; --muted: #6b665c;
+  --rule: #ddd6c8; --accent: #8a2b1d; --accent-2: #1f4e79;
+  --def-bg: #f1ece1; --code-bg: #1e1f24; --code-ink: #e6e3dc; --code-dim: #8b8778;
+  --code-kw: #e7a76c; --code-str: #a6c98a; --code-com: #7f8a99;
+  --ok: #2d6a4f; --now: #b5651d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --paper: #1b1a18; --ink: #ebe6dc; --muted: #a39d90;
+    --rule: #39352e; --accent: #e08a6f; --accent-2: #8fb8e0;
+    --def-bg: #26231e; --code-bg: #0f1013; --ok: #74c69d; --now: #f0a35e;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212; --paper: #1b1a18; --ink: #ebe6dc; --muted: #a39d90;
+  --rule: #39352e; --accent: #e08a6f; --accent-2: #8fb8e0;
+  --def-bg: #26231e; --code-bg: #0f1013; --ok: #74c69d; --now: #f0a35e;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 17px/1.65 "Source Serif 4", Georgia, "Times New Roman", serif;
+  font-optical-sizing: auto;
+}
+.sheet {
+  max-width: 860px; margin: 32px auto; background: var(--paper);
+  border: 1px solid var(--rule); padding: 56px 64px 72px;
+  box-shadow: 0 1px 0 var(--rule), 0 12px 40px -24px rgba(0,0,0,.25);
+}
+@media (max-width: 700px) { .sheet { margin: 0; border: 0; padding: 32px 16px 56px; } }
+
+.sans, h1, h2, h3, .kicker, figcaption, .def, .codebox header, table, .meta, nav, .flow, .pill {
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+.kicker { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 10px 0 14px; letter-spacing: -.01em; }
+.byline { color: var(--muted); font-size: 15px; margin: 0; }
+h2 { font-size: 21px; font-weight: 600; margin: 56px 0 6px; padding-top: 14px; border-top: 2px solid var(--ink); display: flex; gap: 14px; }
+h2 .n { color: var(--accent); min-width: 1.6em; }
+h3 { font-size: 16px; font-weight: 600; margin: 32px 0 6px; color: var(--accent-2); }
+p { margin: 10px 0; hyphens: auto; }
+a { color: var(--accent-2); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+em.k { font-style: normal; font-weight: 600; border-bottom: 1px dotted var(--accent); }
+
+.abstract { margin: 28px 0 8px; padding: 18px 22px; border-left: 3px solid var(--accent); background: var(--def-bg); }
+.abstract b.h { font-family: "IBM Plex Sans", sans-serif; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 4px; }
+.keywords { font-size: 14px; color: var(--muted); margin-top: 10px; }
+
+nav.toc { margin: 24px 0 0; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); }
+nav.toc a { color: var(--muted); text-decoration: none; }
+nav.toc a:hover { color: var(--accent); }
+
+/* definicje pod akapitem, w którym pojęcie pada pierwszy raz */
+.def {
+  font-size: 14px; line-height: 1.55; margin: 6px 0 16px 0; padding: 8px 12px 8px 14px;
+  background: var(--def-bg); border-radius: 0 6px 6px 0; border-left: 2px solid var(--accent-2);
+}
+.def dfn { font-style: normal; font-weight: 600; color: var(--accent-2); }
+.def dfn::after { content: " · "; color: var(--muted); font-weight: 400; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 28px 0 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.stats div { padding: 14px 12px; border-right: 1px solid var(--rule); }
+.stats div:last-child { border-right: 0; }
+.stats .v { font: 600 26px/1.1 "IBM Plex Sans", sans-serif; font-variant-numeric: tabular-nums; color: var(--accent); }
+.stats .l { font: 13px/1.35 "IBM Plex Sans", sans-serif; color: var(--muted); margin-top: 4px; }
+@media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } .stats div:nth-child(2) { border-right: 0; } .stats div:nth-child(-n+2) { border-bottom: 1px solid var(--rule); } }
+
+figure { margin: 24px 0; }
+figure .img { background: #fff; border: 1px solid var(--rule); padding: 10px; }
+figure img { width: 100%; height: auto; display: block; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+figcaption b { color: var(--ink); }
+
+.codebox { margin: 18px 0 22px; border-radius: 8px; overflow: hidden; background: var(--code-bg); border: 1px solid #000; }
+.codebox header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: center; padding: 8px 14px; background: #2a2b31; color: #cfcabe; font-size: 12.5px; }
+.codebox header .path { font-family: "IBM Plex Mono", monospace; color: #fff; }
+.codebox header .path span { color: var(--code-kw); }
+.codebox header a { color: #9cc4ec; text-decoration: none; margin-left: 10px; }
+.codebox header a:hover { text-decoration: underline; }
+.codebox pre { margin: 0; padding: 14px 16px; overflow-x: auto; font: 13px/1.6 "IBM Plex Mono", Consolas, monospace; color: var(--code-ink); }
+.codebox .why { padding: 8px 14px 12px; color: #bdb8ab; font: 13px/1.5 "IBM Plex Sans", sans-serif; border-top: 1px solid #33343a; }
+.kw { color: var(--code-kw); } .st { color: var(--code-str); } .cm { color: var(--code-com); font-style: italic; }
+code { font: 14px "IBM Plex Mono", monospace; background: var(--def-bg); padding: 1px 4px; border-radius: 3px; }
+
+.tablewrap { overflow-x: auto; margin: 18px 0 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+caption { caption-side: top; text-align: left; font-size: 13.5px; color: var(--muted); padding-bottom: 8px; }
+caption b { color: var(--ink); }
+thead th { border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); font-weight: 600; text-align: left; padding: 7px 10px; }
+tbody td { padding: 6px 10px; border-bottom: 1px solid var(--rule); }
+tbody tr:last-child td { border-bottom: 2px solid var(--ink); }
+td.r, th.r { text-align: right; }
+tr.best td { font-weight: 600; }
+.bar { height: 6px; background: var(--rule); min-width: 90px; position: relative; }
+.bar i { position: absolute; inset: 0 auto 0 0; background: var(--accent-2); }
+.bar.base i { background: var(--muted); }
+
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0; counter-reset: st; }
+.flow a { display: block; text-decoration: none; color: var(--ink); border: 1px solid var(--rule); border-top: 3px solid var(--accent-2); padding: 10px 12px; background: var(--paper); font-size: 13px; line-height: 1.4; position: relative; }
+.flow a:hover { border-top-color: var(--accent); background: var(--def-bg); }
+.flow a::before { counter-increment: st; content: counter(st); font-weight: 600; color: var(--accent); margin-right: 6px; }
+.flow b { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; }
+.flow span { display: block; color: var(--muted); margin-top: 4px; }
+
+.callout { margin: 18px 0; padding: 14px 18px; border: 1px solid var(--accent); border-left-width: 4px; }
+.callout b.h { font-family: "IBM Plex Sans", sans-serif; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); display: block; }
+
+ul.threats { padding-left: 20px; } ul.threats li { margin: 6px 0; }
+ol.tl { list-style: none; padding: 0; margin: 16px 0; font-size: 15px; }
+ol.tl li { display: grid; grid-template-columns: 74px 22px 1fr; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+ol.tl .d { font: 500 13px "IBM Plex Mono", monospace; color: var(--muted); }
+ol.tl .s.ok { color: var(--ok); } ol.tl .s.now { color: var(--now); }
+.pill { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--rule); color: var(--muted); margin-left: 4px; }
+.foot { margin-top: 48px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<article class="sheet">
+
+<div class="kicker">Inżynieria ruchu · Politechnika Wrocławska · raport postępów</div>
+<h1>Klasyfikacja usług w zaszyfrowanym ruchu sieciowym na podstawie statystyk przepływów</h1>
+<p class="byline">Piotr Cząstkiewicz · stan na 9 listopada 2026 · repozytorium: <a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml">P0w3r223/klasyfikacja-ruchu-ml</a></p>
+
+<div class="abstract">
+  <b class="h">Streszczenie</b>
+  Badam, czy usługę (WWW, VoIP, Video) da się rozpoznać wyłącznie po statystycznym „kształcie” ruchu, bez dostępu do treści, także przez VPN. Na zbiorze CIC-Darknet2020 wykazano trzy źródła zawyżania wyników: <em>efekt kampanii</em> nagraniowej, losowy podział danych oraz <em>cechy-skróty</em> zdradzające datę i system nagrywający. Po ich usunięciu las losowy osiąga F1 makro <b>0,957</b> dla VoIP vs Video i <b>0,797</b> dla WWW vs Video, przy poziomie zgadywania ok. 0,50. Nie znaleziono dowodu, że tunel VPN utrudnia klasyfikację.
+  <div class="keywords sans">Słowa kluczowe: klasyfikacja ruchu, uczenie maszynowe, CICFlowMeter, przeciek danych, walidacja krzyżowa po sesjach</div>
+</div>
+
+<div class="stats">
+  <div><div class="v">32 441</div><div class="l">przepływów po czyszczeniu (z 141 530)</div></div>
+  <div><div class="v">0,957</div><div class="l">F1 makro, VoIP vs Video</div></div>
+  <div><div class="v">0,797</div><div class="l">F1 makro, WWW vs Video</div></div>
+  <div><div class="v">9 / 128</div><div class="l">modeli finalnych / testów automatycznych</div></div>
+</div>
+
+<nav class="toc">
+  <a href="#s1">1 Wprowadzenie</a><a href="#s2">2 Dane</a><a href="#s3">3 Metodyka</a><a href="#s4">4 Wyniki</a><a href="#s5">5 Zagrożenia trafności</a><a href="#s6">6 Architektura kodu</a><a href="#s7">7 Stan prac</a>
+</nav>
+
+<!-- 1 -->
+<h2 id="s1"><span class="n">1</span>Wprowadzenie</h2>
+<p>Większość ruchu w Internecie jest dziś szyfrowana, a mimo to operator chce odróżniać rozmowy (wrażliwe na opóźnienie) od wideo (wymagającego przepustowości), np. do nadawania priorytetów. Klasyczna inspekcja treści nie działa, pozostają cechy zewnętrzne: rozmiary pakietów, odstępy między nimi, czas trwania połączenia.</p>
+<p>Projekt odpowiada na trzy pytania badawcze:</p>
+<p><b>P1.</b> Które cechy niosą więcej informacji o usłudze: czasowe czy rozmiarowe?<br>
+<b>P2.</b> O ile sposób podziału danych na uczące i testowe zawyża wynik?<br>
+<b>P3.</b> Czy tunel VPN utrudnia rozpoznanie usługi?</p>
+
+<!-- 2 -->
+<h2 id="s2"><span class="n">2</span>Dane i ich przygotowanie</h2>
+<p>Źródłem jest publiczny zbiór <b>CIC-Darknet2020</b> (Canadian Institute for Cybersecurity), w którym ruch nagrano w laboratorium i opisano narzędziem CICFlowMeter. Każdy wiersz to jeden <em class="k">przepływ</em> z 62 cechami liczbowymi oraz etykietą usługi i rodzaju tunelu.</p>
+<div class="def"><dfn>Przepływ</dfn>ciąg pakietów między dwoma punktami końcowymi z tym samym adresem IP, portem i protokołem, zamknięty po zakończeniu połączenia lub przerwie. Dla modelu to jeden przykład, opisany statystykami (np. średni rozmiar pakietu, średni odstęp między pakietami).</div>
+
+<p>Usunięto uszkodzony wiersz, duplikaty oraz <em class="k">ruch tła</em>, który nie należy do żadnej usługi (DNS, NTP, DHCP, mDNS, SSDP, rozgłoszenia i protokoły inne niż TCP/UDP). Porty służą wyłącznie do filtrowania, nie są cechami modelu: inaczej model uczyłby się numerów portów zamiast zachowania ruchu.</p>
+<div class="codebox">
+  <header><span class="path">src/preprocess.py · <span>background_reason()</span></span><span><a href="../src/preprocess.py">otwórz lokalnie</a><a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml/blob/014d170/src/preprocess.py#L77-L85">GitHub L77–85</a></span></header>
+<pre><span class="kw">def</span> background_reason(df):
+    reason = pd.Series(<span class="st">""</span>, index=df.index)
+    reason[~df[<span class="st">"Protocol"</span>].isin([<span class="st">6</span>, <span class="st">17</span>])] = <span class="st">"protokół inny niż TCP/UDP"</span>
+    <span class="kw">for</span> col <span class="kw">in</span> [<span class="st">"Dst Port"</span>, <span class="st">"Src Port"</span>]:
+        hit = df[col].map(BACKGROUND_PORTS)
+        reason = reason.mask((reason == <span class="st">""</span>) &amp; hit.notna(), hit)
+    mb = df[<span class="st">"Dst IP"</span>].map(is_multicast_or_broadcast)
+    reason[(reason == <span class="st">""</span>) &amp; mb] = <span class="st">"multicast/broadcast"</span>
+    <span class="kw">return</span> reason</pre>
+  <div class="why">Każdy usunięty przepływ dostaje powód usunięcia, więc liczności po każdym kroku są w <a href="preprocess_report.md">preprocess_report.md</a>. Całość odtwarza się z surowego pliku bit w bit (43 testy w <a href="../tests/test_preprocess.py">test_preprocess.py</a>).</div>
+</div>
+
+<p>Przepływy połączono w <em class="k">sesje</em>, które są kluczowe dla uczciwej oceny (rozdz. 3).</p>
+<div class="def"><dfn>Sesja</dfn>seria przepływów tej samej pary komputerów i tej samej usługi z przerwami nie dłuższymi niż 5 minut, np. jedno oglądanie filmu albo jedna rozmowa. Przepływy w obrębie sesji są do siebie bardzo podobne.</div>
+<div class="codebox">
+  <header><span class="path">src/preprocess.py · <span>assign_sessions()</span></span><span><a href="../src/preprocess.py">otwórz lokalnie</a><a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml/blob/014d170/src/preprocess.py#L95-L102">GitHub L95–102</a></span></header>
+<pre><span class="kw">def</span> assign_sessions(df, gap_min):
+    <span class="cm">"""Sesja = ta sama nieuporządkowana para IP, ta sama etykieta, przerwa &lt;= gap_min."""</span>
+    key = df[<span class="st">"traffic_type"</span>] + <span class="st">"|"</span> + df[<span class="st">"service"</span>] + <span class="st">"|"</span> + ip_pair(df)
+    order = pd.DataFrame({<span class="st">"key"</span>: key, <span class="st">"ts"</span>: df[<span class="st">"ts"</span>]}).sort_values([<span class="st">"key"</span>, <span class="st">"ts"</span>])
+    new = order[<span class="st">"key"</span>].ne(order[<span class="st">"key"</span>].shift()) | (
+        order[<span class="st">"ts"</span>].diff() &gt; pd.Timedelta(minutes=gap_min))
+    <span class="kw">return</span> new.cumsum().reindex(df.index).astype(int)</pre>
+</div>
+
+<figure>
+  <div class="img"><img src="figures/01_licznosci.png" alt="Liczności przepływów w klasach"></div>
+  <figcaption><b>Rys. 1.</b> Liczności przepływów w klasach po czyszczeniu. Klasy są silnie niezrównoważone (WWW ok. 20 tys., VoIP ok. 400), co przesądza o wyborze miary jakości (rozdz. 3).</figcaption>
+</figure>
+
+<!-- 3 -->
+<h2 id="s3"><span class="n">3</span>Metodyka</h2>
+<h3>3.1 Modele</h3>
+<p>Porównywane są trzy klasyfikatory o różnej naturze oraz model odniesienia. Każdy jest zamknięty w <em class="k">potoku</em> razem ze standaryzacją cech.</p>
+<div class="def"><dfn>k-NN</dfn>przypisuje klasę większości <i>k</i> najbardziej podobnych przykładów ze zbioru uczącego. <dfn style="margin-left:6px">Drzewo decyzyjne</dfn>seria pytań „tak/nie” o wartości cech. <dfn style="margin-left:6px">Las losowy (RF)</dfn>głosowanie 200 drzew uczonych na losowych podzbiorach danych i cech. <dfn style="margin-left:6px">Dummy</dfn>losuje odpowiedź według proporcji klas; wyznacza poziom „zgadywania”.</div>
+<div class="def"><dfn>Potok (pipeline)</dfn>skalowanie i model zapisane jako jeden obiekt. Parametry skalowania liczone są tylko na danych uczących, więc dane testowe nie „przeciekają” do modelu.</div>
+<div class="codebox">
+  <header><span class="path">src/models.py · <span>ModelSpec</span>, <span>MODELS</span></span><span><a href="../src/models.py">otwórz lokalnie</a><a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml/blob/014d170/src/models.py#L17-L56">GitHub L17–56</a></span></header>
+<pre><span class="kw">def</span> pipeline(self, seed=SEED):
+    <span class="cm">"""Skalowanie i model w jednym potoku, żeby test nie wpływał na skalowanie."""</span>
+    <span class="kw">return</span> Pipeline([(<span class="st">"scale"</span>, StandardScaler()), (<span class="st">"clf"</span>, self.make(seed))])
+
+<span class="st">"rf"</span>: ModelSpec(<span class="st">"rf"</span>,
+    <span class="kw">lambda</span> seed: RandomForestClassifier(
+        n_estimators=<span class="st">200</span>, class_weight=<span class="st">"balanced"</span>, random_state=seed),
+    {<span class="st">"max_depth"</span>: [<span class="st">10</span>, <span class="st">20</span>, None], <span class="st">"max_features"</span>: [<span class="st">"sqrt"</span>, <span class="st">0.3</span>],
+     <span class="st">"min_samples_leaf"</span>: [<span class="st">1</span>, <span class="st">5</span>]}),</pre>
+  <div class="why">Siatki hiperparametrów wszystkich modeli są w jednym miejscu; <code>class_weight="balanced"</code> kompensuje niezrównoważenie klas.</div>
+</div>
+
+<h3>3.2 Schemat oceny</h3>
+<p>Wynik oceniany jest w <em class="k">zagnieżdżonej walidacji krzyżowej</em>, porównując dwa sposoby podziału: losowy (<b>E1</b>) i <em class="k">po sesjach</em> (<b>E2</b>).</p>
+<div class="def"><dfn>Walidacja krzyżowa</dfn>dane dzieli się na 5 części (foldów); kolejno każda jest testem, a reszta służy do uczenia. Wynik to średnia z 5 prób, a rozrzut mierzy stabilność. <i>Zagnieżdżona</i>: wewnątrz każdego foldu uczącego osobna, 3-krotna walidacja dobiera hiperparametry, więc fold testowy nie wpływa na żaden wybór.</div>
+<div class="def"><dfn>Podział po sesjach</dfn>cała sesja trafia albo do uczenia, albo do testu. Przy podziale losowym fragmenty tego samego filmu są w obu częściach i model „rozpoznaje znajomego”, zamiast uogólniać.</div>
+<div class="codebox">
+  <header><span class="path">src/evaluate.py · <span>outer_folds()</span></span><span><a href="../src/evaluate.py">otwórz lokalnie</a><a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml/blob/014d170/src/evaluate.py#L82-L95">GitHub L82–95</a></span></header>
+<pre><span class="kw">for</span> _, fold_test <span class="kw">in</span> _split(spec.kind, spec.n_outer, spec.seed + repeat,
+                          data.strata.iloc[test_pos], data.groups.iloc[test_pos]):
+    test_idx = test_pos[fold_test]
+    exclude = np.zeros(len(data.y), dtype=bool)
+    <span class="kw">if</span> spec.kind == <span class="st">"session"</span>:
+        <span class="cm"># żadna sesja z testu nie może pojawić się w uczeniu</span>
+        exclude = data.groups.isin(data.groups.iloc[test_idx]).to_numpy(copy=True)
+    exclude[test_idx] = True
+    train_idx = np.flatnonzero(data.train_mask &amp; ~exclude)</pre>
+  <div class="why">Serce oceny. <code>_split()</code> używa <code>StratifiedGroupKFold</code> (grupy = sesje), a <code>fit_tuned()</code> stroi model wewnętrzną CV tak samo, jak powstają modele finalne. Moduł nie wykonuje I/O i jest pokryty testami w <a href="../tests/test_evaluate.py">test_evaluate.py</a>.</div>
+</div>
+
+<h3>3.3 Miara jakości</h3>
+<p>Główną miarą jest <em class="k">F1 makro</em>; pomocniczo raportowane są macierze pomyłek i F1 ważone sesjami.</p>
+<div class="def"><dfn>F1 makro</dfn>dla każdej klasy liczy się F1, czyli średnią harmoniczną <i>precyzji</i> (jaka część wskazań klasy była trafna) i <i>czułości</i> (jaką część przypadków klasy model znalazł), a potem średnią po klasach. Klasa rzadka waży tyle co częsta, więc odpowiadanie zawsze „WWW” nie daje wysokiego wyniku. Skala: ok. 0,5 to zgadywanie przy dwóch klasach, 1,0 to bezbłędna klasyfikacja.</div>
+<div class="codebox">
+  <header><span class="path">src/evaluate.py · <span>fold_metrics()</span></span><span><a href="../src/evaluate.py">otwórz lokalnie</a><a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml/blob/014d170/src/evaluate.py#L146-L176">GitHub L146–176</a></span></header>
+<pre><span class="st">"f1_macro"</span>: f1_score(y_true, y_pred, labels=labels, average=<span class="st">"macro"</span>),
+<span class="cm"># każda sesja waży tyle samo: czy wynik nie ciągnie jedna długa rozmowa</span>
+<span class="st">"f1_macro_session_weighted"</span>: f1_score(y_true, y_pred, labels=labels, average=<span class="st">"macro"</span>,
+                                       sample_weight=<span class="st">1.0</span> / sizes),</pre>
+</div>
+
+<!-- 4 -->
+<h2 id="s4"><span class="n">4</span>Wyniki</h2>
+<h3>4.1 Efekt kampanii nagraniowej</h3>
+<p>Zbiór powstał w dwóch niezależnych <em class="k">kampaniach</em>: Tor-nonTor (zawiera WWW) i VPN-nonVPN (zawiera VoIP). Wideo nagrano w obu. Las losowy odróżnia kampanię <b>na samym wideo</b> z dokładnością zbalansowaną <b>0,997</b>, a po usunięciu wszystkich cech-skrótów (4.3) nadal 0,982.</p>
+<div class="def"><dfn>Kampania</dfn>osobna sesja nagraniowa autorów zbioru: inne komputery, inny czas, inna konfiguracja. <dfn style="margin-left:6px">Dokładność zbalansowana</dfn>średni odsetek trafień w każdej klasie; 0,5 = zgadywanie, 1,0 = bezbłędnie.</div>
+<figure>
+  <div class="img"><img src="figures/06_efekt_kampanii.png" alt="Efekt kampanii a efekt usługi dla każdej cechy"></div>
+  <figcaption><b>Rys. 2.</b> Każdy punkt to jedna cecha. Oś pozioma: jak silnie cecha różni WWW od wideo (usługa); oś pionowa: jak silnie różni wideo z dwóch kampanii. Miarą jest statystyka Kołmogorowa–Smirnowa (KS), czyli największa różnica dwóch rozkładów, od 0 (identyczne) do 1 (rozłączne). Cechy nad przekątną mówią więcej o <i>miejscu nagrania</i> niż o usłudze.</figcaption>
+</figure>
+<div class="callout"><b class="h">Konsekwencja metodyczna</b>Zadanie „WWW / VoIP / Video” jest zawyżone, bo model częściowo rozpoznaje kampanię. Główną miarą są dwa zadania <b>wewnątrz jednej kampanii</b>: WWW vs Video oraz VoIP vs Video (zaakceptowane przez prowadzącego 21.10).</div>
+
+<h3>4.2 Podział losowy a podział po sesjach (P2)</h3>
+<figure>
+  <div class="img"><img src="figures/09_zawyzenie_e1_e2.png" alt="Zawyżenie wyniku przy podziale losowym"></div>
+  <figcaption><b>Rys. 3.</b> Różnica F1 makro między podziałem losowym (E1) a podziałem po sesjach (E2). Najbardziej zawyżony jest k-NN (+0,025…0,033), bo dosłownie wyszukuje „bliźniacze” przepływy z tej samej sesji. Dla RF po usunięciu skrótów zawyżenie sięga ok. 0,02.</figcaption>
+</figure>
+<p><b>Odpowiedź na P2:</b> podział losowy systematycznie zawyża wyniki, najmocniej dla metod opartych na podobieństwie. Wszystkie dalsze wyniki pochodzą z podziału po sesjach.</p>
+
+<h3>4.3 Cechy-skróty i ważność grup cech (P1)</h3>
+<p>Część cech opisuje okoliczności nagrania, a nie usługę. Grupa <code>Idle *</code> w 51% przepływów zawiera w praktyce bezwzględny czas, czyli <b>datę nagrania</b>, a każdą usługę nagrywano innego dnia. Cechy <code>Fwd Seg Size Min</code> i <code>Init Win Bytes</code> zależą od systemu operacyjnego nagrywającego komputera. Po usunięciu jednej grupy model przejmuje następną, dlatego wiarygodny jest wyłącznie zestaw <b>bez skrótów</b> (55 cech).</p>
+<div class="def"><dfn>Przeciek danych (data leakage)</dfn>sytuacja, w której model korzysta z informacji niedostępnej w rzeczywistym zastosowaniu (tu: daty i systemu nagrywającego). Daje wysoki wynik w testach, który nie przenosi się na nowe dane.</div>
+<div class="codebox">
+  <header><span class="path">src/experiments.py · <span>FEATURE_SETS</span></span><span><a href="../src/experiments.py">otwórz lokalnie</a><a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml/blob/014d170/src/experiments.py#L71-L87">GitHub L71–87</a></span></header>
+<pre>TCP_SHORTCUTS = (<span class="st">"Fwd Seg Size Min"</span>, <span class="st">"FWD Init Win Bytes"</span>, <span class="st">"Bwd Init Win Bytes"</span>)
+
+FEATURE_SETS = {
+    ...
+    <span class="st">"bez_skrotow"</span>: <span class="kw">lambda</span> features: [f <span class="kw">for</span> f <span class="kw">in</span> features
+                                     <span class="kw">if not</span> _is_idle(f) <span class="kw">and</span> f <span class="kw">not in</span> TCP_SHORTCUTS],</pre>
+  <div class="why"><a href="../src/experiments.py">experiments.py</a> to rejestr zadań, zestawów cech i eksperymentów. Każdy eksperyment E1–E5 jest tu jednym wpisem uruchamianym przez <a href="../src/train.py">train.py</a>, więc schemat oceny pozostaje niezmienny.</div>
+</div>
+<figure>
+  <div class="img"><img src="figures/13_e4_zestawy_cech.png" alt="F1 makro dla zestawów cech"></div>
+  <figcaption><b>Rys. 4.</b> F1 makro dla siedmiu zestawów cech (duży znak: średnia; małe: poszczególne foldy). Usunięcie skrótów obniża WWW vs Video z 0,896 do 0,797. To spadek do wartości prawdziwej, a nie pogorszenie modelu.</figcaption>
+</figure>
+<p>Do oceny, które cechy są ważne, użyto <em class="k">ważności permutacyjnej grup</em>.</p>
+<div class="def"><dfn>Ważność permutacyjna</dfn>w danych testowych losowo miesza się wartości całej grupy cech (np. wszystkich czasowych) i mierzy spadek F1. Duży spadek oznacza, że model na tej grupie polega. Mieszanie całej grupy naraz zapobiega temu, by skorelowana cecha z tej samej grupy „zastąpiła” wymieszaną.</div>
+<figure>
+  <div class="img"><img src="figures/14_e4_waznosc_grup.png" alt="Ważność grup cech"></div>
+  <figcaption><b>Rys. 5.</b> Ważność grup cech dla RF (kod: <a href="../src/importance.py">src/importance.py</a>, przypisanie cech do grup: <a href="../src/features.py">feature_group()</a>).</figcaption>
+</figure>
+<p><b>Odpowiedź na P1:</b> zależy od zadania. WWW od wideo odróżniają głównie cechy <b>czasowe</b> (RF na samych czasowych 0,777 vs na samych rozmiarowych 0,689), a VoIP od wideo cechy <b>rozmiarowe</b> (0,933 vs 0,895).</p>
+
+<h3>4.4 Wyniki główne</h3>
+<div class="tablewrap">
+<table>
+  <caption><b>Tab. 1.</b> F1 makro (średnia ± odchylenie z 5 foldów), podział po sesjach, zestaw cech bez skrótów. Źródło: <a href="results/04_e4_tabela.md">results/04_e4_tabela.md</a>.</caption>
+  <thead><tr><th>Zadanie</th><th>Model</th><th class="r">F1 makro</th><th style="width:30%">skala 0–1</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="4">VoIP vs Video<br><span class="meta">kampania VPN-nonVPN</span></td><td>Dummy</td><td class="r">0,519 ± 0,012</td><td><div class="bar base"><i style="width:51.9%"></i></div></td></tr>
+    <tr><td>k-NN</td><td class="r">0,942 ± 0,016</td><td><div class="bar"><i style="width:94.2%"></i></div></td></tr>
+    <tr><td>drzewo</td><td class="r">0,926 ± 0,040</td><td><div class="bar"><i style="width:92.6%"></i></div></td></tr>
+    <tr class="best"><td>RF</td><td class="r">0,957 ± 0,022</td><td><div class="bar"><i style="width:95.7%"></i></div></td></tr>
+    <tr><td rowspan="4">WWW vs Video<br><span class="meta">kampania Tor-nonTor</span></td><td>Dummy</td><td class="r">0,496 ± 0,000</td><td><div class="bar base"><i style="width:49.6%"></i></div></td></tr>
+    <tr><td>k-NN</td><td class="r">0,791 ± 0,007</td><td><div class="bar"><i style="width:79.1%"></i></div></td></tr>
+    <tr><td>drzewo</td><td class="r">0,782 ± 0,009</td><td><div class="bar"><i style="width:78.2%"></i></div></td></tr>
+    <tr class="best"><td>RF</td><td class="r">0,797 ± 0,012</td><td><div class="bar"><i style="width:79.7%"></i></div></td></tr>
+  </tbody>
+</table>
+</div>
+<p>Las losowy jest najlepszy w obu zadaniach, ale po usunięciu skrótów jego przewaga nad prostszymi modelami jest w granicach rozrzutu między foldami. Klasyfikacja jednego przepływu przez RF trwa ok. 10 µs.</p>
+<div class="def"><dfn>Macierz pomyłek</dfn>tabela, w której wiersz to prawdziwa klasa, a kolumna odpowiedź modelu. Na przekątnej są trafienia, poza nią pomyłki, więc widać nie tylko <i>ile</i>, ale i <i>jak</i> model się myli.</div>
+<figure>
+  <div class="img"><img src="figures/11_macierze_rf.png" alt="Macierze pomyłek lasu losowego"></div>
+  <figcaption><b>Rys. 6.</b> Macierze pomyłek RF (górny rząd: podział losowy, dolny: po sesjach). Uwaga: policzone na wszystkich cechach, ze skrótami, więc pokazują charakter pomyłek, a nie wynik końcowy. Główna słabość: ok. 14% wideo w kampanii Tor-nonTor model bierze za WWW.</figcaption>
+</figure>
+
+<h3>4.5 Wpływ VPN (P3, eksperyment E3)</h3>
+<figure>
+  <div class="img"><img src="figures/12_e3_warianty.png" alt="VoIP vs Video w wariantach tunelu"></div>
+  <figcaption><b>Rys. 7.</b> VoIP vs Video w czterech wariantach: uczenie i test na ruchu zwykłym, na VPN, uczenie na zwykłym i test na VPN oraz dane mieszane. Bez cech-skrótów: zwykły→VPN 0,971, VPN→VPN 0,976.</figcaption>
+</figure>
+<p><b>Odpowiedź na P3:</b> brak dowodu, że VPN utrudnia rozróżnienie VoIP od wideo. Rytm i rozmiary pakietów przechodzą przez tunel w dużej mierze niezmienione.</p>
+
+<h3>4.6 Klasa nieznana modelowi (E5)</h3>
+<p>Przepływy Audio (streaming muzyki), których modele nigdy nie widziały, podano modelom finalnym. Trafiają prawie wyłącznie do <b>Video</b> (do VoIP najwyżej 1,5%), co jest zgodne z intuicją: oba są strumieniami jednokierunkowymi. Ponownie widać efekt kampanii: model z kampanii Tor-nonTor klasyfikuje Audio jako WWW w 29,1% przypadków, model z VPN-nonVPN tylko w 2,4% (<a href="results/05_e5/">results/05_e5/</a>, kod: <a href="../src/e5_audio.py">e5_audio.py</a>).</p>
+
+<!-- 5 -->
+<h2 id="s5"><span class="n">5</span>Zagrożenia dla trafności wniosków</h2>
+<ul class="threats">
+  <li><b>Jeden zbiór laboratoryjny.</b> Wyniki mogą nie przenosić się na ruch rzeczywisty. Odpowiedź: własne nagrania w etapie 06 (E7).</li>
+  <li><b>Mała liczba sesji VoIP.</b> Największa sesja to 30% przepływów VoIP; w zadaniu trzech usług użyto przez to 3 foldów zamiast 5.</li>
+  <li><b>Nieusuwalny efekt kampanii.</b> Nawet bez skrótów kampanię da się rozpoznać (0,982). Dlatego wnioski opierają się na zadaniach wewnątrz kampanii.</li>
+  <li><b>Definicja sesji.</b> Próg 5 min jest arbitralny; analiza wrażliwości (15 min oraz grupowanie po samej parze IP) nie zmienia wniosków.</li>
+</ul>
+
+<!-- 6 -->
+<h2 id="s6"><span class="n">6</span>Architektura kodu i artefakty</h2>
+<p>Kod tworzy liniowy potok od surowego pliku CSV do zapisanych modeli. Kliknij etap, aby otworzyć plik.</p>
+<div class="flow">
+  <a href="../src/preprocess.py"><b>preprocess.py</b><span>czyszczenie, filtr tła, sesje → flows.parquet</span></a>
+  <a href="../src/features.py"><b>features.py</b><span>wczytanie danych, lista i grupy cech</span></a>
+  <a href="../src/experiments.py"><b>experiments.py</b><span>rejestr zadań, zestawów cech, eksperymentów</span></a>
+  <a href="../src/evaluate.py"><b>evaluate.py</b><span>zagnieżdżona CV po sesjach, metryki</span></a>
+  <a href="../src/train.py"><b>train.py</b><span>CLI: uruchamia eksperyment, zapisuje wyniki</span></a>
+  <a href="../src/finalize.py"><b>finalize.py</b><span>modele finalne + metadata.json</span></a>
+</div>
+<div class="tablewrap">
+<table>
+  <caption><b>Tab. 2.</b> Najważniejsze pliki projektu.</caption>
+  <thead><tr><th>Plik</th><th>Rola</th></tr></thead>
+  <tbody>
+    <tr><td><a href="../src/models.py">src/models.py</a></td><td>definicje modeli i siatek hiperparametrów</td></tr>
+    <tr><td><a href="../src/importance.py">src/importance.py</a></td><td>ważność grup cech (Gini, permutacja grupy)</td></tr>
+    <tr><td><a href="../src/model_store.py">src/model_store.py</a></td><td>bezpieczne wczytanie modelu: sprawdza SHA-256 i wersje bibliotek</td></tr>
+    <tr><td><a href="../src/check_models.py">src/check_models.py</a></td><td>kontrola, że 9 modeli wczytuje się i przewiduje na danej maszynie</td></tr>
+    <tr><td><a href="../models/metadata.json">models/metadata.json</a></td><td>opis modeli: kolejność cech, wersje, commit, wyniki CV, sesje odłożone na pokaz</td></tr>
+    <tr><td><a href="../models/">models/*.joblib</a></td><td>9 potoków (k-NN, drzewo, RF × 3 zadania); także w GitHub Release <a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml/releases/tag/models-v1">models-v1</a></td></tr>
+    <tr><td><a href="../notebooks/01_eda.ipynb">notebooks/01_eda.ipynb</a></td><td>eksploracyjna analiza danych</td></tr>
+    <tr><td><a href="../tests/">tests/</a></td><td>128 testów automatycznych (pytest)</td></tr>
+    <tr><td><a href="../docs/decyzje.md">docs/decyzje.md</a></td><td>dziennik decyzji metodycznych z uzasadnieniem</td></tr>
+    <tr><td><a href="../docs/research/literatura.md">docs/research/literatura.md</a></td><td>przegląd literatury (16 prac)</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="codebox">
+  <header><span class="path">src/model_store.py · <span>load_pipeline()</span></span><span><a href="../src/model_store.py">otwórz lokalnie</a><a href="https://github.com/P0w3r223/klasyfikacja-ruchu-ml/blob/014d170/src/model_store.py#L67-L79">GitHub L67–79</a></span></header>
+<pre>actual = file_sha256(path)
+<span class="kw">if</span> actual != entry[<span class="st">"sha256"</span>]:
+    <span class="kw">raise</span> ValueError(f<span class="st">"{path.name}: SHA-256 {actual} różni się od metadata.json"</span>)
+<span class="kw">with</span> warnings.catch_warnings():
+    warnings.simplefilter(<span class="st">"error"</span>)   <span class="cm"># ostrzeżenie o wersji sklearn = błąd</span>
+    <span class="kw">return</span> joblib.load(path)</pre>
+  <div class="why">Model wytrenowany na komputerze stacjonarnym jest używany na laptopie. Sprawdzenie sumy kontrolnej i wersji gwarantuje, że to ten sam model, który dał raportowane wyniki.</div>
+</div>
+
+<!-- 7 -->
+<h2 id="s7"><span class="n">7</span>Stan prac i dalsze kroki</h2>
+<ol class="tl">
+  <li><span class="d">00–01</span><span class="s ok">✓</span><span>Ocena źródeł danych, przegląd literatury</span></li>
+  <li><span class="d">02</span><span class="s ok">✓</span><span>Weryfikacja i odtwarzalne przygotowanie danych</span></li>
+  <li><span class="d">03</span><span class="s ok">✓</span><span>Moduł oceny; E1/E2: podział losowy vs po sesjach (P2)</span></li>
+  <li><span class="d">04</span><span class="s ok">✓</span><span>E3 (VPN, P3), E4 (zestawy cech, P1), wykrycie cech-skrótów</span></li>
+  <li><span class="d">05</span><span class="s ok">✓</span><span>9 modeli finalnych, E5 (Audio) <span class="pill">kontrola na laptopie otwarta</span></span></li>
+  <li><span class="d">06</span><span class="s now">●</span><span><b>W toku:</b> E7, własne nagrania ruchu i test modeli na danych spoza zbioru</span></li>
+  <li><span class="d">dalej</span><span class="s">○</span><span>Aplikacja demonstracyjna (Streamlit), raport końcowy, prezentacja</span></li>
+</ol>
+<p class="sans meta">Kamienie milowe: M1 19.10 (oddany) · M2 16.11 · M3 7.12 · M4 21.12 · M5 17.01.2027 · M6 koniec stycznia 2027.</p>
+
+<div class="callout"><b class="h">Wniosek ogólny</b>Na publicznym zbiorze wysoki wynik łatwo uzyskać przypadkiem. Najważniejszym wynikiem dotychczasowej pracy jest identyfikacja trzech źródeł zawyżania (kampania, podział losowy, cechy-skróty) i pomiar rzeczywistej skuteczności: <b>0,96</b> dla VoIP vs Video i <b>0,80</b> dla WWW vs Video.</div>
+
+<p class="foot">Linki „otwórz lokalnie” działają, gdy plik jest otwarty z folderu <code>reports/</code> repozytorium; linki GitHub wskazują commit <code>014d170</code>. Wszystkie liczby pochodzą z plików w <a href="results/">reports/results/</a>.</p>
+
+</article>
+</body>
+</html>
