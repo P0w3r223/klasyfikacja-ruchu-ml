@@ -329,6 +329,79 @@ Kopia na Zenodo (rekord 8035724) ma 69 innych cech (szeregi czasowe przepływu),
 
 Rok 2022 i inna sieć oznaczają, że E7 mierzy łącznie trzy rzeczy: efekt zbioru, zmianę aplikacji i różnicę narzędzia liczącego cechy. Raport ma je rozdzielić tak dalece, jak pozwolą rozkłady cech. Słaby wynik też jest wynikiem.
 
+## 2026-11-18: E7, krok 1: cechy z USBVPN2022 i rozkłady przed oceną (etap 06, sesja 1)
+
+**Kod.** `src/usbvpn.py` (pobranie z kontrolą MD5, JSON czytany strumieniowo prosto z zip, filtr, przepływy), `src/cic_features.py` (55 cech `bez_skrotow`), `src/e7.py rozklady` (KS). Testy na ręcznie policzonych przepływach: `tests/test_cic_features.py`, `tests/test_usbvpn.py`, `tests/test_e7.py`. Archiwum i parquet są w `data/external/` (poza gitem).
+
+**Format danych (rozstrzygnięte na danych).**
+- `bytes` to **całkowita długość pakietu IP**: czysty ACK ma `bytes = 52` przy `ip_header_len = 20` i `tcp_header_len = 32`. Ładunek = |bytes| − nagłówek IP − nagłówek TCP (UDP: 8 B).
+- Znak `bytes` to kierunek w obrębie rekordu (+ od `port_src` do `port_dst`); rekord pmacct jest dwukierunkowy.
+- `tcp_flags` to 6 bitów URG-ACK-PSH-RST-SYN-FIN.
+- Wpis z `packets` = k > 1 (k pakietów z tej samej mikrosekundy, bez pól nagłówków; 0,7% wpisów WWW, 4,3% Video, 0,8% VoIP) dzielimy na k pakietów po równo. Nagłówek IP przyjmujemy jako 20 B, nagłówek TCP bierzemy z poprzedniego pakietu, flaga ACK.
+- Tylko IPv4 (`ip_header_len` zawsze 20).
+
+**Definicje CICFlowMeter sprawdzone na Darknet.** Każda poniższa zależność zachodzi w 100% przepływów `flows.parquet`:
+- długości to ładunek L4 (TCP ≤ 1460 B, z rzadkimi scalonymi segmentami do 48 KB), a `Header Length` to suma nagłówków L4 (UDP 8 B na pakiet);
+- `Packet Length Mean/Std/Variance` liczą pierwszy pakiet dwa razy (błąd w `BasicFlow.firstPacket`), a `Average Packet Size` = (suma + ładunek 1. pakietu) / n;
+- odchylenia są próbkowe (n − 1);
+- `Fwd PSH Flags` to PSH pierwszego pakietu (maksimum 1, nigdy razem z SYN);
+- `Down/Up Ratio` = bwd // fwd;
+- `Subflow *` = wartość // liczba wszystkich pakietów;
+- „Bwd bulk” obejmuje pakiety obu kierunków (jest > 0 także przy 0 pakietach wstecz), a wartość jest obcięta do liczby całkowitej.
+
+Granice przepływu jak w CICFlowMeter: koniec po pakiecie z FIN albo gdy pakiet przychodzi > 120 s od startu (w Darknet max 119 999 999 µs). Po timeoucie kierunek zostaje ze starego przepływu (36 przepływów bez pakietów Fwd).
+
+**Połączenia.** pmacct tnie długie połączenia na rekordy po ok. 120–186 s, a rekordy w pliku nie są posortowane. Rekordy z tym samym protokołem i parą portów łączymy w jeden strumień pakietów i dopiero go tniemy regułami CICFlowMeter (WWW: 46 191 rekordów → 20 744 połączenia). Adresów IP nie ma, więc dwa hosty z tą samą parą portów zostałyby scalone; przy portach efemerycznych to rzadkie.
+
+**Scalone segmenty (GRO karty).** Dotyczą tylko TCP. Scalony ładunek jest zwykle wielokrotnością MSS kierunku (najczęściej 1400 B). Udział przepływów z ładunkiem > 1460 B:
+
+| | ładunek > 1460 B |
+| --- | ---: |
+| Darknet WWW, Video Tor-nonTor, VoIP | 0% |
+| Darknet Video VPN-nonVPN | 8,8% |
+| USBVPN2022 przed rozbiciem | 33–43% |
+
+**Wariant domyślny: rozbijamy** pakiety IP > 1500 B na segmenty MSS (MSS = największy ładunek kierunku mieszczący się w MTU) z tym samym czasem i nagłówkiem, a PSH/FIN zostawiamy na ostatnim segmencie. Wariant bez rozbijania jest policzony do porównania (`reports/results/06_e7/bez_rozbijania/`). Średni KS jest w obu wariantach prawie ten sam (0,43), więc ten wybór nie decyduje o wyniku.
+
+**Filtr (ustalony przed oceną).** Jak w `preprocess.py`: protokoły inne niż TCP/UDP i porty tła. Do tego infrastruktura laboratorium: GRE, UDP/9000, UDP/13231, TCP/8291, TCP/10443. Reguły multicast/broadcast nie da się zastosować (brak IP). Usunięte rekordy:
+
+| | rekordy | wpisy `x_packets` |
+| --- | ---: | ---: |
+| WWW | 8 410 z 46 191 | 12,3 mln z 17,1 mln (głównie GRE i UDP/9000) |
+| Video | 1 033 z 3 807 | |
+| VoIP | 21 z 72 | |
+
+Po filtrze zostają krótkie próby połączeń na porty inne niż 443/80/STUN (1433, 2323, 5555, 47691…; mediana 2–3 pakiety): 1,1% WWW, 4,7% Video, 11% VoIP. Zostają zgodnie z regułą. Ich usunięcie byłoby dodatkową regułą do decyzji autora przed oceną.
+
+**Czyszczenie** jak w `preprocess.py` (inf/NaN, duplikaty cech w klasie). Próbkowanie nie jest potrzebne: `non_streaming.json` (4 GB) liczy się w ok. 1 min. Wynik: **WWW 42 797, Video 2 914, VoIP 62** przepływów (`data/external/usbvpn_flows.parquet`). VoIP to jedno spotkanie Meet, więc jego wynik będzie bardzo niepewny.
+
+**Rozkłady (KS per cecha i klasa, przed oceną; `reports/results/06_e7/rozklady.md`, `ks_heatmap.png`).**
+
+| porównanie | średni KS |
+| --- | ---: |
+| USBVPN2022 vs Darknet, cztery porównania | 0,36–0,46 |
+| dwie kampanie Darknet na wideo (różnica, po której RF rozpoznaje kampanię z dokładnością 0,997) | 0,17 |
+
+Przesunięcie zbioru jest więc 2–3 razy większe niż efekt kampanii.
+- Najbardziej rozjechane: `Bwd Bulk Rate Avg` (0,64–0,73), średnie i odchylenia długości pakietów (0,5–0,7), `Flow Bytes/s` (do 0,78), `Flow IAT Min`.
+- Najbliższe: `RST Flag Count`, `Subflow Fwd Packets`, `Fwd PSH Flags`, `Down/Up Ratio` (≤ 0,19).
+
+Przyczyny widać w profilu ruchu:
+
+| | Darknet | USBVPN2022 |
+| --- | --- | --- |
+| ładowanie stron | ręczne przeglądanie z długimi połączeniami keep-alive | Selenium, krótkie ładowanie strony |
+| mediana czasu przepływu | 5–20 s | 0,1 s |
+| przepływy z przerwą > 1 s | 56–71% | 12–28% |
+| przepływy TCP z FIN | 64–94% | ok. 31% |
+| przepływy TCP bez ładunku | 37–56% | 11–31% |
+| mediana bajtów na przepływ | 0–1 317 | 7 400–8 250 |
+| udział UDP (głównie QUIC) | 0,4–6% (VoIP 62%) | 21–37% |
+
+Przesunięcie dotyczy wszystkich grup cech, także czasowych i liczności, a nie tylko rozmiarów, więc nie wynika z jednego wyboru w ekstraktorze.
+
+**Oczekiwanie przed oceną:** modele dostaną dane spoza rozkładu uczącego, więc słaby wynik E7 jest prawdopodobny i będzie opisany jako efekt zbioru (sposób nagrania, aplikacje 2022, QUIC), nie samej usługi.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.

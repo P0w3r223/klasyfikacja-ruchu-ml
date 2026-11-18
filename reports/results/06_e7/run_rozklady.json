@@ -1,0 +1,17 @@
+{
+  "step": "rozklady",
+  "darknet": {
+    "path": "flows.parquet",
+    "sha256": "9cccd872542fd1f1b8fe9a7b1451563a18b6b85a2562f0cb8988ae02d5674ef7"
+  },
+  "usbvpn": {
+    "path": "usbvpn_flows.parquet",
+    "sha256": "5bef21726a465930ef4ae0fdbd85eba7b4f13b704b28bfb8128d06a0e659a2ab",
+    "n_flows": 45773
+  },
+  "features": 55,
+  "commit": "ab959e39df5533a47ab8cde4156a758685600a1a",
+  "dirty": false,
+  "dirty_excludes": "reports/results",
+  "changed_during_run": false
+}
