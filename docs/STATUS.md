@@ -35,7 +35,5 @@ Autor: wysłać formularz https://cicresearch.ca/CICDataset/ISCX-VPN-NonVPN-2016
 - Etap 09: dopasowanie kluczy sesji w surowym Darknet.CSV według `metadata.json` → `holdout.match_rules` (n_flows liczone po filtrze tła i czyszczeniu)
 - Etap 09: pliki demo E7 mają zastępcze IP (jedna para, RFC 5737) i powtarzalne `Flow ID`; aplikacja nie może usuwać duplikatów po `Flow ID`, a cały plik to jedna sesja na etykietę
 - Raport: VoIP USBVPN2022 to 62 przepływy z jednego spotkania; wynik tej klasy z licznością i bez wniosków ogólnych
-- Lokalny `git stash` na PC („lokalny STATUS sprzed pull 18.11”) jest nieaktualny; do usunięcia (`git stash drop`)
-
 ## Plan
 Full plan: docs/plan_projektu.md · Etapy: docs/prompty/README.md · Decyzje: docs/decyzje.md · Literatura: docs/research/literatura.md

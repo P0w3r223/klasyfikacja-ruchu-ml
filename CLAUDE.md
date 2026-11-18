@@ -76,12 +76,20 @@ Ten test kampanii daje bez wszystkich skrótów nadal 0,982, więc efekt kampani
 
 Audio: 5 926.
 
+**Zbiór zewnętrzny E7: USBVPN2022** (Zenodo 10.5281/zenodo.7301756, CC BY 4.0; decyzje.md 18.11).
+- Tylko test, bez treningu. Cechy z `x_packets` liczy `src/cic_features.py` według definicji CICFlowMeter, sprawdzonych na Darknet. Przepływy są w `data/external/usbvpn_flows.parquet`: WWW 42 797, Video 2 914, VoIP 62 (jedno spotkanie). Brak IP, więc nie ma sesji.
+- **Wynik:** wszystkie 9 potoków jest na poziomie zgadywania (dokładność zbalansowana 0,49–0,55 w 2 klasach, 0,35–0,39 w 3 usługach). Modele uczą się warunków nagrania, a nie tylko usługi. Część VPN to 1 połączenie tunelu na plik, więc podajemy tylko liczności.
+- Pliki do pokazu w formacie Darknet.CSV są w `reports/results/06_e7/demo/` (dla `app/demo/`):
+  - mają zastępcze IP (jedna para, RFC 5737) i powtarzalne `Flow ID`;
+  - nie mają kolumn, których nie liczymy (`Idle *`, `Init Win Bytes`).
+
 ## Zasady techniczne
 
 - Python 3.13, venv w `.venv`. Wersje bibliotek są przypięte w `requirements.txt` (sklearn 1.9.1, pandas 3.0.6) i muszą być identyczne na obu maszynach, inaczej `.joblib` może się nie wczytać.
 - Zapisujemy **cały potok** (skalowanie + model) oraz `models/metadata.json`: kolejność cech, wersje, commit, wyniki.
 - Ścieżki względne przez `ROOT = Path(__file__).resolve().parents[1]`, bez `C:\Users\...`.
 - Ładowanie danych: `from features import load_flows, feature_list, feature_groups` (z katalogu `src`).
+- Potoki tylko przez `model_store` (`load_metadata`, `check_versions`, `find_pipeline`, `load_pipeline`); kontrola kolumn wejścia w formacie Darknet.CSV: `model_store.missing_input_columns`; zapis przepływów w tym formacie: `src/darknet_csv.py`.
 - Nowe dane lub modele idą do nowego Release (`gh release create ...`), nie do gita. Pobieranie z `--skip-existing`, a przy nowej wersji z `--clobber`.
 - Na Windows przy polskich znakach w konsoli: `PYTHONIOENCODING=utf-8`.
 - Testy: `.venv/Scripts/python -m pytest -q` (`pytest.ini` dodaje `src` do ścieżki). Odtworzenie danych bez nadpisywania repo: `src/preprocess.py --raw … --out-dir … --reports-dir …`. `train.py --data` czyta próg sesji z `features.json` w katalogu danych (preprocess.py zapisuje go obok `flows.parquet`).
