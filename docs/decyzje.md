@@ -307,6 +307,8 @@ Kod: `src/finalize.py`, `src/model_store.py`, `src/check_models.py`, `src/e5_aud
 - **Przesunięcie VPN jest umiarkowane:** udział WWW rośnie w RF z 2,4% do 10,8%, przy modelu uczonym tylko na ruchu zwykłym. Rozkład per sesja daje ten sam obraz (`e5_tabela.md`). Remis głosów w sesji rozstrzyga kolejność alfabetyczna, więc w krótkich sesjach z remisem wygrywa Video; dlatego główną miarą E5 są przepływy.
 - k-NN rozprasza Audio najbardziej (WWW 52,5% w Tor-nonTor), drzewa są bardziej zdecydowane.
 
+**Sprawdzenie na laptopie (18.11, zamyka etap 05).** Klon na laptopie na `1f1f8bd`, bez lokalnych zmian. Python 3.13.15, biblioteki zgodne z `requirements.txt`. `flows.parquet` i `features.json` mają te same SHA-256 co w `data-processed-v1`. Potoki pobrane z `models-v1`. `src/check_models.py` wczytał 9 potoków bez ostrzeżeń: wersje i SHA-256 zgodne z `metadata.json`. Wyniki na sesjach odłożonych są takie same jak na PC (RF 0,821 / 0,945 / 0,726). `pytest -q` → 128 passed. To nie był świeży `git clone`, tylko istniejący folder z czystym drzewem; kontrola sum SHA-256 obejmuje wszystko, co się liczy.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.
