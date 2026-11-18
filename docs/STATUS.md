@@ -17,11 +17,10 @@ Etap 06 (E7 na USBVPN2022), sesja 1 zakończona: cechy policzone, rozkłady por�
 - brak
 
 ## Next step
-Etap 06, sesja 2 · Scope: odpowiedzi autora na otwarte decyzje; Release `usbvpn-processed-v1` (parquet + atrybucja CC BY 4.0); `src/e7.py ocena`: 9 potoków przez `model_store` w www_video_tor, voip_video_vpncamp, uslugi3_plain (F1 makro, czułość per klasa, macierze pomyłek) zestawione z CV z E4; liczności części VPN; 1–2 CSV w formacie Darknet.CSV dla app/demo/ z kontrolą kolumn `input_columns`; wynik w decyzje.md · Done when: GOTOWE GDY z promptu 06, potem `/gate standard 6677412..HEAD` i zamknięcie etapu.
+Etap 06, sesja 2 · Scope: `gh release download usbvpn-processed-v1 -D data/external --skip-existing` (SHA-256 w opisie Release); `src/e7.py ocena`: 9 potoków przez `model_store` w www_video_tor, voip_video_vpncamp, uslugi3_plain (F1 makro, czułość per klasa, macierze pomyłek) zestawione z CV z E4; liczności części VPN; 1–2 CSV w formacie Darknet.CSV dla app/demo/ z kontrolą kolumn `input_columns`; wynik w decyzje.md · Done when: GOTOWE GDY z promptu 06, potem `/gate standard 6677412..HEAD` i zamknięcie etapu.
 
 ## Open decisions
-- Scalone segmenty TCP: rozbijać na MSS (domyślnie, zgodne z Darknet: 0% przepływów > 1460 B poza Video VPN-nonVPN 8,8%) czy zostawić jak w danych; KS prawie ten sam (0,43)
-- Krótkie próby połączeń na porty inne niż 443/80/STUN (1,1% WWW, 4,7% Video, 11% VoIP): zostawić zgodnie z regułą (domyślnie) czy dodać regułę przed oceną
+- brak (18.11 autor wybrał oba warianty domyślne: rozbijanie scalonych segmentów, filtr bez nowej reguły; decyzje.md)
 
 ## Blockers
 - brak

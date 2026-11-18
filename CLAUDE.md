@@ -10,7 +10,8 @@ Autor: Piotr Cząstkiewicz. **Komunikacja po polsku.**
 - Duże pliki (dane, modele) **nie trafiają do historii gita** (patrz `.gitignore`). Wymienia się je przez **GitHub Releases**:
   - `data-raw-v1`: `darknet2020_kaggle.zip` (surowy `Darknet.CSV`);
   - `data-processed-v1`: `flows.parquet` i `features.json`;
-  - `models-v1`: 9 potoków `.joblib` (k-NN, drzewo, RF × 3 zadania, zestaw `bez_skrotow`) i `metadata.json` (ten ostatni także w gicie); kontrola: `src/check_models.py`.
+  - `models-v1`: 9 potoków `.joblib` (k-NN, drzewo, RF × 3 zadania, zestaw `bez_skrotow`) i `metadata.json` (ten ostatni także w gicie); kontrola: `src/check_models.py`;
+  - `usbvpn-processed-v1`: `usbvpn_flows.parquet` do E7 (USBVPN2022, CC BY 4.0), do `data/external/`.
 - Ten sam projekt jest używany na dwóch maszynach. Komputer stacjonarny (~1 TB) robi ciężkie etapy (dane, trening). Laptop ma mało miejsca, więc tylko uruchamia gotowe modele i Streamlit. Szczegóły: [docs/srodowisko.md](docs/srodowisko.md).
 
 ## Dokumenty: czytaj najpierw

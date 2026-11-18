@@ -10,6 +10,7 @@ Duże pliki nie trafiają do historii gita. Wymiana między maszynami idzie prze
 - `data-raw-v1`: surowy `Darknet.CSV` (zip)
 - `data-processed-vN`: oczyszczony podzbiór (`.parquet`)
 - `models-vN`: wytrenowane potoki (`.joblib`) i plik `models/metadata.json`
+- `usbvpn-processed-v1`: przepływy z USBVPN2022 do E7 (`usbvpn_flows.parquet`, CC BY 4.0, autorzy: Naas, Fesl). Pobranie: `gh release download usbvpn-processed-v1 -D data/external --skip-existing`. Odtworzenie z archiwum Zenodo: `src/usbvpn.py build` (pobiera 812 MB z kontrolą MD5)
 
 ## Pierwsze uruchomienie na nowej maszynie
 

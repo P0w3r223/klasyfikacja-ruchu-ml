@@ -402,6 +402,12 @@ Przesunięcie dotyczy wszystkich grup cech, także czasowych i liczności, a nie
 
 **Oczekiwanie przed oceną:** modele dostaną dane spoza rozkładu uczącego, więc słaby wynik E7 jest prawdopodobny i będzie opisany jako efekt zbioru (sposób nagrania, aplikacje 2022, QUIC), nie samej usługi.
 
+**Decyzja autora (18.11, po obejrzeniu rozkładów, przed oceną).** Oba warianty domyślne:
+- scalone segmenty TCP **rozbijamy** na segmenty MSS;
+- filtr zostaje taki, jak ustalono; krótkie próby połączeń na inne porty zostają w danych.
+
+Do oceny w sesji 2 idzie więc `usbvpn_flows.parquet` z Release `usbvpn-processed-v1`. Wariant bez rozbijania służy tylko do opisu w raporcie.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.
