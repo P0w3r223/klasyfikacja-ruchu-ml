@@ -309,6 +309,26 @@ Kod: `src/finalize.py`, `src/model_store.py`, `src/check_models.py`, `src/e5_aud
 
 **Sprawdzenie na laptopie (18.11, zamyka etap 05).** Klon na laptopie na `1f1f8bd`, bez lokalnych zmian. Python 3.13.15, biblioteki zgodne z `requirements.txt`. `flows.parquet` i `features.json` mają te same SHA-256 co w `data-processed-v1`. Potoki pobrane z `models-v1`. `src/check_models.py` wczytał 9 potoków bez ostrzeżeń: wersje i SHA-256 zgodne z `metadata.json`. Wyniki na sesjach odłożonych są takie same jak na PC (RF 0,821 / 0,945 / 0,726). `pytest -q` → 128 passed. To nie był świeży `git clone`, tylko istniejący folder z czystym drzewem; kontrola sum SHA-256 obejmuje wszystko, co się liczy.
 
+## 2026-11-18: E7 na zbiorze zewnętrznym USBVPN2022 zamiast własnych nagrań (zmiana zakresu etapu 06)
+
+**Decyzja autora.** Własnych nagrań nie robimy. E7 sprawdza modele z `models-v1` na zbiorze z innego laboratorium i innego roku: **USBVPN2022** (Naas, Fesl, „Encrypted VPN Dataset”, Zenodo 10.5281/zenodo.7301756, CC BY 4.0, `encrypted_vpn_dataset.zip` 811,7 MB, MD5 `35a4aef78526440cd6e352de49c4daf2`). Powód: przed prezentacją nie ma czasu na nagrania, a do pokazu potrzebny jest gotowy wynik.
+
+**Odrzucone: oryginalne pliki ISCX VPN-nonVPN 2016.** Z trzech powodów:
+- formularz CIC 18.11 nadal zwracał „Server error”, a kopii na Kaggle nie znaleziono;
+- to te same nagrania, z których powstała część VPN-nonVPN w CIC-Darknet2020, więc test nie byłby niezależny;
+- pliki mają 23 cechy czasowe z ISCXFlowMeter, a potoki wymagają 55 cech `bez_skrotow`.
+
+Kopia na Zenodo (rekord 8035724) ma 69 innych cech (szeregi czasowe przepływu), więc też nie pasuje do potoków.
+
+**Ustalenia dla E7** (wcześniejsze sprawdzenie zbioru: `docs/research/zrodla.md`):
+- **Tylko test, bez treningu.** Modele uczone na Darknet oceniamy na całym USBVPN2022. Brak adresów IP nie przeszkadza, bo nie dzielimy tego zbioru na sesje.
+- **Klasy:** `non_streaming` → WWW, `streaming` → Video, `meet` → VoIP. `mail` i `ssh` są poza zakresem.
+- **Tylko ruch bez VPN.** Przez VPN cały tunel to 1–2 przepływy na klasę, więc część VPN opisujemy samą licznością.
+- **Cechy** liczy własny skrypt z `x_packets` według definicji CICFlowMeter. Nie używamy `cicflowmeter` (Python), bo zbiór nie ma PCAP-ów. Przed oceną trzeba porównać rozkłady cech z Darknet.
+- **Ruch infrastruktury** (GRE, UDP/9000, UDP/13231, TCP/8291, TCP/10443) i ruch tła usuwamy regułą ustaloną przed oceną modeli, a nie dobraną pod wynik.
+
+Rok 2022 i inna sieć oznaczają, że E7 mierzy łącznie trzy rzeczy: efekt zbioru, zmianę aplikacji i różnicę narzędzia liczącego cechy. Raport ma je rozdzielić tak dalece, jak pozwolą rozkłady cech. Słaby wynik też jest wynikiem.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.

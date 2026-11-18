@@ -29,7 +29,7 @@ Terminy, maszyny i liczba sesji są tylko w tej tabeli; przy przesunięciu termi
 | [03b](03b_e1_e2.md) | E1/E2: podział losowy vs po sesjach (M3) | 7.12.2026 | PC | 1–2 | 03a | `/gate` |
 | [04](04_e3_e4.md) | E3 (VPN) i E4 (ważność cech) | 18.12.2026 | PC | 2 | 03b | `/gate` |
 | [05](05_e5_modele_finalne.md) | E5 i finalne modele (zamyka M4) | 21.12.2026 | PC, potem laptop | 2 | 04 | wczytanie na laptopie, `/gate` |
-| [06](06_e7_wlasne_przechwycenia.md) | E7: własne przechwycenia | przerwa świąteczna | laptop + PC | 2 | 00, 05 | zgodność rozkładów cech, `/gate` |
+| [06](06_e7_zbior_zewnetrzny.md) | E7: test na zbiorze zewnętrznym USBVPN2022 (**18.11: zamiast własnych nagrań**, docs/decyzje.md) | przerwa świąteczna | laptop lub PC | 2 | 00, 05 | zgodność rozkładów cech, `/gate` |
 | [07](07_e6_wczesna_klasyfikacja.md) | E6: wczesna klasyfikacja (tylko przy „go” z 00; **22.10: no-go z warunkiem powrotu**, docs/decyzje.md) | 6.01.2027 | PC | 1–2 | 00, 03a | `/gate` |
 | [08](08_wyniki.md) | Zestawienie wyników | 10.01.2027 | PC | 1 | 03b–07 | rysunki odtwarzalne skryptem, `/gate` |
 | [09](09_streamlit.md) | Aplikacja Streamlit (M5) | 17.01.2027 | PC + laptop | 1–2 | 05 | uruchomienie na laptopie, `/gate` |
