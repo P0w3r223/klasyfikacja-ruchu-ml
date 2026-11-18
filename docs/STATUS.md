@@ -3,6 +3,8 @@
 Updated: 2026-11-18 · Branch: main · Last gate: standard @ 79baed5 - PASS with notes (etap 05, fe83fca..79baed5); 7 uwag poprawionych w b31a711, quick po poprawkach: PASS (pytest 128 passed)
 
 ## Stage
+Etap 06 od: 6677412
+
 Etap 05 zamknięty 18.11 (sprawdzenie na laptopie, 8ddccc0). Następny: etap 06 (E7, test na zbiorze zewnętrznym USBVPN2022; 18.11 zamiast własnych nagrań, decyzje.md), jeszcze nie rozpoczęty; linię `Etap 06 od: <sha>` wpisuje pierwsza sesja etapu po `git pull`. M1 oddany, M2 i M3 domknięte, M4 (21.12) ma gotowe modele finalne i E5.
 
 ## Done (with evidence)
