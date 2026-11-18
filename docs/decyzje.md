@@ -446,7 +446,9 @@ Kod: `src/e7.py ocena` i `demo`, `src/e7_ocena.py`, `src/darknet_csv.py`, `src/u
 - adresy zastępcze z RFC 5737 (192.0.2.10 → 198.51.100.10), bo zbiór nie ma IP;
 - kolumn, których nie liczymy (`Idle *`, `Init Win Bytes`, cechy stałe), nie ma w pliku, żeby nie wpisywać wymyślonych wartości.
 
-`e7.py demo` sprawdza każdy plik po zapisie: kontrola kolumn z `metadata.json` (`model_store.missing_input_columns`, z etykietą), brak przepływów usuwanych przez filtr tła z `preprocess.py`, cechy zgodne ze źródłem (tolerancja względna 1e-12 na parser `read_csv`). Wszystkie przepływy są w jednej parze IP, więc aplikacja zobaczy je jako jedną sesję na etykietę.
+`e7.py demo` sprawdza każdy plik po zapisie: kontrola kolumn z `metadata.json` (`model_store.missing_input_columns`, z etykietą), brak przepływów usuwanych przez filtr tła z `preprocess.py`, cechy zgodne ze źródłem (tolerancja względna 1e-12 na parser `read_csv`). Wszystkie przepływy są w jednej parze IP, więc aplikacja zobaczy je jako jedną sesję na etykietę. `Flow ID` może się powtarzać (przepływy po timeoucie na tej samej parze portów), tak jak w Darknet.CSV, więc aplikacja nie może usuwać duplikatów po `Flow ID`.
+
+**Weryfikacja: `/gate standard 6677412..HEAD`, PASS with notes** (bez uwag CRITICAL i HIGH). Uwaga o rozbijaniu scalonych segmentów: MSS kierunku to największy ładunek pakietu ≤ MTU w rekordzie, więc mały pakiet z danymi obok scalonego bloku daje mały MSS i wiele sztucznych segmentów. Zmierzone na danych: MSS < 536 B ma 0,01–0,29% scalonych segmentów (WWW 602 z 1,14 mln), 536–1199 B 0,16–0,59%, a ≥ 1200 B 99,1–99,7%. Na wynik to nie wpływa, więc zostaje bez zmian, jako zastrzeżenie. Pozostałe uwagi były już opisane (łączenie połączeń bez IP, krok 1) albo mają niską wagę.
 
 ## Do sprawdzenia w eksperymentach
 
