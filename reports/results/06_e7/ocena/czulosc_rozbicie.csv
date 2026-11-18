@@ -1,0 +1,169 @@
+by,value,service,n,recall,task,model
+długość,4–20 pakietów,Video,939,0.012779552715654952,www_video_tor,knn
+długość,≤ 3 pakiety,Video,393,0.10178117048346055,www_video_tor,knn
+długość,≥ 21 pakietów,Video,1582,0.0695322376738306,www_video_tor,knn
+długość,4–20 pakietów,WWW,15573,0.9904321582225647,www_video_tor,knn
+długość,≤ 3 pakiety,WWW,3810,0.968766404199475,www_video_tor,knn
+długość,≥ 21 pakietów,WWW,23414,0.9212437003502179,www_video_tor,knn
+port,443,Video,2740,0.05547445255474453,www_video_tor,knn
+port,80,Video,36,0.027777777777777776,www_video_tor,knn
+port,inny,Video,138,0.06521739130434782,www_video_tor,knn
+port,443,WWW,42081,0.9503101162044628,www_video_tor,knn
+port,80,WWW,227,0.9383259911894273,www_video_tor,knn
+port,inny,WWW,489,0.9856850715746421,www_video_tor,knn
+protokół,TCP,Video,1839,0.08482871125611746,www_video_tor,knn
+protokół,UDP,Video,1075,0.005581395348837209,www_video_tor,knn
+protokół,TCP,WWW,33804,0.9405987457105668,www_video_tor,knn
+protokół,UDP,WWW,8993,0.9884354497942844,www_video_tor,knn
+długość,4–20 pakietów,Video,939,0.11501597444089456,www_video_tor,tree
+długość,≤ 3 pakiety,Video,393,0.42748091603053434,www_video_tor,tree
+długość,≥ 21 pakietów,Video,1582,0.4917825537294564,www_video_tor,tree
+długość,4–20 pakietów,WWW,15573,0.837154048673987,www_video_tor,tree
+długość,≤ 3 pakiety,WWW,3810,0.7270341207349081,www_video_tor,tree
+długość,≥ 21 pakietów,WWW,23414,0.5716665243016998,www_video_tor,tree
+port,443,Video,2740,0.3478102189781022,www_video_tor,tree
+port,80,Video,36,0.2777777777777778,www_video_tor,tree
+port,inny,Video,138,0.6594202898550725,www_video_tor,tree
+port,443,WWW,42081,0.6867707516456358,www_video_tor,tree
+port,80,WWW,227,0.762114537444934,www_video_tor,tree
+port,inny,WWW,489,0.24335378323108384,www_video_tor,tree
+protokół,TCP,Video,1839,0.34366503534529635,www_video_tor,tree
+protokół,UDP,Video,1075,0.3925581395348837,www_video_tor,tree
+protokół,TCP,WWW,33804,0.6455153236303396,www_video_tor,tree
+protokół,UDP,WWW,8993,0.81963749583009,www_video_tor,tree
+długość,4–20 pakietów,Video,939,0.08519701810436635,www_video_tor,rf
+długość,≤ 3 pakiety,Video,393,0.25699745547073793,www_video_tor,rf
+długość,≥ 21 pakietów,Video,1582,0.4102402022756005,www_video_tor,rf
+długość,4–20 pakietów,WWW,15573,0.8655365054902716,www_video_tor,rf
+długość,≤ 3 pakiety,WWW,3810,0.820734908136483,www_video_tor,rf
+długość,≥ 21 pakietów,WWW,23414,0.6418809259417443,www_video_tor,rf
+port,443,Video,2740,0.29854014598540146,www_video_tor,rf
+port,80,Video,36,0.027777777777777776,www_video_tor,rf
+port,inny,Video,138,0.07971014492753623,www_video_tor,rf
+port,443,WWW,42081,0.735248687055916,www_video_tor,rf
+port,80,WWW,227,0.9427312775330396,www_video_tor,rf
+port,inny,WWW,489,0.983640081799591,www_video_tor,rf
+protokół,TCP,Video,1839,0.26753670473083196,www_video_tor,rf
+protokół,UDP,Video,1075,0.3144186046511628,www_video_tor,rf
+protokół,TCP,WWW,33804,0.714501242456514,www_video_tor,rf
+protokół,UDP,WWW,8993,0.8319804292227287,www_video_tor,rf
+długość,4–20 pakietów,Video,939,0.8711395101171459,voip_video_vpncamp,knn
+długość,≤ 3 pakiety,Video,393,0.8320610687022901,voip_video_vpncamp,knn
+długość,≥ 21 pakietów,Video,1582,0.984197218710493,voip_video_vpncamp,knn
+długość,4–20 pakietów,VoIP,19,0.10526315789473684,voip_video_vpncamp,knn
+długość,≤ 3 pakiety,VoIP,14,0.07142857142857142,voip_video_vpncamp,knn
+długość,≥ 21 pakietów,VoIP,29,0.0,voip_video_vpncamp,knn
+port,443,Video,2740,0.9291970802919708,voip_video_vpncamp,knn
+port,80,Video,36,0.5555555555555556,voip_video_vpncamp,knn
+port,inny,Video,138,0.9855072463768116,voip_video_vpncamp,knn
+port,443,VoIP,48,0.041666666666666664,voip_video_vpncamp,knn
+port,80,VoIP,4,0.0,voip_video_vpncamp,knn
+port,inny,VoIP,10,0.1,voip_video_vpncamp,knn
+protokół,TCP,Video,1839,0.8852637302882002,voip_video_vpncamp,knn
+protokół,UDP,Video,1075,0.9990697674418605,voip_video_vpncamp,knn
+protokół,TCP,VoIP,39,0.07692307692307693,voip_video_vpncamp,knn
+protokół,UDP,VoIP,23,0.0,voip_video_vpncamp,knn
+długość,4–20 pakietów,Video,939,0.9936102236421726,voip_video_vpncamp,tree
+długość,≤ 3 pakiety,Video,393,0.8854961832061069,voip_video_vpncamp,tree
+długość,≥ 21 pakietów,Video,1582,0.9987357774968394,voip_video_vpncamp,tree
+długość,4–20 pakietów,VoIP,19,0.0,voip_video_vpncamp,tree
+długość,≤ 3 pakiety,VoIP,14,0.2857142857142857,voip_video_vpncamp,tree
+długość,≥ 21 pakietów,VoIP,29,0.034482758620689655,voip_video_vpncamp,tree
+port,443,Video,2740,0.9937956204379562,voip_video_vpncamp,tree
+port,80,Video,36,1.0,voip_video_vpncamp,tree
+port,inny,Video,138,0.7391304347826086,voip_video_vpncamp,tree
+port,443,VoIP,48,0.08333333333333333,voip_video_vpncamp,tree
+port,80,VoIP,4,0.0,voip_video_vpncamp,tree
+port,inny,VoIP,10,0.1,voip_video_vpncamp,tree
+protokół,TCP,Video,1839,0.9717237629146275,voip_video_vpncamp,tree
+protokół,UDP,Video,1075,0.9990697674418605,voip_video_vpncamp,tree
+protokół,TCP,VoIP,39,0.1282051282051282,voip_video_vpncamp,tree
+protokół,UDP,VoIP,23,0.0,voip_video_vpncamp,tree
+długość,4–20 pakietów,Video,939,0.9978700745473909,voip_video_vpncamp,rf
+długość,≤ 3 pakiety,Video,393,0.8549618320610687,voip_video_vpncamp,rf
+długość,≥ 21 pakietów,Video,1582,1.0,voip_video_vpncamp,rf
+długość,4–20 pakietów,VoIP,19,0.0,voip_video_vpncamp,rf
+długość,≤ 3 pakiety,VoIP,14,0.5,voip_video_vpncamp,rf
+długość,≥ 21 pakietów,VoIP,29,0.0,voip_video_vpncamp,rf
+port,443,Video,2740,0.9919708029197081,voip_video_vpncamp,rf
+port,80,Video,36,0.9444444444444444,voip_video_vpncamp,rf
+port,inny,Video,138,0.7463768115942029,voip_video_vpncamp,rf
+port,443,VoIP,48,0.0625,voip_video_vpncamp,rf
+port,80,VoIP,4,0.0,voip_video_vpncamp,rf
+port,inny,VoIP,10,0.4,voip_video_vpncamp,rf
+protokół,TCP,Video,1839,0.9679173463839043,voip_video_vpncamp,rf
+protokół,UDP,Video,1075,1.0,voip_video_vpncamp,rf
+protokół,TCP,VoIP,39,0.1794871794871795,voip_video_vpncamp,rf
+protokół,UDP,VoIP,23,0.0,voip_video_vpncamp,rf
+długość,4–20 pakietów,Video,939,0.5026624068157615,uslugi3_plain,knn
+długość,≤ 3 pakiety,Video,393,0.5012722646310432,uslugi3_plain,knn
+długość,≥ 21 pakietów,Video,1582,0.7724399494310998,uslugi3_plain,knn
+długość,4–20 pakietów,VoIP,19,0.05263157894736842,uslugi3_plain,knn
+długość,≤ 3 pakiety,VoIP,14,0.0,uslugi3_plain,knn
+długość,≥ 21 pakietów,VoIP,29,0.0,uslugi3_plain,knn
+długość,4–20 pakietów,WWW,15573,0.5212226289090092,uslugi3_plain,knn
+długość,≤ 3 pakiety,WWW,3810,0.5908136482939632,uslugi3_plain,knn
+długość,≥ 21 pakietów,WWW,23414,0.47373366362005637,uslugi3_plain,knn
+port,443,Video,2740,0.6521897810218978,uslugi3_plain,knn
+port,80,Video,36,0.3055555555555556,uslugi3_plain,knn
+port,inny,Video,138,0.6739130434782609,uslugi3_plain,knn
+port,443,VoIP,48,0.020833333333333332,uslugi3_plain,knn
+port,80,VoIP,4,0.0,uslugi3_plain,knn
+port,inny,VoIP,10,0.0,uslugi3_plain,knn
+port,443,WWW,42081,0.5040754734915995,uslugi3_plain,knn
+port,80,WWW,227,0.6651982378854625,uslugi3_plain,knn
+port,inny,WWW,489,0.1983640081799591,uslugi3_plain,knn
+protokół,TCP,Video,1839,0.45133224578575315,uslugi3_plain,knn
+protokół,UDP,Video,1075,0.9869767441860465,uslugi3_plain,knn
+protokół,TCP,VoIP,39,0.0,uslugi3_plain,knn
+protokół,UDP,VoIP,23,0.043478260869565216,uslugi3_plain,knn
+protokół,TCP,WWW,33804,0.6319074665720034,uslugi3_plain,knn
+protokół,UDP,WWW,8993,0.011008562215056155,uslugi3_plain,knn
+długość,4–20 pakietów,Video,939,0.8690095846645367,uslugi3_plain,tree
+długość,≤ 3 pakiety,Video,393,0.47837150127226463,uslugi3_plain,tree
+długość,≥ 21 pakietów,Video,1582,0.9766118836915297,uslugi3_plain,tree
+długość,4–20 pakietów,VoIP,19,0.0,uslugi3_plain,tree
+długość,≤ 3 pakiety,VoIP,14,0.21428571428571427,uslugi3_plain,tree
+długość,≥ 21 pakietów,VoIP,29,0.0,uslugi3_plain,tree
+długość,4–20 pakietów,WWW,15573,0.09233930520773133,uslugi3_plain,tree
+długość,≤ 3 pakiety,WWW,3810,0.5146981627296588,uslugi3_plain,tree
+długość,≥ 21 pakietów,WWW,23414,0.07303322798325788,uslugi3_plain,tree
+port,443,Video,2740,0.9186131386861314,uslugi3_plain,tree
+port,80,Video,36,0.5833333333333334,uslugi3_plain,tree
+port,inny,Video,138,0.07971014492753623,uslugi3_plain,tree
+port,443,VoIP,48,0.0,uslugi3_plain,tree
+port,80,VoIP,4,0.0,uslugi3_plain,tree
+port,inny,VoIP,10,0.3,uslugi3_plain,tree
+port,443,WWW,42081,0.10900406359164469,uslugi3_plain,tree
+port,80,WWW,227,0.3788546255506608,uslugi3_plain,tree
+port,inny,WWW,489,0.8916155419222904,uslugi3_plain,tree
+protokół,TCP,Video,1839,0.8020663404023926,uslugi3_plain,tree
+protokół,UDP,Video,1075,0.9990697674418605,uslugi3_plain,tree
+protokół,TCP,VoIP,39,0.07692307692307693,uslugi3_plain,tree
+protokół,UDP,VoIP,23,0.0,uslugi3_plain,tree
+protokół,TCP,WWW,33804,0.15113596024139156,uslugi3_plain,tree
+protokół,UDP,WWW,8993,0.0,uslugi3_plain,tree
+długość,4–20 pakietów,Video,939,0.9776357827476039,uslugi3_plain,rf
+długość,≤ 3 pakiety,Video,393,0.816793893129771,uslugi3_plain,rf
+długość,≥ 21 pakietów,Video,1582,0.9943109987357776,uslugi3_plain,rf
+długość,4–20 pakietów,VoIP,19,0.0,uslugi3_plain,rf
+długość,≤ 3 pakiety,VoIP,14,0.14285714285714285,uslugi3_plain,rf
+długość,≥ 21 pakietów,VoIP,29,0.0,uslugi3_plain,rf
+długość,4–20 pakietów,WWW,15573,0.10235664290759648,uslugi3_plain,rf
+długość,≤ 3 pakiety,WWW,3810,0.2648293963254593,uslugi3_plain,rf
+długość,≥ 21 pakietów,WWW,23414,0.05389937644144529,uslugi3_plain,rf
+port,443,Video,2740,0.9802919708029197,uslugi3_plain,rf
+port,80,Video,36,0.6388888888888888,uslugi3_plain,rf
+port,inny,Video,138,0.7463768115942029,uslugi3_plain,rf
+port,443,VoIP,48,0.0,uslugi3_plain,rf
+port,80,VoIP,4,0.0,uslugi3_plain,rf
+port,inny,VoIP,10,0.2,uslugi3_plain,rf
+port,443,WWW,42081,0.08868610536821843,uslugi3_plain,rf
+port,80,WWW,227,0.3303964757709251,uslugi3_plain,rf
+port,inny,WWW,489,0.11860940695296524,uslugi3_plain,rf
+protokół,TCP,Video,1839,0.9445350734094616,uslugi3_plain,rf
+protokół,UDP,Video,1075,1.0,uslugi3_plain,rf
+protokół,TCP,VoIP,39,0.05128205128205128,uslugi3_plain,rf
+protokół,UDP,VoIP,23,0.0,uslugi3_plain,rf
+protokół,TCP,WWW,33804,0.11433558158797776,uslugi3_plain,rf
+protokół,UDP,WWW,8993,0.0,uslugi3_plain,rf

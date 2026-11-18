@@ -408,6 +408,46 @@ Przesunięcie dotyczy wszystkich grup cech, także czasowych i liczności, a nie
 
 Do oceny w sesji 2 idzie więc `usbvpn_flows.parquet` z Release `usbvpn-processed-v1`. Wariant bez rozbijania służy tylko do opisu w raporcie.
 
+## 2026-11-18: E7, wynik: modele z CIC-Darknet2020 nie przenoszą się na USBVPN2022 (etap 06, sesja 2)
+
+Kod: `src/e7.py ocena` i `demo`, `src/e7_ocena.py`, `src/darknet_csv.py`, `src/usbvpn.py vpn`; testy `tests/test_e7_ocena.py` (`pytest -q` → 172 passed). Przebieg z `aaaa94c` (`dirty=false`). Wyniki w `reports/results/06_e7/ocena/`: `ocena.md`, `metryki.csv`, `macierze_pomylek.png`, `czulosc_rozbicie.csv`, `cechy_przesuniecie.csv`. Dane: `usbvpn_flows.parquet` z Release `usbvpn-processed-v1` (SHA-256 zgodne). Tylko test: 9 potoków z `models-v1`, bez treningu i bez strojenia. Porównanie z CV z E4 (`e4_bez_skrotow_*`, podział po sesjach).
+
+**F1 makro: CV z E4 → USBVPN2022** (w nawiasie dokładność zbalansowana na USBVPN2022). Proporcje klas są inne niż w Darknet, a dokładność zbalansowana od nich nie zależy.
+
+| zadanie (przepływy USBVPN2022) | k-NN | drzewo | RF | klasa większości |
+| --- | ---: | ---: | ---: | ---: |
+| WWW vs Video (WWW 42 797, Video 2 914) | 0,791 → 0,503 (0,503) | 0,782 → 0,455 (0,522) | 0,797 → 0,469 (0,512) | 0,484 (0,500) |
+| VoIP vs Video (VoIP 62, Video 2 914) | 0,942 → 0,487 (0,488) | 0,926 → 0,532 (0,531) | 0,957 → 0,545 (0,546) | 0,495 (0,500) |
+| 3 usługi (jak wyżej) | 0,717 → 0,270 (0,389) | 0,698 → 0,114 (0,348) | 0,713 → 0,108 (0,363) | 0,322 (0,333) |
+
+**Czułość RF: CV → USBVPN2022** (pozostałe modele w `ocena.md`):
+
+| zadanie | WWW | VoIP | Video |
+| --- | ---: | ---: | ---: |
+| WWW vs Video | 92,1% → 73,9% | – | 79,7% → 28,5% |
+| VoIP vs Video | – | 92,1% → 11,3% (7 z 62) | 99,2% → 98,0% |
+| 3 usługi | 95,0% → 9,0% | 36,3% → 3,2% | 86,6% → 96,5% |
+
+**Wnioski:**
+- **Żaden potok nie rozróżnia usług w USBVPN2022.** Dokładność zbalansowana wynosi 0,49–0,55 w zadaniach 2-klasowych i 0,35–0,39 w zadaniu 3 usług, czyli tyle co zgadywanie (0,5 i 0,333). F1 makro jest na poziomie stałej odpowiedzi „klasa większości” albo niżej.
+- **Predykcja prawie nie zależy od prawdziwej usługi.** Wiersze macierzy pomyłek są do siebie podobne. Przykład: RF w WWW vs Video oznacza jako Video 26% przepływów WWW i 28% przepływów Video. Każdy model przypisuje cały nowy ruch do jednego obszaru przestrzeni cech: WWW vs Video głównie do WWW (k-NN 95%), VoIP vs Video i 3 usługi głównie do Video (RF 89–98%).
+- **Model 3-klasowy uznaje prawie wszystko za Video** (RF: 91% WWW i 84% VoIP). Tak samo było z Audio w E5. WWW w Darknet pochodzi wyłącznie z kampanii Tor-nonTor, więc obszar „WWW” to w dużej części cechy tej kampanii (długie połączenia keep-alive, przerwy > 1 s). Ruch USBVPN2022 ma inny profil i do tego obszaru nie trafia. To zgodne z efektem kampanii, ale bez osobnego testu jest to interpretacja, a nie dowód.
+- **QUIC/UDP.** W Darknet UDP ma 0,4% WWW, 2–6% Video i 62% VoIP, a w USBVPN2022 21–37% przepływów każdej usługi. Model 3-klasowy wszystkie przepływy UDP z WWW uznaje za Video (czułość WWW na UDP 0%, na TCP 11%).
+- **Przesunięcie dotyczy też cech, na których opierają się modele.** Średni KS ważony ważnością Gini RF wynosi 0,47 (WWW vs Video), 0,42 i 0,42. Bez ważenia jest to 0,43, 0,42 i 0,42, więc przesunięcie nie omija ważnych cech. WWW vs Video opiera się na przerwach między pakietami (`Flow IAT Max/Min`, `Fwd IAT Max`; KS 0,43–0,68). To zgadza się z profilem ruchu z kroku 1: mediana czasu przepływu 5–20 s → 0,1 s. VoIP vs Video opiera się na rozmiarach i flagach (`ACK Flag Count`, `Packet Length Min`, `Protocol`; KS 0,25–0,56).
+- **Czego E7 nie rozstrzyga.** Wynik łączy trzy rzeczy: sposób nagrania (Selenium i krótkie ładowanie stron zamiast ręcznego przeglądania), aplikacje i protokoły z 2022 r. (QUIC) oraz własny ekstraktor cech zamiast CICFlowMeter. Wpływ ekstraktora jest ograniczony, bo definicje cech zgadzają się w 100% przepływów Darknet, a wariant bez rozbijania scalonych segmentów ma ten sam KS (krok 1). Nie da się jednak zbadać, czy usługi w USBVPN2022 są w ogóle rozróżnialne tymi cechami, bez treningu na tym zbiorze, a to wykracza poza ustalenia E7.
+- **VoIP to 62 przepływy z jednego spotkania Meet.** Wynik tej klasy (RF 7 z 62) podajemy z licznością i bez wniosków ogólnych.
+
+**Wniosek do raportu:** modele z CIC-Darknet2020 uczą się warunków nagrania co najmniej tak samo jak usługi. Wysoki wynik CV wewnątrz zbioru (nawet po sesjach i bez skrótów) nie oznacza, że model zadziała w innej sieci. Uzupełnia to efekt kampanii z EDA i E4: tam warunki nagrania różnicowały klasy wewnątrz zbioru, tu różnicują zbiory.
+
+**Część VPN: tylko liczności** (`reports/results/06_e7/usbvpn_vpn.md`, 6 typów VPN × 3 usługi, bez filtra). W każdym pliku 98,5–100% wpisów `x_packets` należy do jednego połączenia, czyli do tunelu: L2TP UDP/1701, L2TP IPsec UDP/4500, OpenVPN TCP/1194, PPTP GRE, SSTP TCP/443, WireGuard UDP/13231. Każdy plik ma tylko 1–4 połączenia. Ruch aplikacji jest więc niewidoczny jako osobne przepływy i tej części nie oceniamy. pmacct tnie tunel na rekordy (VoIP 2–4, Video 97–190, WWW 1 009–1 759 na plik), ale wszystkie należą do tego samego połączenia.
+
+**Pliki do pokazu** (`reports/results/06_e7/demo/`, dla `app/demo/` w etapie 09): `usbvpn2022_www_video.csv` (WWW 300 + Video 300, 0,37 MB) i `usbvpn2022_voip_video.csv` (VoIP 62, czyli wszystkie, + Video 300, 0,22 MB). Losowanie z ziarnem 42. Format Darknet.CSV:
+- identyfikatory przepływu, 55 cech kontraktu i dwie kolumny `Label` (`NonVPN`; `Browsing`, `Video-Streaming`, `VOIP`);
+- adresy zastępcze z RFC 5737 (192.0.2.10 → 198.51.100.10), bo zbiór nie ma IP;
+- kolumn, których nie liczymy (`Idle *`, `Init Win Bytes`, cechy stałe), nie ma w pliku, żeby nie wpisywać wymyślonych wartości.
+
+`e7.py demo` sprawdza każdy plik po zapisie: kontrola kolumn z `metadata.json` (`model_store.missing_input_columns`, z etykietą), brak przepływów usuwanych przez filtr tła z `preprocess.py`, cechy zgodne ze źródłem (tolerancja względna 1e-12 na parser `read_csv`). Wszystkie przepływy są w jednej parze IP, więc aplikacja zobaczy je jako jedną sesję na etykietę.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.

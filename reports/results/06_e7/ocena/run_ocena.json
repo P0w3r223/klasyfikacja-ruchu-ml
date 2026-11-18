@@ -1,0 +1,25 @@
+{
+  "step": "ocena",
+  "usbvpn": {
+    "path": "usbvpn_flows.parquet",
+    "sha256": "5bef21726a465930ef4ae0fdbd85eba7b4f13b704b28bfb8128d06a0e659a2ab",
+    "n_flows": 45773
+  },
+  "ks": "ks_cechy.csv",
+  "models_release": "models-v1",
+  "pipelines": {
+    "www_video_tor/knn": "71cb1d73a4e818121c2a30aabd0128266d20078bcdf2e9259a24bf6d8996a11c",
+    "www_video_tor/tree": "d11381ed02e20d73e8901295a5d050dad917680560ffaa858a06dd5833109334",
+    "www_video_tor/rf": "4bd1988ce7a457df881a3c0edca09bf7dd7a1e2281f79160802b1f8d4bba94a1",
+    "voip_video_vpncamp/knn": "db8a8f6a54260f726dbf6fcfcb1ce4b98d7adca6006d2dc7a7bc3b6b3e16e92c",
+    "voip_video_vpncamp/tree": "31dd19e14dac95fbdc249dcba96586e338dc06e5a348e1396c89c1ed5e0c4032",
+    "voip_video_vpncamp/rf": "067af072cb291b3352b9a1a383710acb3c5067204a35597472958d1e5797dae4",
+    "uslugi3_plain/knn": "1ca2a8b983261ab04bb241ac9335d6be338dc22ac328ff61ef2a722d516555a3",
+    "uslugi3_plain/tree": "ea57ddefcc492ab6c7062a5847a3a4577aef2daa4b8a3703e199e059c7356dc3",
+    "uslugi3_plain/rf": "513e57307f1dd7f2a087dda90fa58b06e67e467dfacda0c1071e9900d83b18ca"
+  },
+  "commit": "aaaa94ce44d5a486829b87991c30b9b31e79c453",
+  "dirty": false,
+  "dirty_excludes": "reports/results",
+  "changed_during_run": false
+}

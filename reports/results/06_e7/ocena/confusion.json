@@ -1,0 +1,170 @@
+{
+ "www_video_tor/knn": {
+  "classes": [
+   "WWW",
+   "Video"
+  ],
+  "matrix": [
+   [
+    40685,
+    2112
+   ],
+   [
+    2752,
+    162
+   ]
+  ]
+ },
+ "www_video_tor/tree": {
+  "classes": [
+   "WWW",
+   "Video"
+  ],
+  "matrix": [
+   [
+    29192,
+    13605
+   ],
+   [
+    1860,
+    1054
+   ]
+  ]
+ },
+ "www_video_tor/rf": {
+  "classes": [
+   "WWW",
+   "Video"
+  ],
+  "matrix": [
+   [
+    31635,
+    11162
+   ],
+   [
+    2084,
+    830
+   ]
+  ]
+ },
+ "voip_video_vpncamp/knn": {
+  "classes": [
+   "VoIP",
+   "Video"
+  ],
+  "matrix": [
+   [
+    3,
+    59
+   ],
+   [
+    212,
+    2702
+   ]
+  ]
+ },
+ "voip_video_vpncamp/tree": {
+  "classes": [
+   "VoIP",
+   "Video"
+  ],
+  "matrix": [
+   [
+    5,
+    57
+   ],
+   [
+    53,
+    2861
+   ]
+  ]
+ },
+ "voip_video_vpncamp/rf": {
+  "classes": [
+   "VoIP",
+   "Video"
+  ],
+  "matrix": [
+   [
+    7,
+    55
+   ],
+   [
+    59,
+    2855
+   ]
+  ]
+ },
+ "uslugi3_plain/knn": {
+  "classes": [
+   "WWW",
+   "VoIP",
+   "Video"
+  ],
+  "matrix": [
+   [
+    21460,
+    273,
+    21064
+   ],
+   [
+    26,
+    1,
+    35
+   ],
+   [
+    1018,
+    5,
+    1891
+   ]
+  ]
+ },
+ "uslugi3_plain/tree": {
+  "classes": [
+   "WWW",
+   "VoIP",
+   "Video"
+  ],
+  "matrix": [
+   [
+    5109,
+    480,
+    37208
+   ],
+   [
+    23,
+    3,
+    36
+   ],
+   [
+    353,
+    12,
+    2549
+   ]
+  ]
+ },
+ "uslugi3_plain/rf": {
+  "classes": [
+   "WWW",
+   "VoIP",
+   "Video"
+  ],
+  "matrix": [
+   [
+    3865,
+    44,
+    38888
+   ],
+   [
+    8,
+    2,
+    52
+   ],
+   [
+    90,
+    12,
+    2812
+   ]
+  ]
+ }
+}
