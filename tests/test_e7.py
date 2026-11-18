@@ -41,6 +41,9 @@ def test_profile_counts_offload_and_udp():
     df = pd.DataFrame({"Protocol": [6, 17, 6, 6], "Fwd Packet Length Max": [100, 1460, 2000, 0],
                        "Bwd Packet Length Max": [0, 0, 0, 5000], "Total Fwd Packet": [1, 2, 3, 4],
                        "Total Bwd packets": [1, 1, 1, 1], "Flow Duration": [1e6] * 4,
-                       "SYN Flag Count": [1, 0, 0, 0]})
+                       "SYN Flag Count": [1, 0, 0, 0], "FIN Flag Count": [0] * 4,
+                       "Total Length of Fwd Packet": [1] * 4, "Total Length of Bwd Packet": [0] * 4,
+                       "Flow IAT Max": [0] * 4})
     p = e7.profile(df, "x")
     assert p["% UDP"] == 25 and p["% z ładunkiem > 1460 B"] == 50 and p["% ≤ 3 pakiety"] == 50
+    assert p["TCP: % z SYN"] == pytest.approx(100 / 3)

@@ -72,11 +72,18 @@ def profile(df: pd.DataFrame, name: str) -> dict[str, Any]:
     """Proste cechy ruchu do tabeli porównawczej (protokoły, scalone segmenty, czas, rozmiar)."""
     big = (df["Fwd Packet Length Max"] > MTU_PAYLOAD) | (df["Bwd Packet Length Max"] > MTU_PAYLOAD)
     n = df["Total Fwd Packet"] + df["Total Bwd packets"]
-    return {"zbiór": name, "przepływy": len(df), "% UDP": 100 * (df["Protocol"] == 17).mean(),
+    size = df["Total Length of Fwd Packet"] + df["Total Length of Bwd Packet"]
+    tcp = df["Protocol"] == 6
+    pct = lambda m: 100 * m[tcp].mean() if tcp.any() else float("nan")  # noqa: E731
+    return {"zbiór": name, "przepływy": len(df), "% UDP": 100 * (~tcp).mean(),
             f"% z ładunkiem > {MTU_PAYLOAD} B": 100 * big.mean(),
-            "mediana pakietów": n.median(), "mediana czasu [s]": df["Flow Duration"].median() / 1e6,
+            "mediana pakietów": n.median(), "mediana bajtów": size.median(),
+            "mediana czasu [s]": df["Flow Duration"].median() / 1e6,
             "% ≤ 3 pakiety": 100 * (n <= 3).mean(),
-            "% z SYN": 100 * (df["SYN Flag Count"] > 0).mean()}
+            "% przerwa > 1 s": 100 * (df["Flow IAT Max"] > 1e6).mean(),
+            "TCP: % bez ładunku": pct(size == 0),
+            "TCP: % z SYN": pct(df["SYN Flag Count"] > 0),
+            "TCP: % z FIN": pct(df["FIN Flag Count"] > 0)}
 
 
 def heatmap(ks: pd.DataFrame, path: Path) -> None:
@@ -87,8 +94,8 @@ def heatmap(ks: pd.DataFrame, path: Path) -> None:
     piv = piv.loc[piv.iloc[:, :4].mean(axis=1).sort_values(ascending=False).index]
     fig, ax = plt.subplots(figsize=(8.5, 15))
     im = ax.imshow(piv.to_numpy(), cmap="viridis", vmin=0, vmax=1, aspect="auto")
-    ax.set_xticks(range(len(order)), [o.replace(" (", "\n(").replace(": ", ":\n") for o in order],
-                  fontsize=8)
+    labels = [o.replace(" (", "\n(") for o in order[:4]] + ["Darknet:\nVideo Tor-nonTor\nvs VPN-nonVPN"]
+    ax.set_xticks(range(len(order)), labels, fontsize=7)
     ax.set_yticks(range(len(piv)), piv.index, fontsize=7)
     for i in range(piv.shape[0]):
         for j in range(piv.shape[1]):
