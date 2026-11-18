@@ -3,7 +3,7 @@
 Pobranie archiwum z kontrolą MD5, strumieniowe czytanie JSON-ów prosto z zip, filtr ruchu tła
 i infrastruktury, przepływy i cechy jak w CICFlowMeter (src/cic_features.py).
 
-Użycie: python src/usbvpn.py download | build
+Użycie: python src/usbvpn.py download | build | vpn
 """
 import argparse
 import hashlib
@@ -13,7 +13,7 @@ import shutil
 import urllib.request
 import zipfile
 from collections import Counter, defaultdict
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -301,6 +301,57 @@ def build(zip_path: Path | None = None,
     return df[META_COLS + FEATURES], "\n".join(log)
 
 
+def vpn_file_summary(records: Iterable[dict]) -> dict[str, int | float | str]:
+    """Liczności jednego pliku VPN: rekordy, wpisy x_packets i połączenia (protokół + porty).
+
+    Bez filtra: w VPN ruch aplikacji jest wewnątrz tunelu (GRE w PPTP, UDP w WireGuard), więc
+    reguła z ruchu bez VPN usunęłaby właśnie tunel. Udział największego połączenia pokazuje,
+    ile przepływów zostałoby z całego nagrania.
+    """
+    entries: Counter = Counter()
+    n_records = 0
+    for rec in records:
+        n_records += 1
+        key, _ = connection_key(rec)
+        entries[key] += len(rec["x_packets"])
+    total = sum(entries.values())
+    top = entries.most_common(2)
+    share = lambda k: top[k][1] / total if len(top) > k and total else 0.0  # noqa: E731
+    return {"records": n_records, "entries": total, "connections": len(entries),
+            "connections_100": sum(v >= 100 for v in entries.values()),
+            "top_connection": "/".join(map(str, top[0][0])) if top else "",
+            "top1_share": share(0), "top2_share": share(0) + share(1)}
+
+
+def vpn_summary(zip_path: Path) -> pd.DataFrame:
+    """Liczności wszystkich plików VPN dla trzech usług E7 (typ VPN × usługa)."""
+    with zipfile.ZipFile(zip_path) as z:
+        members = sorted(n for n in z.namelist()
+                         if n.startswith(f"{ARCHIVE_ROOT}/VPN/") and n.endswith(".json")
+                         and Path(n).stem in SERVICES)
+    rows = []
+    for member in members:
+        vpn_type, name = member.split("/")[2], Path(member).stem
+        rows.append({"vpn": vpn_type, "service": SERVICES[name],
+                     **vpn_file_summary(iter_records(member, zip_path))})
+    return pd.DataFrame(rows)
+
+
+def vpn_markdown(df: pd.DataFrame) -> str:
+    lines = ["# USBVPN2022: część VPN (tylko liczności, E7)\n",
+             "Pliki `VPN/<typ>/<usługa>.json`, bez filtra ruchu tła i infrastruktury. "
+             "Połączenie = protokół + para portów (brak adresów IP). „Największe połączenie” "
+             "to jego udział we wpisach `x_packets` pliku.\n",
+             "| VPN | usługa | rekordy | wpisy x_packets | połączenia | połączenia ≥ 100 wpisów "
+             "| największe połączenie | jego udział | 2 największe |",
+             "| --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |"]
+    for r in df.sort_values(["service", "vpn"]).itertuples(index=False):
+        lines.append(f"| {r.vpn} | {r.service} | {r.records:,} | {r.entries:,} | "
+                     f"{r.connections:,} | {r.connections_100:,} | {r.top_connection} | "
+                     f"{100 * r.top1_share:.1f}% | {100 * r.top2_share:.1f}% |")
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -311,9 +362,18 @@ def main(argv: list[str] | None = None) -> None:
                    default=ROOT / "reports" / "results" / "06_e7" / "usbvpn_przeplywy.md")
     b.add_argument("--no-split-offload", action="store_true",
                    help="zostaw scalone segmenty TCP (wariant do porównania)")
+    v = sub.add_parser("vpn", help="liczności plików VPN (bez cech) → reports/results/06_e7/")
+    v.add_argument("--out-dir", type=Path, default=ROOT / "reports" / "results" / "06_e7")
     args = p.parse_args(argv)
     if args.cmd == "download":
         print(f"OK: {download()} (MD5 zgodne)")
+    elif args.cmd == "vpn":
+        df = vpn_summary(download())
+        args.out_dir.mkdir(parents=True, exist_ok=True)
+        df.to_csv(args.out_dir / "usbvpn_vpn.csv", index=False)
+        report = vpn_markdown(df)
+        (args.out_dir / "usbvpn_vpn.md").write_text(report, encoding="utf-8")
+        print(report)
     elif args.cmd == "build":
         df, report = build(download(), split_offload=not args.no_split_offload)
         args.out.parent.mkdir(parents=True, exist_ok=True)

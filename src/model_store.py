@@ -64,6 +64,18 @@ def check_data(path: Path, metadata: dict[str, Any]) -> None:
                          f"{metadata['data']['release']} (docs/srodowisko.md)")
 
 
+def missing_input_columns(columns: list[str], metadata: dict[str, Any],
+                          require_label: bool = False) -> list[str]:
+    """Kolumny z kontraktu (`input_columns`, opcjonalnie `label_column`), których brakuje.
+
+    Nazwy jak po `pd.read_csv` pliku w formacie Darknet.CSV, więc druga kolumna `Label`
+    to `Label.1`. Etykieta jest potrzebna tylko do macierzy pomyłek i F1 (pliki do pokazu).
+    """
+    required = [*metadata["input_columns"], *([metadata["label_column"]] if require_label else [])]
+    present = set(columns)
+    return [c for c in required if c not in present]
+
+
 def load_pipeline(entry: dict[str, Any], models_dir: Path = MODELS_DIR) -> Pipeline:
     """Wczytuje jeden potok z metadata["pipelines"]; ostrzeżenie przy wczytaniu to błąd."""
     path = models_dir / entry["file"]
