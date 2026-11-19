@@ -1,0 +1,57 @@
+,rowne,w_1proc
+(wszystkie 55 naraz),0.9551,0.9709
+Fwd Packets/s,0.9586,0.9955
+Total Fwd Packet,0.9588,0.9985
+Fwd Header Length,0.9588,0.9839
+Fwd IAT Mean,0.9591,0.9844
+Bwd Packets/s,0.9608,0.9977
+Bwd Header Length,0.9611,0.9862
+Fwd IAT Std,0.9611,0.9862
+Total Bwd packets,0.9611,1.0
+Total Length of Fwd Packet,0.9631,0.9849
+Bwd IAT Mean,0.9633,0.9887
+Total Length of Bwd Packet,0.9656,0.9902
+Bwd IAT Std,0.9674,0.9935
+Fwd IAT Total,0.9676,0.995
+Bwd IAT Total,0.9679,0.9902
+Fwd Packet Length Mean,0.9756,0.9882
+Fwd Packet Length Std,0.9756,0.9854
+Fwd Segment Size Avg,0.9756,0.9882
+Bwd Packet Length Mean,0.9814,0.991
+Bwd Segment Size Avg,0.9814,0.991
+Bwd Packet Length Std,0.9832,0.9917
+Fwd IAT Min,0.9834,0.9834
+Down/Up Ratio,0.9847,0.9987
+Subflow Fwd Bytes,0.9882,0.9912
+Fwd PSH Flags,0.989,1.0
+Subflow Bwd Bytes,0.9897,0.9912
+Fwd Packet Length Max,0.9905,0.991
+Bwd IAT Max,0.9935,0.9952
+Flow IAT Min,0.9945,0.999
+Bwd IAT Min,0.995,0.9952
+Bwd Packet Length Max,0.9955,0.996
+Fwd IAT Max,0.9972,0.9972
+Flow Packets/s,0.9975,0.9975
+PSH Flag Count,0.9975,0.9985
+Packet Length Variance,0.9975,0.9975
+Average Packet Size,0.9975,0.9975
+Packet Length Max,0.9975,0.9975
+Packet Length Std,0.9975,0.9975
+Packet Length Mean,0.9975,0.9975
+Flow IAT Mean,0.9975,0.9975
+Flow Bytes/s,0.9975,0.9975
+Fwd Act Data Pkts,0.9977,0.9985
+Bwd Bulk Rate Avg,0.9977,0.9977
+Bwd Packet/Bulk Avg,0.9977,0.9985
+ACK Flag Count,0.9977,0.9985
+Flow IAT Std,0.9977,0.9977
+Subflow Fwd Packets,0.998,1.0
+Bwd Packet Length Min,0.9987,0.9992
+Fwd Packet Length Min,0.999,0.999
+Flow Duration,0.9997,0.9997
+Flow IAT Max,0.9997,0.9997
+Protocol,1.0,1.0
+Packet Length Min,1.0,1.0
+SYN Flag Count,1.0,1.0
+FIN Flag Count,1.0,1.0
+RST Flag Count,1.0,1.0

@@ -463,6 +463,27 @@ Ten sam zbiór odrzuciliśmy 18.11 jako E7, bo to te same nagrania co Darknet. D
 
 Etap 06 jest zamknięty. Następny jest etap 07 (`docs/prompty/07_e6_wczesna_klasyfikacja.md`, przepisany pod ten zakres), a potem 08 i 09 według `docs/prompty/README.md`.
 
+## 2026-11-19: E6, sesja 1: przepływy z PCAP-ów ISCX i etykiety z Darknet.CSV (etap 07)
+
+**Dane.** Autor pobrał 5 archiwów `PCAPs` (NonVPN-PCAPs-01..03, VPN-PCAPs-01..02, 26 GB po rozpakowaniu). Leżą w `data/external/iscx_vpn2016/` (poza gitem), a kopie `.zip` w podkatalogu `zip/` zostają (decyzja autora). E6 czyta 60 plików z rozmowami i wideo (`voipbuster`, `*audio*`, `*video*`, `netflix`, `youtube`, `vimeo`; 7,5 GB, 14,5 mln ramek).
+
+**Czytnik: dpkt 1.9.8** (decyzja autora, zamiast NFStream albo własnego czytnika; wpis w `requirements.txt`, laptop go nie potrzebuje). Uzasadnienie: `cic_features` potrzebuje danych o każdym pakiecie (czas, ładunek, nagłówek, flagi). NFStream składa przepływy według własnych reguł i dla pierwszych N pakietów daje tylko długość, kierunek i odstęp. Kod: `src/pcap_flows.py` (format rozpoznawany po zawartości, bo `vpn_hangouts_audio2.pcap` to w środku PCAPNG; Ethernet i raw IP) oraz `src/e6.py przeplywy|dopasuj`. Scalonych segmentów TCP nie rozbijamy, bo CICFlowMeter liczył Darknet z tych samych pakietów.
+
+**Pliki VPN zawierają ruch wewnątrz tunelu.** Większość ma typ łącza raw IP (nagranie z interfejsu tunelu), a `vpn_voipbuster1a/1b` mają typ Ethernet, ale też ruch aplikacji. Dopasowanie do wierszy VPN w Darknet wynosi 85–100% na plik (11 plików), więc bierzemy pliki VPN (otwarta decyzja ze STATUS rozstrzygnięta na danych).
+
+**Dopasowanie etykiet.** Używamy 5-krotki i czasu startu przepływu. Czas w Darknet.CSV to czas lokalny ADT, **UTC−3 h**, ucięty do sekundy. Przesunięcie zmierzono na 10 plikach: różnica wynosi −3 h co do sekundy. Tolerancja to 1 s. Przy kilku kandydatach decydują najpierw te same liczniki pakietów, potem najmniejsza różnica czasu. Różne etykiety oznaczają przepływ niejednoznaczny (0 takich). Jeden wiersz Darknet przypisujemy jednemu przepływowi (425 duplikatów). Wyniki: `reports/results/07_e6/dopasowanie.md`, `dopasowanie_pliki.csv`.
+- **Darknet policzono tylko z plików `.pcap`:** wszystkie 21 plików `.pcapng` (wersje `*b`, `*3`, `*4`) ma 0 dopasowań i odpada. Stąd 141 255 z 166 113 przepływów bez dopasowania. W plikach `.pcap` dopasowuje się 76–100% przepływów (vimeo najmniej).
+- **Pokrycie wierszy Darknet** (przed filtrem tła): NonVPN Video 96,4%, NonVPN VoIP 96,9%, VPN Video 99,4%, VPN VoIP 95,2%.
+- **Etykiety Darknet według plików** (ważne dla interpretacji E3 i E5): **VoIP to tylko VoIPBuster** (`voipbuster*`, `vpn_voipbuster*`). Rozmowy głosowe Facebook, Hangouts i Skype (także VPN) mają etykietę **Audio-Streaming**. Rozmowy wideo (`facebook_video`, `hangouts_video`, `skype_video`) mają etykietę **Video-Streaming**, razem z Netflix, YouTube i Vimeo. Klasa „Video” w projekcie obejmuje więc rozmowy wideo, „VoIP” to jedna aplikacja, a „Audio” z E5 to głównie rozmowy głosowe. Etykiety są jednorodne w obrębie pliku.
+
+**Po filtrze tła i czyszczeniu (jak `preprocess.py`):** NonVPN Video 2 612, NonVPN VoIP 202, VPN Video 982, VPN VoIP 187, razem 3 983. W `flows.parquet` jest odpowiednio 2 712, 204, 1 015 i 187. Plik: `data/external/iscx_e6/e6_flows.parquet`. Pliki źródłowe: Video NonVPN 20, VoIP NonVPN 2, Video VPN 4, VoIP VPN 2. Sesje (przerwa 5 min): VoIP NonVPN 53 sesje, największa ma 31% klasy (jak w Darknet); VoIP VPN 25 sesji (17%); Video NonVPN 462 sesje (4%); Video VPN 138 sesji (12%).
+
+**Zgodność cech pełnego przepływu z Darknet.CSV** (`zgodnosc_cech.csv`): **95,5% przepływów ma wszystkie 55 cech równe** wierszowi Darknet, a 97,1% ma wszystkie w granicy 1%. Pozostałe ok. 4% różnią się liczbą pakietów (Total Fwd Packet równe w 95,9%), czyli granicami przepływu. Definicje z E7 potwierdzają się więc na tych samych pakietach.
+
+**Poprawka `cic_features`: `Fwd Act Data Pkts` nie liczy pierwszego pakietu** (`firstPacket` w CICFlowMeter nie zwiększa licznika). W całym Darknet zawsze `Fwd Act Data Pkts ≤ Total Fwd Packet − 1`, a w UDP równość z `Total Fwd Packet − 1` zachodzi w 99,7% przepływów. Przed poprawką wynik był o 1 za duży, gdy pierwszy pakiet miał ładunek (wszystkie UDP, 77% zgodności tej cechy). E7 (USBVPN2022) policzono starą definicją: przepływy z ładunkiem w 1. pakiecie mają tam tę cechę o 1 większą. Wyników E7 nie przeliczamy (NIE RUSZAJ w etapie 07). Przy wyniku na poziomie zgadywania przesunięcie jednej cechy o 1 pakiet nie zmienia wniosku. Przy ponownym przebiegu E7 wartości tej cechy będą inne.
+
+**Do sesji 2:** zadanie VoIP vs Video w kampanii VPN-nonVPN, czyli VoIP 389 przepływów. Największa sesja VoIP to 202 · 0,31 ≈ 62 przepływy, około 16% klasy, więc poniżej 1/5 przy 5 foldach. Sprawdzić przed przebiegiem.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.
