@@ -3,6 +3,7 @@
 Updated: 2026-11-19 · Branch: main · Last gate: standard @ 881df04 - PASS with notes (etap 06, 6677412..881df04); bez CRITICAL/HIGH, mały MSS zmierzony (≤ 0,29% scalonych segmentów) i zostawiony jako zastrzeżenie (decyzje.md)
 
 ## Stage
+Etap 07 od: 05d901c
 Etap 06 zamknięty (decyzje.md, wpis 2026-11-19). Następny: etap 07, E6 (VoIP vs Video na PCAP-ach ISCX VPN-nonVPN, PC, 2 sesje, termin 6.01.2027), jeszcze nierozpoczęty; na starcie sesji dopisz tu `Etap 07 od: <sha>`. M1 oddany, M2 i M3 domknięte, M4 (21.12) ma modele finalne i E5.
 
 ## Done (with evidence)
