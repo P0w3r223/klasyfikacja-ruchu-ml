@@ -450,6 +450,19 @@ Kod: `src/e7.py ocena` i `demo`, `src/e7_ocena.py`, `src/darknet_csv.py`, `src/u
 
 **Weryfikacja: `/gate standard 6677412..HEAD`, PASS with notes** (bez uwag CRITICAL i HIGH). Uwaga o rozbijaniu scalonych segmentów: MSS kierunku to największy ładunek pakietu ≤ MTU w rekordzie, więc mały pakiet z danymi obok scalonego bloku daje mały MSS i wiele sztucznych segmentów. Zmierzone na danych: MSS < 536 B ma 0,01–0,29% scalonych segmentów (WWW 602 z 1,14 mln), 536–1199 B 0,16–0,59%, a ≥ 1200 B 99,1–99,7%. Na wynik to nie wpływa, więc zostaje bez zmian, jako zastrzeżenie. Pozostałe uwagi były już opisane (łączenie połączeń bez IP, krok 1) albo mają niską wagę.
 
+## 2026-11-19: E6 wraca: formularz CIC działa (zamyka etap 06)
+
+**Fakt.** 19.11.2026 autor wysłał formularz CIC dla ISCX VPN-nonVPN 2016 (https://cicresearch.ca/CICDataset/ISCX-VPN-NonVPN-2016/). Formularz zadziałał i pokazał katalogi `CSVs` i `PCAPs`. Warunek powrotu z 22.10 jest więc spełniony: formularz działa przed 15.12.2026, a etapy do 05 są w terminie.
+
+**Decyzja autora: wracamy do E6** (etap 07, termin 6.01.2027, PC). Zakres jest węższy niż w planie z 13.10:
+- **tylko VoIP vs Video w kampanii VPN-nonVPN**, bo w tej kampanii WWW nie ma osobnych plików, a WWW z Tor-nonTor wprowadziłoby z powrotem efekt kampanii;
+- **etykiety przez dopasowanie 5-krotki i czasu do Darknet.CSV**, bo nie wiadomo, jak CIC-Darknet2020 oznaczył rozmowy wideo (`*_video*`); z nazw plików bierzemy tylko wybór archiwów do pobrania;
+- **cechy z pierwszych N pakietów liczy `src/cic_features.py`** (definicje CICFlowMeter sprawdzone na Darknet w etapie 06), więc „pełny przepływ” z tego samego skryptu da się porównać z wierszami Darknet.CSV.
+
+Ten sam zbiór odrzuciliśmy 18.11 jako E7, bo to te same nagrania co Darknet. Dla E6 to zaleta, bo pytanie P4 dotyczy tych samych danych, a nie innej sieci.
+
+Etap 06 jest zamknięty. Następny jest etap 07 (`docs/prompty/07_e6_wczesna_klasyfikacja.md`, przepisany pod ten zakres), a potem 08 i 09 według `docs/prompty/README.md`.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.

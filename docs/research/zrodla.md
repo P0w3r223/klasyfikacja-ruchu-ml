@@ -137,6 +137,8 @@ Zwolniony czas (1–2 sesje w styczniu) przechodzi na E7 i zapas przed raportem.
 
 **Warunek powrotu.** Jeśli formularz CIC zadziała przed 15.12.2026, a etapy do 05 będą w terminie, można wrócić do E6 w wersji VoIP vs Video na PCAP-ach VPN-nonVPN (NFStream `splt_analysis`, etykiety przez dopasowanie 5-krotki i czasu do Darknet.CSV). Wtedy trzeba poprawić prompt 07, bo zmienia się zakres.
 
+**Aktualizacja 19.11.2026:** formularz CIC zadziałał (katalogi `CSVs` i `PCAPs`), warunek powrotu spełniony, E6 wraca w wersji VoIP vs Video (docs/decyzje.md, wpis 2026-11-19).
+
 ## Luki i niepewności
 
 - Nie wiadomo, czy błąd formularza CIC jest trwały. Sprawdzić przy okazji (autor), bo od tego zależy też SHA-256.
