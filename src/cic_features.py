@@ -16,7 +16,9 @@ poniższych zależności zachodzi w 100% przepływów (docs/decyzje.md, wpis E7)
 - „Bwd bulk” obejmuje pakiety obu kierunków (porównanie referencji tablic adresów w Javie
   kieruje każdy pakiet do gałęzi „backward”), a wyniki są obcinane do liczb całkowitych;
 - przepływ kończy się po pakiecie z FIN (ten pakiet należy do przepływu) albo gdy pakiet
-  przychodzi > 120 s od początku przepływu; nowy przepływ po timeoucie zachowuje kierunek starego.
+  przychodzi > 120 s od początku przepływu; nowy przepływ po timeoucie zachowuje kierunek starego;
+- `Fwd Act Data Pkts` nie liczy pierwszego pakietu (w Darknet zawsze ≤ Total Fwd Packet − 1,
+  w UDP równe mu minus 1 w 99,7% przepływów; wykryte w E6 na tych samych PCAP-ach).
 
 Pakiety jednego połączenia podaje się jako tablice tej samej długości, posortowane po czasie:
 ts (µs), payload (B ładunku), sign (+1/-1, kierunek w dowolnym stałym układzie),
@@ -186,5 +188,6 @@ def flow_features(pk: Packets, fwd_sign: int, protocol: int) -> dict[str, float]
         "Subflow Fwd Packets": float(nf // n),
         "Subflow Fwd Bytes": float(F // n),
         "Subflow Bwd Bytes": float(B // n),
-        "Fwd Act Data Pkts": float((fs >= 1).sum()),
+        # firstPacket nie zwiększa licznika; w Darknet zawsze ≤ Total Fwd Packet − 1 (E6)
+        "Fwd Act Data Pkts": float(((size[1:] >= 1) & fwd[1:]).sum()),
     }

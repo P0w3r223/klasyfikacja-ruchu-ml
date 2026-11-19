@@ -99,6 +99,14 @@ def test_first_packet_counted_twice_and_fwd_psh():
     assert f["Down/Up Ratio"] == 0 and f["Subflow Fwd Bytes"] == 15 // 3
 
 
+def test_fwd_act_data_pkts_skips_first_packet():
+    """CICFlowMeter nie liczy pierwszego pakietu (w Darknet UDP: Total Fwd Packet − 1)."""
+    pk = [Packet(T0, 160, +1, 8, 0), Packet(T0 + 20, 160, -1, 8, 0),
+          Packet(T0 + 40, 160, +1, 8, 0), Packet(T0 + 60, 0, +1, 8, 0)]
+    f = flow_features(Packets.of(pk), +1, 17)
+    assert f["Total Fwd Packet"] == 3 and f["Fwd Act Data Pkts"] == 1
+
+
 def test_zero_duration_gives_inf_rate():
     f = flow_features(Packets.of([Packet(T0, 10, +1, 8, 0), Packet(T0, 20, -1, 8, 0)]), +1, 17)
     assert math.isinf(f["Flow Bytes/s"]) and f["Flow IAT Mean"] == 0
