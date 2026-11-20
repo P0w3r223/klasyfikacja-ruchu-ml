@@ -41,13 +41,14 @@ def load_pipeline(task: str, model: str) -> Pipeline:
     return model_store.load_pipeline(model_store.find_pipeline(metadata, task, model))
 
 
-@st.cache_data
+@st.cache_data(max_entries=3)  # wgrane pliki trzymamy w pamięci, więc tylko kilka ostatnich
 def read_csv_bytes(data: bytes) -> pd.DataFrame:
     return app_logic.read_flows_csv(io.BytesIO(data))
 
 
 @st.cache_data
-def read_csv_path(path: str) -> pd.DataFrame:
+def read_csv_path(path: str, mtime_ns: int) -> pd.DataFrame:
+    """`mtime_ns` jest tylko kluczem cache: po zmianie pliku demo wczytujemy go ponownie."""
     return app_logic.read_flows_csv(path)
 
 
@@ -65,7 +66,7 @@ def choose_input() -> tuple[str, pd.DataFrame] | None:
             st.sidebar.warning(f"Brak plików w {DEMO_DIR.relative_to(ROOT)}")
             return None
         path = st.sidebar.selectbox("Plik", files, format_func=lambda p: p.name)
-        return path.name, read_csv_path(str(path))
+        return path.name, read_csv_path(str(path), path.stat().st_mtime_ns)
     uploaded = st.sidebar.file_uploader("CSV w formacie Darknet.CSV (CICFlowMeter)",
                                         type="csv")
     if uploaded is None:
@@ -130,6 +131,9 @@ def show_evaluation(evaluation: app_logic.Evaluation | None) -> None:
         col.metric(f"F1 {cls}", fmt(f1))
     st.dataframe(evaluation.confusion.style.background_gradient(cmap="Blues", axis=None))
     st.caption(f"Ocena na {evaluation.n_evaluated} przepływach z etykietą spośród klas zadania.")
+    if evaluation.absent_classes:
+        st.warning(f"W pliku nie ma etykiet klasy {', '.join(evaluation.absent_classes)}: F1 "
+                   "(makro) to średnia po pozostałych klasach, nieporównywalna z walidacją.")
     if not evaluation.outside_classes.empty:
         outside = ", ".join(f"{k}: {v}" for k, v in evaluation.outside_classes.items())
         st.caption(f"Poza oceną (etykieta spoza klas zadania): {outside}.")

@@ -113,6 +113,23 @@ def test_evaluate_counts_labels_outside_task():
     assert ev.outside_classes.to_dict() == {"VoIP": 1, "nieznana": 1}
 
 
+def test_evaluate_single_class_file_averages_present_classes():
+    ev = app_logic.evaluate(pd.Series(["Video"] * 3), pd.Series(["Video"] * 3), ["WWW", "Video"])
+    assert ev.f1_macro == 1.0 and ev.absent_classes == ["WWW"]
+    assert ev.f1_per_class["WWW"] == 0.0
+
+
+def test_too_many_flows_is_an_input_error(monkeypatch):
+    monkeypatch.setattr(app_logic, "MAX_INPUT_FLOWS", 5)
+    with pytest.raises(app_logic.InputError, match="najwyżej 5"):
+        app_logic.prepare_input(flows(6), META)
+
+
+def test_missing_file_is_an_input_error(tmp_path):
+    with pytest.raises(app_logic.InputError):
+        app_logic.read_flows_csv(str(tmp_path / "brak.csv"))
+
+
 def test_evaluate_none_without_task_labels():
     assert app_logic.evaluate(pd.Series(["VoIP"]), pd.Series(["WWW"]), ["WWW", "Video"]) is None
 

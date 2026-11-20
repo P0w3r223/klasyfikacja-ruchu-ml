@@ -554,6 +554,25 @@ Wynik: `reports/wyniki.md` (odpowiedzi na P1–P4, oś opowieści, efekt kampani
 
 Zostaje: `04_kampania/tabela.md` ma kropkę dziesiętną, jak inne tabele generowane przez skrypty eksperymentów. Plik jest w `reports/results/`, więc zmiana wymagałaby nowego przebiegu. `campaign_test.py` importuje `train._git_state`, tak jak `e5_audio.py`, `e6_ocena.py` i `e7.py`.
 
+## 2026-11-20: Aplikacja Streamlit i pliki do pokazu (etap 09)
+
+Wynik: `app/streamlit_app.py` (sam interfejs) i `src/app_logic.py` (logika bez Streamlit). Aplikacja wybiera zadanie i model z `models/metadata.json` i przyjmuje plik demo albo własny CSV w formacie Darknet.CSV. Kolumny sprawdza `model_store.missing_input_columns`. Ruch tła usuwa `preprocess.background_reason`, a do tego odpadają wiersze z inf/NaN; duplikatów aplikacja nie usuwa. Pokazuje klasę i pewność przepływów, rozkład klas i najważniejsze cechy, a przy etykietach także macierz pomyłek i F1. Instrukcja jest w README. Etap od `e8338df`.
+
+**Decyzje autora:**
+- **Pliki demo z Darknet: jeden na kampanię, z ruchem tła.** `darknet_tor_www_video.csv` to 4 sesje odłożone (WWW 12, Video 16) i 40 przepływów tła (DNS). `darknet_vpn_voip_video.csv` to 8 sesji (VoIP 30, Video 25) i 48 przepływów tła (LLMNR, DNS, NetBIOS, Dropbox, NTP, SNMP, inne protokoły). Tło to najwyżej 10 losowych przepływów tła hostów sesji z jej okna czasowego (ziarno 42). Wycina je `src/demo_files.py` z surowego Darknet.CSV (tylko PC). Pliki E7 to kopie z `reports/results/06_e7/demo/`.
+- **Ważność cech:** dla drzewa i RF to Gini z modelu. Dla k-NN to ważność permutacyjna na wgranym pliku (spadek F1 makro, 5 powtórzeń, najwyżej 200 przepływów, ziarno 42), liczona tylko wtedy, gdy plik ma etykiety z klas zadania. Poniżej 100 przepływów aplikacja ostrzega, że kolejność cech jest niepewna.
+
+**Ustalenia:**
+- Przepływy sesji w plikach demo to dokładnie przepływy z `flows.parquet` (liczba zgodna z `n_flows`). Deduplikacja w `preprocess.build` działa na całym zbiorze, więc w oknie sesji WWW 2 wiersze są kopiami przepływów spoza okna, a te mogły być w treningu. Do pliku nie trafiają. Przepływów hostów sesji z innymi adresami też nie bierzemy, bo należą do innych sesji.
+- F1 (makro) w aplikacji to średnia po klasach obecnych w etykietach pliku (uwaga z /gate). Plik z jedną klasą nie ma wtedy F1 zaniżonego zerem dla klasy bez etykiet, a aplikacja ostrzega, że wynik nie jest porównywalny z walidacją.
+- Plik powyżej 50 000 przepływów dostaje komunikat: k-NN liczyłby minutami.
+- Czas na PC: wynik poniżej 0,2 s; ważność permutacyjna k-NN 1–3 s na plikach Darknet i ok. 7 s na plikach E7 (liczona na końcu strony, z cache).
+- F1 (makro) RF na plikach demo: WWW vs Video na pliku Tor 0,821 (28 przepływów), VoIP vs Video na pliku VPN 0,945 (55 przepływów), na plikach E7 ok. 0,50, czyli poziom zgadywania, jak w E7. Na tak małych plikach to ilustracja, nie wynik.
+
+**Weryfikacja: `/gate standard e8338df..25554f2`, PASS with notes** (bez CRITICAL i HIGH, bez wycieku z holdoutu). Poprawione: F1 po obecnych klasach (także w ważności permutacyjnej), limit cache wgranych plików (3) i klucz cache plików demo z czasem modyfikacji, limit 50 000 przepływów, błąd odczytu pliku (`OSError`) jako komunikat. Zostaje: aplikacja mapuje etykietę z `strip()`, a `preprocess.load_raw` bez niego. Wspólna funkcja wymagałaby zmiany `load_raw`, na którym zbudowano `flows.parquet`.
+
+Zostaje do zrobienia: kontrola na laptopie w czystym klonie (warunek „gotowe gdy” z promptu etapu).
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.

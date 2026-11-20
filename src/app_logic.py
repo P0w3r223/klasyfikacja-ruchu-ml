@@ -19,6 +19,7 @@ import preprocess as pp
 PERMUTATION_REPEATS = 5
 PERMUTATION_MAX_FLOWS = 200  # k-NN liczy odległości do całego zbioru treningowego
 SMALL_SAMPLE_FLOWS = 100     # poniżej tej liczby ważność permutacyjna jest bardzo niepewna
+MAX_INPUT_FLOWS = 50_000     # większy plik k-NN liczyłby minutami (pokaz na laptopie)
 SEED = 42
 
 
@@ -39,8 +40,9 @@ class PreparedInput:
 @dataclass(frozen=True)
 class Evaluation:
     confusion: pd.DataFrame        # wiersze: etykieta, kolumny: klasa modelu
-    f1_macro: float
+    f1_macro: float                # średnia po klasach obecnych w etykietach pliku
     f1_per_class: pd.Series
+    absent_classes: list[str]      # klasy zadania bez żadnej etykiety w pliku (poza średnią)
     n_evaluated: int
     outside_classes: pd.Series     # etykiety spoza klas zadania (poza oceną) i ich liczności
 
@@ -49,7 +51,8 @@ def read_flows_csv(source: str | IO[bytes]) -> pd.DataFrame:
     """CSV z przepływami; druga kolumna `Label` dostaje od pandas nazwę `Label.1`."""
     try:
         return pd.read_csv(source, low_memory=False)
-    except (pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeDecodeError) as exc:
+    except (pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeDecodeError,
+            OSError) as exc:
         raise InputError(f"Nie udało się odczytać pliku jako CSV: {exc}") from exc
 
 
@@ -61,6 +64,9 @@ def prepare_input(df: pd.DataFrame, metadata: dict[str, Any]) -> PreparedInput:
         raise InputError(f"W pliku brakuje kolumn wymaganych przez model: {', '.join(missing)}")
     if df.empty:
         raise InputError("Plik nie zawiera żadnego przepływu")
+    if len(df) > MAX_INPUT_FLOWS:
+        raise InputError(f"Plik ma {len(df)} przepływów; aplikacja przyjmuje najwyżej "
+                         f"{MAX_INPUT_FLOWS}, podziel plik na mniejsze")
     typed = df.assign(**{"Dst IP": df["Dst IP"].astype(str)})
     reason = pp.background_reason(typed)
     kept = typed[reason == ""]
@@ -90,6 +96,12 @@ def class_distribution(predicted: pd.Series, classes: list[str]) -> pd.Series:
     return predicted.value_counts().reindex(classes, fill_value=0)
 
 
+def present_classes(y_true: pd.Series, classes: list[str]) -> list[str]:
+    """Klasy zadania z co najmniej jedną etykietą; F1 klasy bez etykiet to zawsze 0,
+    więc liczona po nich średnia zaniżałaby F1 makro pliku z jedną klasą."""
+    return [c for c in classes if (y_true == c).any()]
+
+
 def evaluate(y_true: pd.Series, y_pred: pd.Series, classes: list[str]) -> Evaluation | None:
     """Macierz pomyłek i F1 na przepływach z etykietą spośród klas zadania; None, gdy brak."""
     inside = y_true.isin(classes)
@@ -98,12 +110,15 @@ def evaluate(y_true: pd.Series, y_pred: pd.Series, classes: list[str]) -> Evalua
         return None
     t, p = y_true[inside], y_pred[inside]
     cm = confusion_matrix(t, p, labels=classes)
-    per_class = f1_score(t, p, labels=classes, average=None, zero_division=0)
+    per_class = pd.Series(f1_score(t, p, labels=classes, average=None, zero_division=0),
+                          index=classes)
+    present = present_classes(t, classes)
     return Evaluation(
         confusion=pd.DataFrame(cm, index=pd.Index(classes, name="etykieta"),
                                columns=pd.Index(classes, name="klasa modelu")),
-        f1_macro=float(per_class.mean()),
-        f1_per_class=pd.Series(per_class, index=classes),
+        f1_macro=float(per_class[present].mean()),
+        f1_per_class=per_class,
+        absent_classes=[c for c in classes if c not in present],
         n_evaluated=int(inside.sum()), outside_classes=outside)
 
 
@@ -127,9 +142,11 @@ def file_permutation_importance(pipeline: Pipeline, X: pd.DataFrame, y: pd.Serie
     if len(Xs) > PERMUTATION_MAX_FLOWS:
         Xs = Xs.sample(n=PERMUTATION_MAX_FLOWS, random_state=seed)
         ys = ys.loc[Xs.index]
+    labels = present_classes(ys, classes)
+
     # Własna funkcja zamiast make_scorer: ten dla dwóch klas wymaga pos_label=1.
     def scorer(model: Pipeline, X_: pd.DataFrame, y_: pd.Series) -> float:
-        return float(f1_score(y_, model.predict(X_), labels=classes, average="macro",
+        return float(f1_score(y_, model.predict(X_), labels=labels, average="macro",
                               zero_division=0))
 
     result = permutation_importance(pipeline, Xs, ys, scoring=scorer,
