@@ -1,9 +1,11 @@
 """E6: wczesna klasyfikacja VoIP vs Video na PCAP-ach ISCX VPN-nonVPN 2016 (etap 07).
 
-Sesja 1 (ten plik):
   przeplywy  PCAP-y → przepływy CICFlowMeter (`pcap_flows`) → data/external/iscx_e6/
   dopasuj    etykiety z Darknet.CSV przez 5-krotkę i czas, filtr tła i czyszczenie jak
              w preprocess.py, raport dopasowania i zgodności cech z Darknet.CSV
+  prefiksy   cechy z pierwszych N pakietów przepływów z e6_flows.parquet (sesja 2);
+             przepływ krótszy niż N daje cechy z wszystkich pakietów (decyzja autora)
+Ocena modeli: e6_ocena.py.
 
 Etykieta pochodzi z Darknet.CSV, nie z nazwy pliku (docs/decyzje.md, wpis 2026-11-19).
 Czas w Darknet.CSV to czas lokalny miejsca nagrania (ADT, UTC-3) z dokładnością do sekundy;
@@ -12,12 +14,13 @@ przesunięcie zmierzone na próbie 10 plików: różnica −3 h co do sekundy.
 import argparse
 import re
 from collections import Counter
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from pcap_flows import file_flows
+from pcap_flows import FlowPackets, file_flow_packets, file_flows
 from preprocess import RAW, background_reason, drop_invalid_and_duplicates, load_raw
 from usbvpn import FEATURES
 
@@ -37,6 +40,10 @@ KEY = ["Src IP", "Src Port", "Dst IP", "Dst Port", "Protocol"]
 COUNTS = ["Total Fwd Packet", "Total Bwd packets"]
 # Zgodność cech: równe co do zaokrąglenia albo w granicy 1% (czasy w µs z zaokrąglenia znacznika)
 REL_CLOSE = 0.01
+FIRST_N = (5, 10, 20, 50)
+FULL_FLOW = 0  # wartość n_first dla cech z całego przepływu
+FLOW_ID = ["source_file", "Src IP", "Src Port", "Dst IP", "Dst Port", "ts_us"]
+LABELS = ["traffic_type", "service"]
 
 
 def select_files(pcap_dir: Path) -> list[Path]:
@@ -165,6 +172,58 @@ def report(stats: pd.DataFrame, matched: pd.DataFrame, cand: pd.DataFrame, cov: 
         "Pełna tabela: `zgodnosc_cech.csv`; na plik: `dopasowanie_pliki.csv`.", ""])
 
 
+def iter_file_flows(pcap_dir: Path, files: list[str]) -> Iterator[tuple[str, FlowPackets]]:
+    for rel in files:
+        stats: Counter = Counter()
+        yield from ((rel, f) for f in file_flow_packets(pcap_dir / rel, stats))
+        print(f"{rel}: {stats['packets']:,} pakietów", flush=True)
+
+
+def prefix_features(flows: Iterable[tuple[str, FlowPackets]], wanted: pd.DataFrame,
+                    first_n: tuple[int, ...] = FIRST_N) -> pd.DataFrame:
+    """Cechy z pierwszych N pakietów i z całego przepływu (n_first = FULL_FLOW) dla przepływów
+    z `wanted` (klucz FLOW_ID), z ich etykietami; brak przepływu albo duplikat klucza to błąd."""
+    if wanted.duplicated(FLOW_ID).any():
+        raise ValueError("e6_flows: powtórzony klucz przepływu " + ", ".join(FLOW_ID))
+    keys = set(wanted[FLOW_ID].itertuples(index=False, name=None))
+    rows = [{"source_file": rel, **f.meta, "n_first": n,
+             **f.features(None if n == FULL_FLOW else n)}
+            for rel, f in flows if (rel, *(f.meta[c] for c in FLOW_ID[1:])) in keys
+            for n in (FULL_FLOW, *first_n)]
+    found = pd.DataFrame(rows, columns=FLOW_ID + ["n_packets", "n_first", *FEATURES])
+    if found.duplicated(FLOW_ID + ["n_first"]).any():
+        raise ValueError("PCAP-y dają dwa przepływy o tym samym kluczu " + ", ".join(FLOW_ID))
+    missing = len(wanted) - found[FLOW_ID].drop_duplicates().shape[0]
+    if missing:
+        raise ValueError(f"{missing} przepływów z e6_flows nie ma w PCAP-ach (inne pliki lub kod?)")
+    return found.merge(wanted[FLOW_ID + LABELS], on=FLOW_ID, validate="many_to_one")
+
+
+def full_flow_mismatches(prefixes: pd.DataFrame, wanted: pd.DataFrame) -> int:
+    """Liczba przepływów, w których cechy pełnego przepływu różnią się od e6_flows."""
+    full = prefixes[prefixes["n_first"] == FULL_FLOW].merge(
+        wanted[FLOW_ID + FEATURES], on=FLOW_ID, suffixes=("", "_e6"))
+    ours = full[FEATURES].to_numpy(dtype=float)
+    theirs = full[[f + "_e6" for f in FEATURES]].to_numpy(dtype=float)
+    return int((~np.isclose(ours, theirs, rtol=1e-9, atol=0, equal_nan=True)).any(axis=1).sum())
+
+
+def prefix_report(prefixes: pd.DataFrame, mismatches: int) -> str:
+    """Na N: udział przepływów obciętych (dłuższych niż N) i z wartością nieskończoną lub NaN."""
+    rows = []
+    for (n, svc), g in prefixes[prefixes["n_first"] != FULL_FLOW].groupby(["n_first", "service"]):
+        rows.append({"N": n, "usługa": svc, "przepływy": len(g),
+                     "obcięte": round(float((g["n_packets"] > n).mean()), 3),
+                     "inf/NaN": int((~np.isfinite(g[FEATURES].to_numpy(dtype=float))).any(axis=1).sum())})
+    return "\n".join([
+        "# E6, sesja 2: cechy z pierwszych N pakietów", "",
+        f"Przepływów: {prefixes[FLOW_ID].drop_duplicates().shape[0]:,}. Przepływ krótszy niż N"
+        " daje cechy ze wszystkich swoich pakietów, czyli takie jak pełny przepływ.", "",
+        f"Cechy pełnego przepływu różne od e6_flows.parquet: {mismatches} przepływów.", "",
+        "`obcięte`: udział przepływów dłuższych niż N (tylko w nich cechy różnią się od pełnych).",
+        "", pd.DataFrame(rows).to_markdown(index=False), ""])
+
+
 def cmd_przeplywy(args: argparse.Namespace) -> None:
     files = select_files(args.pcap_dir)
     flows, stats = build_flows(files, args.pcap_dir)
@@ -193,6 +252,21 @@ def cmd_dopasuj(args: argparse.Namespace) -> None:
     print(text)
 
 
+def cmd_prefiksy(args: argparse.Namespace) -> None:
+    wanted = pd.read_parquet(args.out_dir / "e6_flows.parquet")
+    files = sorted(wanted["source_file"].unique())
+    prefixes = prefix_features(iter_file_flows(args.pcap_dir, files), wanted)
+    mismatches = full_flow_mismatches(prefixes, wanted)
+    if mismatches:
+        raise ValueError(f"{mismatches} przepływów ma inne cechy pełnego przepływu niż e6_flows; "
+                         "przelicz `przeplywy` i `dopasuj` tym samym kodem")
+    prefixes.to_parquet(args.out_dir / "e6_prefiksy.parquet", index=False)
+    text = prefix_report(prefixes, mismatches)
+    args.results.mkdir(parents=True, exist_ok=True)
+    (args.results / "prefiksy.md").write_text(text, encoding="utf-8")
+    print(text)
+
+
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--out-dir", type=Path, default=E6_DIR)
@@ -202,8 +276,11 @@ def main(argv: list[str] | None = None) -> None:
     b = sub.add_parser("dopasuj", help="etykiety z Darknet.CSV, czyszczenie, raport")
     b.add_argument("--raw", type=Path, default=RAW)
     b.add_argument("--results", type=Path, default=RESULTS)
+    c = sub.add_parser("prefiksy", help="cechy z pierwszych N pakietów → e6_prefiksy.parquet")
+    c.add_argument("--pcap-dir", type=Path, default=PCAP_DIR)
+    c.add_argument("--results", type=Path, default=RESULTS)
     args = p.parse_args(argv)
-    {"przeplywy": cmd_przeplywy, "dopasuj": cmd_dopasuj}[args.cmd](args)
+    {"przeplywy": cmd_przeplywy, "dopasuj": cmd_dopasuj, "prefiksy": cmd_prefiksy}[args.cmd](args)
 
 
 if __name__ == "__main__":

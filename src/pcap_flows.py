@@ -129,24 +129,49 @@ def group_connections(packets: Iterable[RawPacket]) -> dict[tuple, Packets]:
     return conns
 
 
-def connection_flows(key: tuple, pk: Packets) -> list[dict]:
-    """Przepływy CICFlowMeter jednego połączenia: kolumny meta (bez source_file) i 55 cech."""
+@dataclass(frozen=True)
+class FlowPackets:
+    """Pakiety jednego przepływu CICFlowMeter; meta to kolumny Src/Dst IP i port, ts_us, n_packets."""
+    meta: dict[str, str | int]
+    packets: Packets
+    fwd_sign: int
+    protocol: int
+
+    def features(self, first_n: int | None = None) -> dict[str, float]:
+        """55 cech z całego przepływu albo z pierwszych `first_n` pakietów (E6)."""
+        pk = self.packets if first_n is None else self.packets[:first_n]
+        return flow_features(pk, self.fwd_sign, self.protocol)
+
+
+def connection_flow_packets(key: tuple, pk: Packets) -> list[FlowPackets]:
+    """Przepływy CICFlowMeter jednego połączenia razem z ich pakietami."""
     proto, ip_a, port_a, ip_b, port_b = key
     out = []
     for start, end, fsign in split_flows(pk, tcp=proto == TCP):
         src, dst = ((ip_a, port_a), (ip_b, port_b)) if fsign == 1 else ((ip_b, port_b), (ip_a, port_a))
-        out.append({"Src IP": src[0], "Src Port": src[1], "Dst IP": dst[0], "Dst Port": dst[1],
-                    "ts_us": int(pk.ts[start]), "n_packets": end - start,
-                    **flow_features(pk[start:end], fsign, proto)})
+        meta = {"Src IP": src[0], "Src Port": src[1], "Dst IP": dst[0], "Dst Port": dst[1],
+                "ts_us": int(pk.ts[start]), "n_packets": end - start}
+        out.append(FlowPackets(meta, pk[start:end], fsign, proto))
     return out
+
+
+def connection_flows(key: tuple, pk: Packets) -> list[dict]:
+    """Przepływy CICFlowMeter jednego połączenia: kolumny meta (bez source_file) i 55 cech."""
+    return [{**f.meta, **f.features()} for f in connection_flow_packets(key, pk)]
+
+
+def file_flow_packets(path: Path, stats: Counter) -> Iterator[FlowPackets]:
+    """Przepływy z pakietami z jednego pliku; liczniki ramek i połączeń trafiają do `stats`."""
+    conns = group_connections(iter_packets(path, stats))
+    stats["connections"] = len(conns)
+    for key, pk in conns.items():
+        yield from connection_flow_packets(key, pk)
 
 
 def file_flows(path: Path, source_file: str) -> tuple[pd.DataFrame, Counter]:
     """Wszystkie przepływy z jednego pliku i liczniki pominiętych ramek."""
     stats: Counter = Counter()
-    conns = group_connections(iter_packets(path, stats))
-    rows = [{"source_file": source_file, **f}
-            for key, pk in conns.items() for f in connection_flows(key, pk)]
-    stats["connections"] = len(conns)
+    rows = [{"source_file": source_file, **f.meta, **f.features()}
+            for f in file_flow_packets(path, stats)]
     stats["flows"] = len(rows)
     return pd.DataFrame(rows), stats

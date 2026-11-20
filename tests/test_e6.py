@@ -1,9 +1,13 @@
-"""Dopasowanie etykiet Darknet.CSV do przepływów z PCAP-ów (etap 07, E6)."""
+"""Dopasowanie etykiet Darknet.CSV do przepływów z PCAP-ów i cechy z pierwszych N pakietów
+(etap 07, E6)."""
 import pandas as pd
 import pytest
 
-from e6 import (DARKNET_UTC_OFFSET, MATCH_TOLERANCE, candidates, coverage_table, resolve,
-                select_files)
+from cic_features import Packets
+from e6 import (DARKNET_UTC_OFFSET, FLOW_ID, FULL_FLOW, MATCH_TOLERANCE, candidates,
+                coverage_table, full_flow_mismatches, prefix_features, resolve, select_files)
+from pcap_flows import FlowPackets
+from usbvpn import FEATURES
 
 T0 = pd.Timestamp("2015-04-29 13:47:03.600")  # UTC; w Darknet 10:47:03 (ADT)
 LOCAL = (T0 + DARKNET_UTC_OFFSET).strftime("%d/%m/%Y %I:%M:%S %p")
@@ -95,3 +99,62 @@ def test_select_files_pattern(tmp_path):
 def test_select_files_empty_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         select_files(tmp_path)
+
+
+# --- sesja 2: cechy z pierwszych N pakietów ---
+
+def udp_flow(sport, n, ts0=1_000_000):
+    """UDP: pakiety co 10 ms naprzemiennie w obu kierunkach, ładunek rośnie z numerem pakietu."""
+    pk = Packets.of([(ts0 + 10_000 * i, 100 + i, 1 if i % 2 == 0 else -1, 8, 0) for i in range(n)])
+    meta = {"Src IP": "1.1.1.1", "Src Port": sport, "Dst IP": "2.2.2.2", "Dst Port": 5060,
+            "ts_us": ts0, "n_packets": n}
+    return FlowPackets(meta, pk, 1, 17)
+
+
+def wanted_of(flows, service="VoIP"):
+    rows = [{"source_file": rel, **f.meta, **f.features(), "traffic_type": "NonVPN",
+             "service": service} for rel, f in flows]
+    return pd.DataFrame(rows)
+
+
+def test_prefix_features_first_n_and_full():
+    flows = [("a.pcap", udp_flow(1000, 30)), ("a.pcap", udp_flow(1001, 3))]
+    out = prefix_features(flows, wanted_of(flows), first_n=(5, 20))
+    assert len(out) == 2 * 3
+    long = out[out["Src Port"] == 1000].set_index("n_first")
+    assert long.loc[5, "Total Fwd Packet"] + long.loc[5, "Total Bwd packets"] == 5
+    assert long.loc[20, "Flow Duration"] == 19 * 10_000
+    assert long.loc[FULL_FLOW, "Flow Duration"] == 29 * 10_000
+    assert (out["service"] == "VoIP").all()
+    assert full_flow_mismatches(out, wanted_of(flows)) == 0
+
+
+def test_prefix_shorter_than_n_equals_full_flow():
+    flows = [("a.pcap", udp_flow(1001, 3))]
+    out = prefix_features(flows, wanted_of(flows), first_n=(5,)).set_index("n_first")
+    pd.testing.assert_series_equal(out.loc[5, FEATURES], out.loc[FULL_FLOW, FEATURES],
+                                   check_names=False)
+
+
+def test_prefix_features_ignores_unwanted_and_requires_all_wanted():
+    flows = [("a.pcap", udp_flow(1000, 10)), ("b.pcap", udp_flow(1000, 10))]
+    out = prefix_features(flows, wanted_of(flows[:1]), first_n=(5,))
+    assert set(out["source_file"]) == {"a.pcap"}
+    with pytest.raises(ValueError, match="nie ma w PCAP"):
+        prefix_features(flows[:1], wanted_of(flows), first_n=(5,))
+
+
+def test_prefix_features_rejects_duplicate_keys():
+    flows = [("a.pcap", udp_flow(1000, 10))]
+    with pytest.raises(ValueError, match="powtórzony klucz"):
+        prefix_features(flows, pd.concat([wanted_of(flows)] * 2), first_n=(5,))
+    with pytest.raises(ValueError, match="dwa przepływy"):
+        prefix_features(flows * 2, wanted_of(flows), first_n=(5,))
+
+
+def test_full_flow_mismatch_detected():
+    flows = [("a.pcap", udp_flow(1000, 10))]
+    wanted = wanted_of(flows)
+    out = prefix_features(flows, wanted, first_n=(5,))
+    assert full_flow_mismatches(out, wanted.assign(**{"Flow Duration": 1.0})) == 1
+    assert list(out.columns[:len(FLOW_ID)]) == FLOW_ID
