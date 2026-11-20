@@ -1,33 +1,32 @@
 # STATUS - klasyfikacja-ruchu-ml
 
-Updated: 2026-11-19 · Branch: main · Last gate: standard @ 881df04 - PASS with notes (etap 06); etap 07 jeszcze bez /gate
+Updated: 2026-11-20 · Branch: main · Last gate: standard @ 05a2736 - PASS with notes (etap 07); poprawki po gate 01a52be (testy, docstring, decyzje.md) - quick, PASS
 
 ## Stage
-Etap 07 od: 05d901c
-Etap 07 (E6: VoIP vs Video z pierwszych N pakietów na PCAP-ach ISCX VPN-nonVPN, PC, termin 6.01.2027): sesja 1 skończona, sesja 2 nierozpoczęta. M1 oddany, M2 i M3 domknięte, M4 (21.12) ma modele finalne i E5.
+Etap 07 (E6) zamknięty; etap 08 (zestawienie wyników, PC, termin 10.01.2027) nierozpoczęty. M1 oddany, M2 i M3 domknięte, M4 (21.12) ma modele finalne i E5; eksperymenty E1–E7 policzone.
 
 ## Done (with evidence)
 - Etapy 00–06 (E1–E5, E7, modele w Release models-v1) - do 05d901c, /gate 9b98795
-- PCAP-y ISCX w `data/external/iscx_vpn2016/` (5 archiwów, zip-y w `zip/` zostają, decyzja autora); czytnik dpkt 1.9.8 (decyzja autora) w requirements.txt - 0a419a4
-- `src/pcap_flows.py` (PCAP/PCAPNG po zawartości, Ethernet i raw IP) i `src/e6.py przeplywy|dopasuj` z testami - 0a419a4
-- Poprawka `cic_features`: `Fwd Act Data Pkts` bez 1. pakietu (Darknet: zawsze ≤ Total Fwd − 1) - c082c51; `pytest -q` → 194 passed
-- Dopasowanie etykiet (5-krotka + czas, UTC−3 h, tolerancja 1 s): pokrycie wierszy Darknet VoIP/Video 95–99%, po czyszczeniu NonVPN Video 2612 / VoIP 202, VPN Video 982 / VoIP 187; 95,5% przepływów ma wszystkie 55 cech równe Darknet.CSV - a07bb10, `reports/results/07_e6/dopasowanie.md`, wpis w decyzje.md
+- E6 sesja 1: czytnik PCAP (dpkt 1.9.8), dopasowanie etykiet do Darknet.CSV (pokrycie 95–99%, 3 983 przepływy) - 0a419a4, c082c51, a07bb10
+- E6 sesja 2: cechy z pierwszych N = 5/10/20/50 pakietów (`src/e6.py prefiksy`, 0 różnic pełnego przepływu z e6_flows, 0 inf/NaN), ocena `src/e6_ocena.py`, rysunek `src/make_figures_07.py` → `reports/figures/15_e6_pierwsze_pakiety.png` - 7bd3dfa, 05a2736
+- Wynik E6 / P4: 5 pierwszych pakietów nie daje wykrytej różnicy względem pełnego przepływu (RF 0,975 vs 0,957 we wszystkich przepływach; różnice parami w rozrzucie foldów); pełny przepływ odtwarza E4 bez_skrotow na Darknet (RF 0,957 vs 0,957) - `reports/results/07_e6/ocena/`, wpis 2026-11-20 w decyzje.md, `run.json` dirty=false
+- `.venv/Scripts/python -m pytest -q` → 207 passed (01a52be)
 
 ## In progress (uncommitted)
 - brak (STATUS.md i brief z tego handoffu do commitu)
 
 ## Next step
-Etap 07, sesja 2 (docs/prompty/07_e6_wczesna_klasyfikacja.md): cechy z pierwszych N = 5, 10, 20, 50 pakietów i z pełnego przepływu z `data/external/iscx_e6/` (przepływy trzeba zachować z pakietami albo przeliczyć z PCAP-ów, ok. 10 min), zestaw bez_skrotow, k-NN/drzewo/RF modułem z 03a, podział po sesjach, zadanie VoIP vs Video w kampanii VPN-nonVPN · Scope: `src/e6.py` (+ ewentualnie `src/pcap_flows.py`), testy, `reports/results/07_e6/`, rysunek w `reports/figures/` · Done when: wykres F1 makro i dokładności zbalansowanej w funkcji N z punktem odniesienia dla pełnego przepływu i odpowiedź na P4 w decyzje.md; potem /gate standard 05d901c..HEAD i zamknięcie etapu.
+Etap 08 (docs/prompty/08_wyniki.md): `reports/wyniki.md` z odpowiedziami na P1–P4 z liczbami, tabela główna (zadanie × model × podział), efekt kampanii, E3, E5, E6, E7, ograniczenia; rysunki jednym skryptem z `reports/results/` · Scope: `reports/wyniki.md`, nowy skrypt w `src/`, `reports/figures/` (reports/results/ tylko do odczytu) · Done when: ponowne uruchomienie skryptu odtwarza wszystkie rysunki i tabele, a każda liczba w wyniki.md wynika z pliku w reports/results/; potem /gate od SHA startu etapu.
 
 ## Open decisions
-- Liczba foldów: największa sesja VoIP ≈ 16% klasy w kampanii VPN-nonVPN (31% w samym NonVPN) - sprawdzić przed przebiegiem; przy problemie mniej foldów (decyzja autora)
-- Czy E6 ma też wariant tylko NonVPN (VoIP 202, 2 pliki źródłowe) - domyślnie nie, cała kampania jak E2 `voip_video_vpncamp`
+- Etap 08: czy rysunki 08–15 z etapów 03b–07 wchodzą do wyniki.md bez zmian, czy jeden skrypt je przerysowuje w formacie slajdu - decyzja autora na starcie etapu
 
 ## Blockers
 - brak
 
 ## To verify
-- E7 policzony starą definicją `Fwd Act Data Pkts` (+1 przy ładunku w 1. pakiecie); wyniki E7 nieprzeliczane (decyzje.md, wpis E6 sesja 1)
+- E7 policzony starą definicją `Fwd Act Data Pkts` (+1 przy ładunku w 1. pakiecie; usbvpn_flows.parquet, 06_e7, pliki demo); nieprzeliczany - w raporcie nie mieszać z definicją z E6 (decyzje.md, wpis E6 sesja 1)
+- Raport, P4: „brak wykrytej różnicy przy 3–5 foldach”, nie równoważność; VoIP = tylko VoIPBuster (2 pliki na tunel); liczb populacji `wszystkie` (5 foldów) i `min20` (3 foldy) nie zestawiać ze sobą
 - Raport: VoIP w Darknet to tylko VoIPBuster, rozmowy głosowe to Audio-Streaming, rozmowy wideo to Video - opisać przy E3 i E5
 - `reports/figures/` nie jest wyłączony z flagi dirty: skrypty rysunków uruchamiaj po przebiegach i commituj przed kolejnymi
 - SHA-256 Darknet.CSV vs UNB: formularz CICDarknet2020 powinien działać; autor podaje ścieżkę pliku
