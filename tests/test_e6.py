@@ -4,8 +4,9 @@ import pandas as pd
 import pytest
 
 from cic_features import Packets
-from e6 import (DARKNET_UTC_OFFSET, FLOW_ID, FULL_FLOW, MATCH_TOLERANCE, candidates,
-                coverage_table, full_flow_mismatches, prefix_features, resolve, select_files)
+from e6 import (DARKNET_UTC_OFFSET, FLOW_ID, FULL_FLOW, MATCH_TOLERANCE, candidates, clean_e6,
+                coverage_table, feature_agreement, full_flow_mismatches, prefix_features, resolve,
+                select_files)
 from pcap_flows import FlowPackets
 from usbvpn import FEATURES
 
@@ -158,3 +159,41 @@ def test_full_flow_mismatch_detected():
     out = prefix_features(flows, wanted, first_n=(5,))
     assert full_flow_mismatches(out, wanted.assign(**{"Flow Duration": 1.0})) == 1
     assert list(out.columns[:len(FLOW_ID)]) == FLOW_ID
+
+
+# --- sesja 1: czyszczenie i zgodność cech (liczby z dopasowanie.md) ---
+
+def labelled(n=4, **over):
+    base = {"Src IP": "1.1.1.1", "Dst IP": "2.2.2.2", "Src Port": 40000, "Dst Port": 443,
+            "match": "dopasowany", "traffic_type": "NonVPN", "service": "Video"}
+    rows = []
+    for i in range(n):
+        feats = {f: float(i + 1) for f in FEATURES}
+        feats["Protocol"] = 6.0
+        rows.append({**base, "Src Port": 40000 + i, **feats, "darknet_row": i})
+    return pd.DataFrame(rows).assign(**over) if over else pd.DataFrame(rows)
+
+
+def test_clean_e6_drops_unmatched_other_services_background_invalid_and_duplicates():
+    df = labelled(6)
+    df.loc[1, "match"] = "brak"
+    df.loc[2, "service"] = "Audio"
+    df.loc[3, "Dst Port"] = 53  # DNS: ruch tła
+    df.loc[4, "Flow Bytes/s"] = float("inf")
+    dup = df.iloc[[0]].assign(**{"Src Port": 50000})  # te same cechy i etykieta
+    clean, st = clean_e6(pd.concat([df, dup], ignore_index=True))
+    assert list(clean["darknet_row"]) == [0, 5]
+    assert st == {"voip_video": 5, "background": 1, "invalid": 1, "duplicates": 1,
+                  "conflicts": 0, "final": 2}
+
+
+def test_feature_agreement_counts_equal_and_close():
+    clean = labelled(4)
+    raw = clean[FEATURES].copy()
+    raw.loc[1, "Flow Duration"] = raw.loc[1, "Flow Duration"] * 1.005  # w granicy 1%
+    raw.loc[2, "Flow Duration"] = 1000.0  # daleko
+    out = feature_agreement(clean, raw)
+    assert out.loc["Flow Duration", "rowne"] == 0.5
+    assert out.loc["Flow Duration", "w_1proc"] == 0.75
+    assert out.loc["(wszystkie 55 naraz)", "rowne"] == 0.5
+    assert out.loc["Total Fwd Packet", "rowne"] == 1.0

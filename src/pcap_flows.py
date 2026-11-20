@@ -9,6 +9,9 @@ sprawdzone na Darknet). Różnice względem E7 (USBVPN2022):
 
 Format pliku rozpoznajemy po pierwszych bajtach, nie po rozszerzeniu (w ISCX jest plik `.pcap`,
 który w środku jest PCAPNG).
+PCAPNG: typ łącza bierzemy z pierwszego interfejsu (dpkt), więc plik z kilkoma interfejsami
+o różnych typach łącza byłby zdekodowany błędnie (nie sprawdzaliśmy, czy takie są w ISCX;
+nieznany typ łącza pierwszego interfejsu kończy się błędem).
 """
 import socket
 from collections import Counter, defaultdict

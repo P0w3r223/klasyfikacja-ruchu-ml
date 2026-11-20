@@ -513,7 +513,20 @@ Dummy: 0,50–0,52. Dokładność zbalansowana zachowuje się tak samo (RF w `ws
 - RF parami (te same foldy), N minus pełny: w `wszystkie` przy N ≥ 10 |Δ| ≤ 0,006 w każdym foldzie, przy N = 5 od −0,007 do +0,071.
 - W `min20` RF przy N = 10 i 20 traci tylko w jednym foldzie (−0,07 i −0,09), w pozostałych |Δ| ≤ 0,006. Spadek nie jest więc monotoniczny w N, tylko pochodzi z jednego foldu. W tym foldzie F1 ważone sesjami spada do 0,84, czyli dotyczy kilku sesji VoIP. k-NN i drzewo w `min20` nie tracą przy żadnym N.
 
-**Odpowiedź na P4.** Do odróżnienia VoIP od Video w kampanii VPN-nonVPN **wystarcza 5 pierwszych pakietów przepływu**. Wynik jest taki sam jak dla pełnego przepływu (różnica w granicach rozrzutu między foldami, dla RF przy N = 5 nawet nieco wyższa). Hipoteza z planu („kilkanaście–kilkadziesiąt pakietów”) zakładała więcej, niż trzeba.
+**Różnica parami N − pełny, F1 makro, średnia ± odchylenie po foldach** (`folds.csv`):
+
+| Populacja | Model | N = 5 | N = 10 | N = 20 | N = 50 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| wszystkie | RF | +0,019 ± 0,032 | +0,001 ± 0,005 | +0,001 ± 0,004 | +0,002 ± 0,004 |
+| wszystkie | k-NN | +0,014 ± 0,028 | +0,006 ± 0,031 | +0,003 ± 0,030 | +0,010 ± 0,033 |
+| wszystkie | drzewo | +0,022 ± 0,050 | −0,001 ± 0,055 | +0,020 ± 0,045 | +0,003 ± 0,043 |
+| min20 | RF | −0,001 ± 0,003 | −0,023 ± 0,040 | −0,031 ± 0,049 | – |
+| min20 | k-NN | +0,009 ± 0,043 | +0,019 ± 0,041 | +0,024 ± 0,029 | – |
+| min20 | drzewo | −0,003 ± 0,046 | +0,022 ± 0,019 | +0,019 ± 0,017 | – |
+
+Liczby z populacji `wszystkie` (5 foldów) i `min20` (3 foldy) nie są porównaniem między sobą. Każda populacja ma własny punkt odniesienia.
+
+**Odpowiedź na P4.** Przy 5 pierwszych pakietach przepływu nie wykryliśmy różnicy względem pełnego przepływu w VoIP vs Video (kampania VPN-nonVPN). Wszystkie różnice parami mieszczą się w rozrzucie między foldami. To brak wykrytej różnicy przy 3–5 foldach, a nie dowód równoważności. W praktyce **5 pakietów wystarcza** na tych danych. Hipoteza z planu („kilkanaście–kilkadziesiąt pakietów”) zakładała więcej.
 
 **Zastrzeżenia (do raportu):**
 - „VoIP” w Darknet to tylko VoIPBuster (wpis E6, sesja 1): 2 pliki źródłowe na tunel. Wynik mówi, że po 5 pakietach da się odróżnić VoIPBuster od wideo, a nie dowolną aplikację VoIP. Możliwe, że pierwsze pakiety (sygnalizacja, nawiązanie połączenia) mają rozmiary charakterystyczne dla aplikacji. Tego nie sprawdzaliśmy.
