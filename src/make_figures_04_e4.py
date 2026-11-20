@@ -21,7 +21,7 @@ from matplotlib.ticker import FuncFormatter  # noqa: E402
 from experiments import E4_FEATURE_SETS, EXPERIMENTS, FEATURE_SETS  # noqa: E402
 from features import feature_list  # noqa: E402
 from make_figures_03b import (GRID, INK, INK_MUTED, MODEL_LABELS, MODEL_ORDER,  # noqa: E402
-                              TASK_LABELS, TASK_ORDER, _num)
+                              TASK_LABELS, TASK_ORDER, _num, save_figures)
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "reports" / "results"
@@ -266,6 +266,16 @@ def importance_figure(imp: pd.DataFrame) -> plt.Figure:
     return fig
 
 
+SAVE_KW = {"dpi": 150}
+
+
+def figures(results: Path) -> dict[str, plt.Figure]:
+    """Rysunki 13–14 z wyników per eksperyment; niczego nie zapisuje."""
+    imp = importance_table(load_e4(results, "importance.csv"))
+    return {"13_e4_zestawy_cech.png": feature_set_figure(load_e4(results, "folds.csv")),
+            "14_e4_waznosc_grup.png": importance_figure(imp)}
+
+
 def main() -> None:
     folds = load_e4(RESULTS, "folds.csv")
     importance = load_e4(RESULTS, "importance.csv")
@@ -276,11 +286,7 @@ def main() -> None:
                          encoding="utf-8")
     folds.to_csv(RESULTS / "04_e4_folds.csv", index=False)
     importance.to_csv(RESULTS / "04_e4_importance.csv", index=False)
-    FIGURES.mkdir(parents=True, exist_ok=True)
-    for fig, name in [(feature_set_figure(folds), "13_e4_zestawy_cech.png"),
-                      (importance_figure(imp), "14_e4_waznosc_grup.png")]:
-        fig.savefig(FIGURES / name, dpi=150)
-        plt.close(fig)
+    save_figures(figures(RESULTS), FIGURES, **SAVE_KW)
     print(f"Tabela: {out_table}\nRysunki: 13_e4_zestawy_cech.png, 14_e4_waznosc_grup.png")
 
 

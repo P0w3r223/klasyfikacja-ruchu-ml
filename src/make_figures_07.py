@@ -17,7 +17,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 
 from e6 import FULL_FLOW, RESULTS  # noqa: E402
-from make_figures_03b import INK, INK_MUTED, MODEL_LABELS, _num, _style_axes  # noqa: E402
+from make_figures_03b import (INK, INK_MUTED, MODEL_LABELS, _num, _style_axes,  # noqa: E402
+                              save_figures)
 
 ROOT = Path(__file__).resolve().parents[1]
 FIGURES = ROOT / "reports" / "figures"
@@ -97,12 +98,16 @@ def e6_figure(summary: pd.DataFrame) -> plt.Figure:
     return fig
 
 
+SAVE_KW = {"dpi": 150, "bbox_inches": "tight"}
+
+
+def figures(e6_results: Path) -> dict[str, plt.Figure]:
+    """Rysunek 15 z reports/results/07_e6; niczego nie zapisuje."""
+    return {FIGURE_NAME: e6_figure(pd.read_csv(e6_results / "ocena" / "summary.csv"))}
+
+
 def main() -> None:
-    summary = pd.read_csv(RESULTS / "ocena" / "summary.csv")
-    FIGURES.mkdir(parents=True, exist_ok=True)
-    fig = e6_figure(summary)
-    fig.savefig(FIGURES / FIGURE_NAME, dpi=150, bbox_inches="tight")
-    plt.close(fig)
+    save_figures(figures(RESULTS), FIGURES, **SAVE_KW)
     print(f"Rysunek: {FIGURE_NAME}")
 
 

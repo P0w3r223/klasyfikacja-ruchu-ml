@@ -18,7 +18,7 @@ import pandas as pd  # noqa: E402
 
 from experiments import E3_TASKS, EXPERIMENTS  # noqa: E402
 from make_figures_03b import (INK, MODEL_LABELS, MODEL_ORDER, _num,  # noqa: E402
-                              _style_axes)
+                              _style_axes, save_figures)
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "reports" / "results"
@@ -166,16 +166,22 @@ def e3_figure(folds: pd.DataFrame, models: list[str]) -> plt.Figure:
     return fig
 
 
+SAVE_KW = {"dpi": 150}
+
+
+def figures(results: Path) -> dict[str, plt.Figure]:
+    """Rysunek 12 z wyników per eksperyment; niczego nie zapisuje."""
+    folds = load_e3_folds(results)
+    return {"12_e3_warianty.png": e3_figure(folds, [m for m in MODEL_ORDER if m != "dummy"])}
+
+
 def main() -> None:
     folds = load_e3_folds(RESULTS)
     out_table = RESULTS / "04_e3_tabela.md"
     paired = "\n".join(paired_markdown(paired_vpn_difference(folds)))
     out_table.write_text(markdown_table(e3_table(folds)) + "\n" + paired, encoding="utf-8")
     folds.to_csv(RESULTS / "04_e3_folds.csv", index=False)
-    FIGURES.mkdir(parents=True, exist_ok=True)
-    fig = e3_figure(folds, [m for m in MODEL_ORDER if m != "dummy"])
-    fig.savefig(FIGURES / "12_e3_warianty.png", dpi=150)
-    plt.close(fig)
+    save_figures(figures(RESULTS), FIGURES, **SAVE_KW)
     print(f"Tabela: {out_table}\nRysunek: 12_e3_warianty.png")
 
 

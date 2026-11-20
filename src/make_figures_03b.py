@@ -133,10 +133,11 @@ def campaign_markdown(recall: pd.DataFrame) -> str:
     return "\n".join(lines + [""])
 
 
-def load_campaign_recall(results: Path, flows: pd.DataFrame) -> pd.DataFrame:
+def load_campaign_recall(results: Path, flows: pd.DataFrame,
+                         experiment: str = "e1e2_uslugi3_plain") -> pd.DataFrame:
     """Wymaga lokalnych predictions.parquet (poza gitem) i flows.parquet (Release)."""
     task = "uslugi3_plain"
-    predictions = pd.read_parquet(results / f"e1e2_{task}" / "predictions.parquet")
+    predictions = pd.read_parquet(results / experiment / "predictions.parquet")
     population, _, _ = task_frame(flows, TASKS[task])
     at_rows = population.iloc[predictions["row"]]
     # zgodność usług i sesji wiersz po wierszu: przetasowanie w obrębie klasy też wyjdzie
@@ -267,16 +268,15 @@ def confusion_figure(confusions: dict[str, dict[str, dict]], model: str) -> plt.
     return fig
 
 
-def main() -> None:
-    folds = load_folds(RESULTS)
+SAVE_KW = {"dpi": 150}
+
+
+def figures(results: Path) -> dict[str, plt.Figure]:
+    """Rysunki 08–11 z wyników per eksperyment; niczego nie zapisuje."""
+    folds = load_folds(results)
     table = summary_table(folds)
-    out_table = RESULTS / "03b_tabela.md"
-    recall = load_campaign_recall(RESULTS, load_flows())
-    out_table.write_text(markdown_table(table) + "\n" + campaign_markdown(recall),
-                         encoding="utf-8")
-    folds.to_csv(RESULTS / "03b_folds.csv", index=False)
     trained = [m for m in MODEL_ORDER if m != "dummy"]
-    figures = {
+    return {
         "08_e1_vs_e2.png": dot_panels(folds, [E1, E2], trained,
                                       "F1 makro: podział losowy (E1) vs po sesjach (E2); "
                                       "Dummy w tabeli"),
@@ -285,13 +285,27 @@ def main() -> None:
                                            "Wrażliwość E2: próg sesji 5 vs 15 min "
                                            "i grupowanie po parze IP (tylko RF)"),
         "11_macierze_rf.png": confusion_figure(
-            {t: load_confusions(RESULTS, t) for t in TASK_ORDER}, "rf"),
+            {t: load_confusions(results, t) for t in TASK_ORDER}, "rf"),
     }
-    FIGURES.mkdir(parents=True, exist_ok=True)
-    for name, fig in figures.items():
-        fig.savefig(FIGURES / name, dpi=150)
+
+
+def save_figures(figs: dict[str, plt.Figure], out_dir: Path, **save_kw) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, fig in figs.items():
+        fig.savefig(out_dir / name, **save_kw)
         plt.close(fig)
-    print(f"Tabela: {out_table}\nRysunki: {', '.join(figures)}")
+
+
+def main() -> None:
+    folds = load_folds(RESULTS)
+    out_table = RESULTS / "03b_tabela.md"
+    recall = load_campaign_recall(RESULTS, load_flows())
+    out_table.write_text(markdown_table(summary_table(folds)) + "\n"
+                         + campaign_markdown(recall), encoding="utf-8")
+    folds.to_csv(RESULTS / "03b_folds.csv", index=False)
+    figs = figures(RESULTS)
+    save_figures(figs, FIGURES, **SAVE_KW)
+    print(f"Tabela: {out_table}\nRysunki: {', '.join(figs)}")
 
 
 if __name__ == "__main__":
