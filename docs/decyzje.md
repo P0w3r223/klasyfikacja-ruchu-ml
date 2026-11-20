@@ -484,6 +484,43 @@ Etap 06 jest zamknięty. Następny jest etap 07 (`docs/prompty/07_e6_wczesna_kla
 
 **Do sesji 2:** zadanie VoIP vs Video w kampanii VPN-nonVPN, czyli VoIP 389 przepływów. Największa sesja VoIP to 202 · 0,31 ≈ 62 przepływy, około 16% klasy, więc poniżej 1/5 przy 5 foldach. Sprawdzić przed przebiegiem.
 
+## 2026-11-20: E6, wynik: 5 pierwszych pakietów wystarcza do VoIP vs Video (etap 07, sesja 2, P4)
+
+**Cechy z pierwszych N pakietów** (`src/e6.py prefiksy`, N = 5, 10, 20, 50). Ponownie czytamy PCAP-y i liczymy 55 cech `bez_skrotow` z `pk[:N]` tym samym `cic_features`. Wszystkie 3 983 przepływy z `e6_flows.parquet` znalazły się w PCAP-ach. Cechy pełnego przepływu są identyczne z `e6_flows` (0 różnic). Żaden wariant nie dał wartości inf ani NaN, więc populacja jest ta sama dla każdego N. Plik: `data/external/iscx_e6/e6_prefiksy.parquet` (poza gitem), raport: `reports/results/07_e6/prefiksy.md`.
+
+**Przepływy są krótkie:** mediana to 6 pakietów. Dłuższych niż N jest: Video 53% (N = 5), 29% (10), 20% (20), 10% (50); VoIP 63%, 55%, 47%, 37%. Tylko w tych przepływach cechy z N pakietów różnią się od pełnych.
+
+**Dwie populacje (decyzja autora):**
+- `wszystkie`: 3 983 przepływy, a przepływ krótszy niż N ma cechy z wszystkich swoich pakietów, czyli tak jak przy klasyfikacji w chwili N-tego pakietu. 5 foldów: największa sesja VoIP ma 16% klasy, każdy fold ma ≥ 7 sesji VoIP.
+- `min20`: przepływy z ≥ 20 pakietami, czyli czysty efekt obcięcia dla N = 5, 10, 20. Video 734 / 264 sesje, VoIP 185 / 40 sesji. 3 foldy: największa sesja VoIP ma 33,5% klasy, a każdy fold ma 12–14 sesji VoIP.
+
+**Schemat oceny** (`src/e6_ocena.py`): jak E2 `voip_video_vpncamp`, czyli warstwy usługa × tunel, podział po sesjach (5 min), dummy, k-NN, drzewo i RF z siatkami z 03a. W populacji każdy wariant N ma te same przepływy w tej samej kolejności, więc i te same foldy, a różnice między N są parami. Wyniki: `reports/results/07_e6/ocena/` (`e6_tabela.md`, `summary.csv`, `folds.csv`, `run.json`, przebieg z czystego drzewa). Rysunek: `reports/figures/15_e6_pierwsze_pakiety.png`.
+
+**Punkt odniesienia odtwarza Darknet.** Pełny przepływ w E6 daje RF 0,957 ± 0,038, k-NN 0,939, drzewo 0,930. E4 `bez_skrotow` na `flows.parquet` (to samo zadanie) daje 0,957 ± 0,022, 0,942, 0,926. Przepływy z PCAP-ów są więc zamiennikiem danych z Darknet.CSV.
+
+**Wynik, F1 makro, średnia ± odchylenie po foldach:**
+
+| Populacja | Model | N = 5 | N = 10 | N = 20 | N = 50 | pełny |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| wszystkie | RF | 0,975 ± 0,010 | 0,958 | 0,958 | 0,959 | 0,957 ± 0,038 |
+| wszystkie | k-NN | 0,954 | 0,945 | 0,942 | 0,950 | 0,939 |
+| wszystkie | drzewo | 0,952 | 0,929 | 0,950 | 0,933 | 0,930 |
+| min20 | RF | 0,967 | 0,945 | 0,937 | – | 0,968 |
+| min20 | k-NN | 0,953 | 0,963 | 0,967 | – | 0,943 |
+| min20 | drzewo | 0,937 | 0,962 | 0,959 | – | 0,940 |
+
+Dummy: 0,50–0,52. Dokładność zbalansowana zachowuje się tak samo (RF w `wszystkie`: 0,976 przy N = 5, 0,962 pełny).
+- RF parami (te same foldy), N minus pełny: w `wszystkie` przy N ≥ 10 |Δ| ≤ 0,006 w każdym foldzie, przy N = 5 od −0,007 do +0,071.
+- W `min20` RF przy N = 10 i 20 traci tylko w jednym foldzie (−0,07 i −0,09), w pozostałych |Δ| ≤ 0,006. Spadek nie jest więc monotoniczny w N, tylko pochodzi z jednego foldu. W tym foldzie F1 ważone sesjami spada do 0,84, czyli dotyczy kilku sesji VoIP. k-NN i drzewo w `min20` nie tracą przy żadnym N.
+
+**Odpowiedź na P4.** Do odróżnienia VoIP od Video w kampanii VPN-nonVPN **wystarcza 5 pierwszych pakietów przepływu**. Wynik jest taki sam jak dla pełnego przepływu (różnica w granicach rozrzutu między foldami, dla RF przy N = 5 nawet nieco wyższa). Hipoteza z planu („kilkanaście–kilkadziesiąt pakietów”) zakładała więcej, niż trzeba.
+
+**Zastrzeżenia (do raportu):**
+- „VoIP” w Darknet to tylko VoIPBuster (wpis E6, sesja 1): 2 pliki źródłowe na tunel. Wynik mówi, że po 5 pakietach da się odróżnić VoIPBuster od wideo, a nie dowolną aplikację VoIP. Możliwe, że pierwsze pakiety (sygnalizacja, nawiązanie połączenia) mają rozmiary charakterystyczne dla aplikacji. Tego nie sprawdzaliśmy.
+- `Protocol` sam nie rozdziela klas: 39% przepływów VoIP to TCP, 7% przepływów Video to UDP.
+- Te same nagrania i warunki co Darknet. Po E7 (modele nie przenoszą się na USBVPN2022) wynik dotyczy tego zbioru, a nie ruchu w ogóle.
+- Połowa przepływów ma ≤ 6 pakietów, więc w populacji `wszystkie` większość przepływów przy N ≥ 10 ma cechy pełne. Dlatego wniosek opieramy też na `min20`, gdzie każdy przepływ jest obcięty.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.
