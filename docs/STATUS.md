@@ -3,7 +3,8 @@
 Updated: 2026-11-20 · Branch: main · Last gate: standard @ 05a2736 - PASS with notes (etap 07); poprawki po gate 01a52be (testy, docstring, decyzje.md) - quick, PASS
 
 ## Stage
-Etap 07 (E6) zamknięty; etap 08 (zestawienie wyników, PC, termin 10.01.2027) nierozpoczęty. M1 oddany, M2 i M3 domknięte, M4 (21.12) ma modele finalne i E5; eksperymenty E1–E7 policzone.
+Etap 08 od: e5cf6e6
+Etap 08 (zestawienie wyników, PC, termin 10.01.2027) w toku; etap 07 (E6) zamknięty. M1 oddany, M2 i M3 domknięte, M4 (21.12) ma modele finalne i E5; eksperymenty E1–E7 policzone.
 
 ## Done (with evidence)
 - Etapy 00–06 (E1–E5, E7, modele w Release models-v1) - do 05d901c, /gate 9b98795
