@@ -8,7 +8,7 @@ Cel: sprawdzić, czy na podstawie samych statystyk przepływów (bez treści pak
 - **Test zewnętrzny (E7):** USBVPN2022, ruch z innego laboratorium i z innego roku, tylko do oceny.
 - **Modele:** DummyClassifier (bazowy), k-NN, drzewo decyzyjne, Random Forest.
 - **Główna metryka:** F1 makro przy podziale po sesjach, na zestawie cech bez skrótów (`bez_skrotow`, 55 cech).
-- **Demo:** aplikacja Streamlit (etap 09, w przygotowaniu).
+- **Demo:** aplikacja Streamlit `app/streamlit_app.py` z plikami do pokazu w `app/demo/` (uruchomienie niżej).
 
 Aktualny stan i następny krok: [docs/STATUS.md](docs/STATUS.md). Wyniki i decyzje: [docs/decyzje.md](docs/decyzje.md). Etapy do końca projektu: [docs/prompty/README.md](docs/prompty/README.md).
 
@@ -21,12 +21,13 @@ src/         przygotowanie danych: preprocess.py, features.py
              ocena i eksperymenty: evaluate.py, models.py, experiments.py, train.py, importance.py
              modele finalne: finalize.py, model_store.py, check_models.py, e5_audio.py
              E7: usbvpn.py, cic_features.py, e7.py, e7_ocena.py, darknet_csv.py
+             aplikacja: app_logic.py (logika bez interfejsu), demo_files.py (pliki demo)
              rysunki: make_figures_*.py, make_eda_notebook.py
 tests/       pytest
 models/      metadata.json (w gicie) i potoki .joblib (Release models-v1)
 reports/     results/ (wyniki przebiegów), figures/ (rysunki), raport postępów
 docs/        plan, decyzje, stan, środowisko, prompty etapów, przegląd źródeł i literatury
-app/         aplikacja Streamlit (etap 09)
+app/         streamlit_app.py i demo/ (pliki CSV do pokazu)
 ```
 
 ## Dane i modele (GitHub Releases)
@@ -56,6 +57,22 @@ python -m venv .venv
 ```
 
 Na Windows przy polskich znakach w konsoli ustaw `PYTHONIOENCODING=utf-8`.
+
+### Aplikacja (pokaz)
+
+Wystarczy czysty klon z venv jak wyżej i modele z `models-v1`. Danych nie trzeba pobierać, a aplikacja działa bez internetu.
+
+```bash
+gh release download models-v1 -D models --skip-existing --pattern "*.joblib"
+.venv/Scripts/python -m streamlit run app/streamlit_app.py   # z katalogu repozytorium
+```
+
+Przeglądarka otworzy `http://localhost:8501`. W panelu po lewej wybierasz zadanie, model (k-NN, drzewo decyzyjne, Random Forest) i plik: jeden z `app/demo/` albo własny CSV w formacie Darknet.CSV (CICFlowMeter). Aplikacja:
+- sprawdza kolumny wymagane przez `models/metadata.json` i podaje, których brakuje;
+- usuwa ruch tła tym samym filtrem co `src/preprocess.py` oraz wiersze z inf/NaN;
+- pokazuje klasę i pewność każdego przepływu, rozkład klas i najważniejsze cechy, a gdy plik ma etykiety (druga kolumna `Label`), także macierz pomyłek i F1.
+
+Przy innych wersjach bibliotek niż w `metadata.json` aplikacja zatrzymuje się z komunikatem, które wersje się różnią. Opis plików demo: [app/demo/README.md](app/demo/README.md).
 
 ## Źródła danych i licencje
 

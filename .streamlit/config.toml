@@ -1,0 +1,3 @@
+[browser]
+# Pokaz działa bez internetu; bez wysyłania statystyk użycia.
+gatherUsageStats = false

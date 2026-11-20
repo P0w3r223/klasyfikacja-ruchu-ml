@@ -3,7 +3,10 @@
 Updated: 2026-11-20 · Branch: main · Last gate: standard @ 68c4520 - PASS with notes (etap 08); poprawki po gate w 4ec0d59 - quick, PASS (pytest 214 passed)
 
 ## Stage
-Etap 08 (zestawienie wyników) zamknięty; następny etap 09 (Streamlit, M5 17.01.2027). M1 oddany, M2 i M3 domknięte, M4 (21.12) ma modele finalne, E5 i zestawienie wyników; eksperymenty E1–E7 policzone.
+Etap 09 (Streamlit, M5 17.01.2027) w toku.
+Etap 09 od: e8338df
+
+Etap 08 (zestawienie wyników) zamknięty. M1 oddany, M2 i M3 domknięte, M4 (21.12) ma modele finalne, E5 i zestawienie wyników; eksperymenty E1–E7 policzone.
 
 ## Done (with evidence)
 - Etapy 00–07 (E1–E7, modele w Release models-v1, E6 / P4) - do e5cf6e6, /gate 01a52be
