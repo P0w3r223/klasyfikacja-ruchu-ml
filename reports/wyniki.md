@@ -9,7 +9,7 @@ Related to: docs/decyzje.md (wpisy E1–E7), reports/wyniki_tabele.md (tabele T1
 
 Jedno źródło liczb i rysunków dla raportu, prezentacji i aplikacji. Każda liczba poniżej pochodzi z tabel T1–T7 w [wyniki_tabele.md](wyniki_tabele.md), a te z plików w `reports/results/` (ścieżka przy każdej tabeli). Wszystko odtwarza `python src/make_figures_08.py`, a test `tests/test_wyniki.py` sprawdza, że każda liczba dziesiętna z tego pliku występuje w tabelach.
 
-**Jak czytać.** Miara główna to F1 makro, średnia z foldów zewnętrznych, z podziałem po sesjach (para IP + etykieta, przerwa ≤ 5 min), chyba że napisano inaczej. Zgadywanie (Dummy) to ok. 0,5 w zadaniach 2-klasowych i ok. 0,33 w zadaniu 3 usług. Zadania:
+**Jak czytać.** Miara główna to F1 makro, średnia z foldów zewnętrznych, z podziałem po sesjach (para IP + etykieta, przerwa ≤ 5 min), chyba że napisano inaczej. Poziom zgadywania (Dummy, E2) to 0,496 (WWW vs Video), 0,519 (VoIP vs Video) i 0,336 (3 usługi). Zadania:
 - **WWW vs Video** (kampania Tor-nonTor) i **VoIP vs Video** (kampania VPN-nonVPN, ruch zwykły + VPN): zadania wewnątrz jednej kampanii, główna miara;
 - **3 usługi** (ruch zwykły): odniesienie, bo łączy klasy z dwóch kampanii.
 
@@ -34,7 +34,7 @@ Tabela T1, rysunki `08_e1_vs_e2.png`, `09_zawyzenie_e1_e2.png`, `10_wrazliwosc_e
 - **Na wszystkich cechach** zawyżenie (E1−E2) jest wyraźne tylko dla k-NN: +0,033 (WWW vs Video), +0,025 (VoIP vs Video), +0,160 (3 usługi). RF: +0,007, +0,003, +0,008.
 - **Bez `Idle *`** zawyżenie w zadaniu 3 usług rośnie dla wszystkich modeli: k-NN +0,136, drzewo +0,113, RF +0,140. „Odporność” RF na sposób podziału wynikała z `Idle *`: data nagrania jest wspólna dla klasy także między sesjami.
 - **Wewnątrz kampanii** zawyżenie bez `Idle *` wynosi najwyżej +0,032 (k-NN, WWW vs Video).
-- **Odpowiedź:** podział losowy zawyża wynik o 0,11–0,14 tam, gdzie klasa ma mało sesji (VoIP w zadaniu 3 usług), a wewnątrz kampanii o najwyżej ok. 0,03. Hipoteza z planu („wyraźny spadek, szczególnie k-NN i drzewa”) potwierdza się dopiero po usunięciu przecieku.
+- **Odpowiedź:** podział losowy zawyża wynik o 0,113–0,140 tam, gdzie klasa ma mało sesji (VoIP w zadaniu 3 usług), a wewnątrz kampanii o najwyżej 0,032. Hipoteza z planu („wyraźny spadek, szczególnie k-NN i drzewa”) potwierdza się dopiero po usunięciu przecieku.
 
 ## Skróty i P1: które cechy odróżniają usługi (E4)
 

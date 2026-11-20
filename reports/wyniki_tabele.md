@@ -4,7 +4,7 @@ Wygenerowane przez `src/make_figures_08.py` z plików w `reports/results/`; nie 
 
 ## T1. Tabela główna: F1 makro, zadanie × model × podział
 
-Źródło: `reports/results/03b_folds.csv`, `reports/results/04_e4_folds.csv`. Średnia z foldów zewnętrznych; E2 = sesje 5 min; 3 usługi na 3 foldach.
+Źródło: `reports/results/e1e2_*/, e2_gap15_*/, e2_ippair_*/folds.csv`, `reports/results/e4_*/folds.csv`. Średnia z foldów zewnętrznych; E2 = sesje 5 min; 3 usługi na 3 foldach.
 
 | Zadanie | Model | E1 wszystkie | E2 wszystkie | E1−E2 | E1 bez Idle | E2 bez Idle | E1−E2 bez Idle | E2 bez skrótów | bez skrótów − wszystkie |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -54,7 +54,7 @@ Czułość Video w zadaniu 3 usług osobno dla Video z każdej kampanii (WWW jes
 
 ## T3. E3: VoIP vs Video a tunel VPN (F1 makro, 3 foldy po sesjach)
 
-Źródło: `reports/results/04_e3_folds.csv`.
+Źródło: `reports/results/e3_*/folds.csv`.
 
 | Zestaw cech | Model | zwykły → zwykły | VPN → VPN | zwykły → VPN | mieszany |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -87,7 +87,7 @@ Zwykły → VPN minus VPN → VPN, parami po foldach (te same foldy testowe VPN)
 
 ## T4. E4: zestawy cech (F1 makro, po sesjach)
 
-Źródło: `reports/results/04_e4_folds.csv`, `reports/results/04_e4_importance.csv`.
+Źródło: `reports/results/e4_*/folds.csv`, `reports/results/e4_*/importance.csv`.
 
 | Zestaw cech | Model | WWW vs Video | VoIP vs Video | 3 usługi |
 | --- | --- | ---: | ---: | ---: |

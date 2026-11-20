@@ -1,6 +1,6 @@
 # STATUS - klasyfikacja-ruchu-ml
 
-Updated: 2026-11-20 · Branch: main · Last gate: standard @ 05a2736 - PASS with notes (etap 07); poprawki po gate 01a52be (testy, docstring, decyzje.md) - quick, PASS
+Updated: 2026-11-20 · Branch: main · Last gate: standard @ 68c4520 - PASS with notes (etap 08); poprawki po gate w następnym commicie - quick, PASS (pytest 214 passed)
 
 ## Stage
 Etap 08 od: e5cf6e6

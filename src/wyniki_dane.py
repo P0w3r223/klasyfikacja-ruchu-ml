@@ -7,14 +7,25 @@ from pathlib import Path
 
 import pandas as pd
 
-from make_figures_03b import E1, E2
+from make_figures_03b import E1, E2, load_folds
+from make_figures_04 import load_e3_folds
+from make_figures_04_e4 import load_e4
 
-# klucz → plik w reports/results/; ścieżki trafiają też do tabel jako źródło liczb
+# Wyniki per fold E1–E4 składamy tymi samymi funkcjami co rysunki 08–14 (z plików
+# eksperymentów), a nie z plików zbiorczych 03b_folds.csv itd., które odświeża dopiero main()
+# starych skryptów; inaczej rysunki i tabele mogłyby pokazać różne przebiegi.
+FOLD_LOADERS = {
+    "e1e2": lambda results: load_folds(results),
+    "e3": lambda results: load_e3_folds(results),
+    "e4": lambda results: load_e4(results, "folds.csv"),
+    "e4_importance": lambda results: load_e4(results, "importance.csv"),
+}
+# klucz → plik(i) w reports/results/; ścieżki trafiają też do tabel jako źródło liczb
 SOURCES = {
-    "e1e2": "03b_folds.csv",
-    "e3": "04_e3_folds.csv",
-    "e4": "04_e4_folds.csv",
-    "e4_importance": "04_e4_importance.csv",
+    "e1e2": "e1e2_*/, e2_gap15_*/, e2_ippair_*/folds.csv",
+    "e3": "e3_*/folds.csv",
+    "e4": "e4_*/folds.csv",
+    "e4_importance": "e4_*/importance.csv",
     "kampania": "04_kampania/folds.csv",
     "e5": "05_e5/distribution.csv",
     "e6": "07_e6/ocena/summary.csv",
@@ -34,11 +45,13 @@ STEPS = [STEP_E1, STEP_E2, STEP_CLEAN, STEP_EXTERNAL]
 
 
 def load_inputs(results: Path) -> dict[str, pd.DataFrame]:
-    missing = [p for p in SOURCES.values() if not (results / p).exists()]
+    files = {k: p for k, p in SOURCES.items() if k not in FOLD_LOADERS}
+    missing = [p for p in files.values() if not (results / p).exists()]
     if missing:
         raise FileNotFoundError(f"Brak plików wyników w {results}: {missing}; "
                                 "brakującą liczbę liczy etap, który ją wytwarza")
-    return {key: pd.read_csv(results / path) for key, path in SOURCES.items()}
+    return {**{key: load(results) for key, load in FOLD_LOADERS.items()},
+            **{key: pd.read_csv(results / path) for key, path in files.items()}}
 
 
 def _mean_std(df: pd.DataFrame, keys: list[str], value: str = "f1_macro") -> pd.DataFrame:

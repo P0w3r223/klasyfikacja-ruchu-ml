@@ -67,9 +67,13 @@ def test_rerun_reproduces_tables_without_writing_results(tmp_path: Path) -> None
     assert len(list((tmp_path / "fig" / "slajdy").glob("S*.png"))) == 5
 
 
+# całe liczby z przecinkiem dziesiętnym (0,957, 29,1); liczby całkowite i procenty bez części
+# ułamkowej (51%, 62 przepływy) nie są sprawdzane
+DECIMAL = re.compile(r"(?<![\d,])\d+,\d+(?![\d,])")
+
+
 def test_every_decimal_in_report_comes_from_tables() -> None:
-    tables = TABLES.read_text(encoding="utf-8")
-    report = REPORT.read_text(encoding="utf-8")
-    numbers = set(re.findall(r"(?<![\d,])\d+,\d+", report))
-    missing = sorted(n for n in numbers if n not in tables)
+    tables = set(DECIMAL.findall(TABLES.read_text(encoding="utf-8")))
+    numbers = set(DECIMAL.findall(REPORT.read_text(encoding="utf-8")))
+    missing = sorted(numbers - tables)
     assert not missing, f"Liczby z wyniki.md bez źródła w wyniki_tabele.md: {missing}"

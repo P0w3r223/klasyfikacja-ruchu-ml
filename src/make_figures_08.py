@@ -75,7 +75,9 @@ def main(argv: list[str] | None = None) -> None:
     flows = load_flows(path=args.data)
     recall = {exp: load_campaign_recall(args.results, flows, exp) for exp in RECALL_EXPERIMENTS}
     args.tables.parent.mkdir(parents=True, exist_ok=True)
-    args.tables.write_text(tables_markdown(load_inputs(args.results), recall), encoding="utf-8")
+    # LF niezależnie od systemu, żeby plik był powtarzalny na obu maszynach
+    args.tables.write_text(tables_markdown(load_inputs(args.results), recall), encoding="utf-8",
+                           newline="\n")
     print(f"Rysunki ({len(names)}): {', '.join(names)}")
     print(f"Slajdy ({len(slides)}): {', '.join(slides)}")
     print(f"Tabele: {args.tables}")

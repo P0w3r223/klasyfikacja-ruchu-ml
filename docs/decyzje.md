@@ -534,6 +534,26 @@ Liczby z populacji `wszystkie` (5 foldów) i `min20` (3 foldy) nie są porównan
 - Te same nagrania i warunki co Darknet. Po E7 (modele nie przenoszą się na USBVPN2022) wynik dotyczy tego zbioru, a nie ruchu w ogóle.
 - Połowa przepływów ma ≤ 6 pakietów, więc w populacji `wszystkie` większość przepływów przy N ≥ 10 ma cechy pełne. Dlatego wniosek opieramy też na `min20`, gdzie każdy przepływ jest obcięty.
 
+## 2026-11-20: Zestawienie wyników (etap 08)
+
+Wynik: `reports/wyniki.md` (odpowiedzi na P1–P4, oś opowieści, efekt kampanii, E3, E5, E6, E7, ograniczenia) i `reports/wyniki_tabele.md` (tabele T1–T7 ze ścieżką źródła przy każdej). Wszystko odtwarza `python src/make_figures_08.py`. Skrypt z `reports/results/` tylko czyta. `tests/test_wyniki.py` sprawdza trzy rzeczy: ponowne uruchomienie daje tę samą treść tabel, nic nie zmienia się w `reports/results/` i każda liczba dziesiętna z `wyniki.md` jest w tabelach jako cała liczba. Etap od `e5cf6e6`.
+
+**Decyzje autora:**
+- **Rysunki: raport i slajdy.** Rysunki 08–15 zostają do raportu bez zmian. Skrypty 03b/04/04_e4/07 mają osobne `figures()`, więc orkiestrator rysuje je bez zapisu ich tabel do `reports/results/`, a pliki PNG są bajt w bajt takie jak dotąd. Nowe rysunki do raportu: 16 (E5, Audio) i 17 (E7). Slajdy 16:9 w `reports/figures/slajdy/`: S1 oś opowieści, S2 efekt kampanii, S3 E3, S4 E6, S5 E7. Na slajdach jest tylko RF i poziom zgadywania, bez punktów foldów. Rysunki 01–07 zostają z notebooka EDA, poza skryptem.
+- **Test kampanii jako wynik w `reports/results/` (powrót do etapu 04).** Liczby 0,997 / 0,982 były dotąd tylko w notebooku i w kontroli z 23.10. `src/campaign_test.py` (commit `217d2d0`, przebieg `dirty=false`) zapisuje `reports/results/04_kampania/` i odtwarza je co do tysięcznej we wszystkich zestawach cech (wszystkie 0,997, bez `Idle *` 0,996, bez skrótów 0,982, tylko rozmiarowe 0,961, tylko czasowe 0,888).
+- **S1 bez liczby z literatury.** Wynik Rust-Nguyen i Stamp (~0,92, 8 klas, IP w cechach, podział losowy) zostaje w tekście raportu, nie na rysunku z naszymi krokami.
+
+**Nowe w zestawieniu:**
+- Czułość Video w zadaniu 3 usług bez skrótów (RF, E2): Video z VPN-nonVPN 0,965, z Tor-nonTor 0,752 (z wszystkimi cechami było 0,997 i 0,842). Efekt kampanii w zadaniu 3 usług zostaje także po usunięciu skrótów. T2 wymaga lokalnych `predictions.parquet`, więc odtwarza się na PC.
+- T1 liczy E1−E2 z niezaokrąglonych średnich, więc kilka różnic różni się o 0,001 od tabeli z wpisu 22.10. Przykłady: drzewo w WWW vs Video +0,007 (było 0,006), RF w 3 usługach +0,008 (było 0,007). Wnioski się nie zmieniają. Obowiązuje T1.
+
+**Weryfikacja: `/gate standard e5cf6e6..68c4520`, PASS with notes** (bez CRITICAL i HIGH). Poprawione:
+- test liczb porównuje całe liczby, a nie podciągi; dwie liczby zaokrąglone ręcznie w `wyniki.md` zastąpione wartościami z tabel;
+- tabele E1–E4 składane tymi samymi funkcjami co rysunki 08–14 (pliki eksperymentów), a nie z plików zbiorczych `03b_folds.csv` itd., żeby rysunki i tabele nie mogły pokazać różnych przebiegów;
+- `wyniki_tabele.md` zapisywany z LF.
+
+Zostaje: `04_kampania/tabela.md` ma kropkę dziesiętną, jak inne tabele generowane przez skrypty eksperymentów. Plik jest w `reports/results/`, więc zmiana wymagałaby nowego przebiegu. `campaign_test.py` importuje `train._git_state`, tak jak `e5_audio.py`, `e6_ocena.py` i `e7.py`.
+
 ## Do sprawdzenia w eksperymentach
 
 - ~~`FWD Init Win Bytes`, `Bwd Init Win Bytes`: sprawdzić ich ważność w E4.~~ Sprawdzone 23.10 (wpis E4): po usunięciu `Idle *` grupa TCP i protokół staje się najważniejsza w VoIP vs Video, a po usunięciu `Init Win Bytes` i `Fwd Seg Size Min` jej wkład spada do 0,03–0,06.
